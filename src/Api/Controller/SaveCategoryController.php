@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use ErnestDefoe\Giveaways\GiveawayCategory;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -19,6 +20,10 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class SaveCategoryController implements RequestHandlerInterface
 {
+    public function __construct(protected TranslatorInterface $translator)
+    {
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $actor = RequestUtil::getActor($request);
@@ -32,7 +37,7 @@ class SaveCategoryController implements RequestHandlerInterface
         if (array_key_exists('name', $attrs) || ! $id) {
             $name = trim((string) ($attrs['name'] ?? ''));
             if ($name === '') {
-                throw new ValidationException(['name' => 'A category name is required.']);
+                throw new ValidationException(['name' => $this->translator->trans('ernestdefoe-giveaways.api.category_name_required')]);
             }
             $cat->name = mb_substr($name, 0, 100);
         }

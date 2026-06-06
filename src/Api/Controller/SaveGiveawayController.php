@@ -7,6 +7,7 @@ use ErnestDefoe\Giveaways\Api\GiveawaySerializer;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -20,6 +21,10 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class SaveGiveawayController implements RequestHandlerInterface
 {
+    public function __construct(protected TranslatorInterface $translator)
+    {
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $actor = RequestUtil::getActor($request);
@@ -41,18 +46,18 @@ class SaveGiveawayController implements RequestHandlerInterface
 
         if (array_key_exists('title', $attrs) || ! $id) {
             $title = trim((string) ($attrs['title'] ?? ''));
-            $title === '' ? $errors['title'] = 'A title is required.' : $g->title = mb_substr($title, 0, 255);
+            $title === '' ? $errors['title'] = $this->translator->trans('ernestdefoe-giveaways.api.title_required') : $g->title = mb_substr($title, 0, 255);
         }
         if (array_key_exists('prize', $attrs) || ! $id) {
             $prize = trim((string) ($attrs['prize'] ?? ''));
-            $prize === '' ? $errors['prize'] = 'A prize is required.' : $g->prize = mb_substr($prize, 0, 255);
+            $prize === '' ? $errors['prize'] = $this->translator->trans('ernestdefoe-giveaways.api.prize_required') : $g->prize = mb_substr($prize, 0, 255);
         }
         if (array_key_exists('endsAt', $attrs) || ! $id) {
             $ends = $this->date($attrs['endsAt'] ?? null);
             if (! $ends) {
-                $errors['endsAt'] = 'A valid end date/time is required.';
+                $errors['endsAt'] = $this->translator->trans('ernestdefoe-giveaways.api.ends_required');
             } elseif (! $id && $ends->isPast()) {
-                $errors['endsAt'] = 'The end must be in the future.';
+                $errors['endsAt'] = $this->translator->trans('ernestdefoe-giveaways.api.ends_future');
             } else {
                 $g->ends_at = $ends;
             }

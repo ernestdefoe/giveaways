@@ -1,5 +1,17 @@
 ernestdefoe-giveaways:
 
+  # Server-side messages (validation + eligibility), returned localized per actor.
+  api:
+    title_required: A title is required.
+    prize_required: A prize is required.
+    ends_required: A valid end date/time is required.
+    ends_future: The end must be in the future.
+    category_name_required: A category name is required.
+    enter_login: You must be logged in to enter.
+    enter_closed: This giveaway is not open for entries.
+    enter_min_posts: "You need at least {count} posts to enter."
+    enter_too_new: Your account is too new to enter this giveaway.
+
   forum:
     # Navigation & page titles
     nav: Giveaways

@@ -3,26 +3,31 @@
 namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
+use Flarum\Locale\TranslatorInterface;
 use Flarum\User\User;
 
 /** Creates base entries and awards bonus entries, enforcing eligibility. */
 class EntryService
 {
-    /** Returns a human reason the user can't enter, or null if eligible. */
+    public function __construct(protected TranslatorInterface $translator)
+    {
+    }
+
+    /** Returns a human (localized) reason the user can't enter, or null if eligible. */
     public function ineligibleReason(Giveaway $giveaway, User $user): ?string
     {
         if ($user->isGuest()) {
-            return 'You must be logged in to enter.';
+            return $this->translator->trans('ernestdefoe-giveaways.api.enter_login');
         }
         if (! $giveaway->isRunning()) {
-            return 'This giveaway is not open for entries.';
+            return $this->translator->trans('ernestdefoe-giveaways.api.enter_closed');
         }
         $s = $giveaway->settingsArray();
         if (($s['min_posts'] ?? 0) > 0 && (int) $user->comment_count < (int) $s['min_posts']) {
-            return 'You need at least ' . (int) $s['min_posts'] . ' posts to enter.';
+            return $this->translator->trans('ernestdefoe-giveaways.api.enter_min_posts', ['count' => (int) $s['min_posts']]);
         }
         if (($s['min_age_days'] ?? 0) > 0 && $user->joined_at && $user->joined_at->gt(Carbon::now()->subDays((int) $s['min_age_days']))) {
-            return 'Your account is too new to enter this giveaway.';
+            return $this->translator->trans('ernestdefoe-giveaways.api.enter_too_new');
         }
         return null;
     }
