@@ -1,5 +1,5 @@
 import app from 'flarum/forum/app';
-import Modal from 'flarum/common/components/Modal';
+import FormModal from 'flarum/common/components/FormModal';
 import type { IInternalModalAttrs } from 'flarum/common/components/Modal';
 import type Mithril from 'mithril';
 import Button from 'flarum/common/components/Button';
@@ -27,7 +27,7 @@ function toIso(local: string): string | null {
   return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-export default class GiveawayFormModal extends Modal<GiveawayFormAttrs> {
+export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
   titleInput!: Stream<string>;
   prize!: Stream<string>;
   description!: Stream<string>;
