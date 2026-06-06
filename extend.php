@@ -10,6 +10,7 @@ use ErnestDefoe\Giveaways\Api\Controller;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
 use ErnestDefoe\Giveaways\Listener\AwardPostBonus;
 use ErnestDefoe\Giveaways\Api\Resource;
+use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
 use Flarum\Extend;
 use Flarum\Post\Event\Posted;
@@ -40,6 +41,7 @@ return [
         ->delete('/giveaways/{id}', 'giveaways.delete', Controller\DeleteGiveawayController::class)
         ->post('/giveaways/{id}/enter', 'giveaways.enter', Controller\EnterGiveawayController::class)
         ->post('/giveaways/{id}/draw', 'giveaways.draw', Controller\DrawGiveawayController::class)
+        ->post('/giveaways/{id}/claim', 'giveaways.claim', Controller\ClaimGiveawayController::class)
         ->get('/giveaway-categories', 'giveaways.categories.index', Controller\ListCategoriesController::class)
         ->post('/giveaway-categories', 'giveaways.categories.create', Controller\SaveCategoryController::class)
         ->patch('/giveaway-categories/{id}', 'giveaways.categories.update', Controller\SaveCategoryController::class)
@@ -51,7 +53,8 @@ return [
     (new Extend\ApiResource(Resource\GiveawayResource::class)),
 
     (new Extend\Notification())
-        ->type(GiveawayWonBlueprint::class, ['alert']),
+        ->type(GiveawayWonBlueprint::class, ['alert'])
+        ->type(GiveawayClaimedBlueprint::class, ['alert']),
 
     (new Extend\Console())
         ->command(DrawDueCommand::class)

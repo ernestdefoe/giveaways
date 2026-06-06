@@ -44,6 +44,9 @@ export interface Giveaway {
   minPosts: number;
   minAgeDays: number;
   canManage: boolean;
+  iWon: boolean;
+  myClaimedAt: string | null;
+  claimInstructions: string | null;
   createdBy: GiveawayUser | null;
   category: { id: number; name: string; slug: string; color: string; icon: string | null } | null;
   winners?: GiveawayWinner[];
@@ -74,6 +77,10 @@ export function enterGiveaway(id: number): Promise<{ data: Giveaway }> {
 
 export function drawGiveaway(id: number): Promise<{ data: Giveaway }> {
   return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/draw` });
+}
+
+export function claimGiveaway(id: number): Promise<{ data: Giveaway }> {
+  return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/claim` });
 }
 
 export function deleteGiveaway(id: number): Promise<unknown> {

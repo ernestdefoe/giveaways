@@ -86,6 +86,9 @@ class SaveGiveawayController implements RequestHandlerInterface
                 $s[$key] = max(0, (int) $attrs[$in]);
             }
         }
+        if (array_key_exists('claimInstructions', $attrs)) {
+            $s['claim_instructions'] = mb_substr(trim((string) $attrs['claimInstructions']), 0, 2000);
+        }
         $g->settings = json_encode($s);
 
         if ($errors) {

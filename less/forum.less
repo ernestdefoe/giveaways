@@ -283,6 +283,52 @@
 .GiveawayPage-manage .Button { margin-bottom: 8px; }
 .GiveawayPage-delete { color: var(--alert-error-color, #b00); }
 
+// ---- Winner claim ----
+.GiveawayPage-winnerBanner {
+  background: linear-gradient(135deg, @gv-accent, darken(@gv-accent, 14%));
+  color: #fff;
+  border-radius: 12px;
+  padding: 22px 24px;
+  margin-bottom: 26px;
+  box-shadow: 0 6px 18px fade(@gv-ink, 25%);
+
+  .GiveawayPage-winnerBanner-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    .icon { font-size: 1.6rem; color: #ffe08a; }
+    h2 { margin: 0; color: #fff; font-weight: 800; }
+  }
+  p { opacity: 0.95; margin: 8px 0 14px; }
+
+  .Button--primary {
+    background: #fff;
+    color: @gv-ink;
+    font-weight: 700;
+    &:hover { background: #f2f2f2; }
+  }
+}
+.GiveawayPage-claimed {
+  font-weight: 700;
+  .icon { margin-right: 4px; }
+}
+.GiveawayPage-claimInstructions {
+  margin-top: 16px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 12px 14px;
+  h4 { margin: 0 0 6px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.85; }
+  p { margin: 0 0 6px; opacity: 1; }
+}
+.GiveawayPage-winner-claim {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted-color);
+  .icon { margin-right: 3px; }
+  &.is-claimed { color: @gv-accent; }
+}
+
 // ---- Modal ----
 .GiveawayFormModal-row {
   display: grid;

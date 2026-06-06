@@ -8,7 +8,7 @@ import Icon from 'flarum/common/components/Icon';
 import humanTime from 'flarum/common/helpers/humanTime';
 import LogInModal from 'flarum/forum/components/LogInModal';
 
-import { showGiveaway, enterGiveaway, drawGiveaway, deleteGiveaway } from '../../common/api';
+import { showGiveaway, enterGiveaway, drawGiveaway, deleteGiveaway, claimGiveaway } from '../../common/api';
 import type { Giveaway } from '../../common/api';
 import { countdown } from '../../common/format';
 import GiveawayFormModal from '../components/GiveawayFormModal';
@@ -16,6 +16,7 @@ import GiveawayFormModal from '../components/GiveawayFormModal';
 export default class GiveawayPage extends Page {
   loading = true;
   entering = false;
+  claiming = false;
   giveaway: Giveaway | null = null;
 
   oninit(vnode: Mithril.Vnode) {
@@ -66,6 +67,22 @@ export default class GiveawayPage extends Page {
       this.giveaway = res.data;
       m.redraw();
     });
+  }
+
+  claim() {
+    const g = this.giveaway!;
+    this.claiming = true;
+    claimGiveaway(g.id)
+      .then((res) => {
+        this.giveaway = res.data;
+        this.claiming = false;
+        app.alerts.show({ type: 'success' }, app.translator.trans('ernestdefoe-giveaways.forum.claim_success'));
+        m.redraw();
+      })
+      .catch(() => {
+        this.claiming = false;
+        m.redraw();
+      });
   }
 
   edit() {
@@ -119,6 +136,7 @@ export default class GiveawayPage extends Page {
 
         <div className="container GiveawayPage-content">
           <div className="GiveawayPage-main">
+            {this.winnerBanner(g)}
             {this.descriptionBlock(g)}
             {this.requirementsBlock(g)}
             {this.winnersBlock(g)}
@@ -130,6 +148,40 @@ export default class GiveawayPage extends Page {
           </aside>
         </div>
       </div>
+    );
+  }
+
+  winnerBanner(g: Giveaway): Mithril.Children {
+    if (!g.iWon) return null;
+    const claimed = !!g.myClaimedAt;
+    return (
+      <section className="GiveawayPage-winnerBanner">
+        <div className="GiveawayPage-winnerBanner-head">
+          <Icon name="fas fa-trophy" />
+          <h2>{app.translator.trans('ernestdefoe-giveaways.forum.you_won')}</h2>
+        </div>
+        <p>{app.translator.trans('ernestdefoe-giveaways.forum.you_won_sub', { prize: g.prize })}</p>
+        {claimed ? (
+          <div className="GiveawayPage-claimed">
+            <Icon name="fas fa-check-circle" /> {app.translator.trans('ernestdefoe-giveaways.forum.claimed')}
+          </div>
+        ) : (
+          <Button
+            className="Button Button--primary"
+            icon="fas fa-box-open"
+            loading={this.claiming}
+            onclick={() => this.claim()}
+          >
+            {app.translator.trans('ernestdefoe-giveaways.forum.claim')}
+          </Button>
+        )}
+        {claimed && g.claimInstructions ? (
+          <div className="GiveawayPage-claimInstructions">
+            <h4>{app.translator.trans('ernestdefoe-giveaways.forum.claim_next_steps')}</h4>
+            {g.claimInstructions.split('\n').map((l) => (l.trim() ? <p>{l}</p> : null))}
+          </div>
+        ) : null}
+      </section>
     );
   }
 
@@ -183,6 +235,12 @@ export default class GiveawayPage extends Page {
                 ) : (
                   <span className="GiveawayPage-winner-user">—</span>
                 )}
+                <span className={'GiveawayPage-winner-claim' + (w.claimedAt ? ' is-claimed' : '')}>
+                  <Icon name={w.claimedAt ? 'fas fa-check-circle' : 'far fa-clock'} />{' '}
+                  {w.claimedAt
+                    ? app.translator.trans('ernestdefoe-giveaways.forum.claimed')
+                    : app.translator.trans('ernestdefoe-giveaways.forum.unclaimed')}
+                </span>
               </li>
             ))}
           </ul>

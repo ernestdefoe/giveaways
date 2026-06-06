@@ -11,6 +11,7 @@ ernestdefoe-giveaways:
     enter_closed: This giveaway is not open for entries.
     enter_min_posts: "You need at least {count} posts to enter."
     enter_too_new: Your account is too new to enter this giveaway.
+    claim_not_winner: You're not a winner of this giveaway.
 
   forum:
     # Navigation & page titles
@@ -62,9 +63,19 @@ ernestdefoe-giveaways:
     hash_label: Entrant hash
     fairness_help: The entrant hash is a SHA-256 fingerprint of the full entrant list, captured at draw time. Combined with the seed, the winner selection is fully reproducible.
 
+    # Winner claim flow
+    you_won: "You won! 🎉"
+    you_won_sub: "Congratulations — you won {prize}. Claim it so the host knows to send it your way."
+    claim: Claim your prize
+    claim_success: "Prize claimed! 🎉"
+    claimed: Claimed
+    unclaimed: Unclaimed
+    claim_next_steps: How to claim
+
     # Notifications
     notification:
       won_content: You won a giveaway!
+      claimed_content: claimed their prize
 
     # Categories
     categories:
@@ -96,6 +107,9 @@ ernestdefoe-giveaways:
       cover_placeholder: https://…
       category_label: Category
       category_none: "— None —"
+      claim_label: Claim instructions
+      claim_placeholder: "e.g. DM me your shipping address or email to receive your prize."
+      claim_help: Shown to each winner after they claim, so they know how to receive the prize.
       ends_label: Ends at
       starts_label: Starts at (optional)
       winner_count_label: Number of winners

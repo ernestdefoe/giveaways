@@ -39,6 +39,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
   minPosts!: Stream<number>;
   minAgeDays!: Stream<number>;
   categoryId!: Stream<number>;
+  claimInstructions!: Stream<string>;
   categories: GiveawayCategory[] = [];
 
   oninit(vnode: Mithril.Vnode<GiveawayFormAttrs>) {
@@ -49,6 +50,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
       listCategories().then((res) => { this.categories = res.data || []; m.redraw(); });
     }
     this.categoryId = Stream(g?.category?.id || 0);
+    this.claimInstructions = Stream(g?.claimInstructions || '');
     this.titleInput = Stream(g?.title || '');
     this.prize = Stream(g?.prize || '');
     this.description = Stream(g?.description || '');
@@ -121,6 +123,10 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
             {this.numberField(t('min_posts_label'), this.minPosts, 0)}
             {this.numberField(t('min_age_label'), this.minAgeDays, 0)}
           </div>
+          {this.field(t('claim_label'), (
+            <textarea className="FormControl" rows={3} value={this.claimInstructions()} placeholder={t('claim_placeholder') as string}
+              oninput={(e: Event) => this.claimInstructions((e.target as HTMLTextAreaElement).value)} />
+          ), t('claim_help'))}
 
           <div className="Form-group">
             <Button type="submit" className="Button Button--primary" loading={this.loading}>
@@ -132,11 +138,12 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     );
   }
 
-  field(label: Mithril.Children, control: Mithril.Children): Mithril.Children {
+  field(label: Mithril.Children, control: Mithril.Children, help?: Mithril.Children): Mithril.Children {
     return (
       <div className="Form-group">
         <label>{label}</label>
         {control}
+        {help && <p className="helpText">{help}</p>}
       </div>
     );
   }
@@ -168,6 +175,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
       minPosts: this.minPosts(),
       minAgeDays: this.minAgeDays(),
       categoryId: this.categoryId() || null,
+      claimInstructions: this.claimInstructions(),
     };
 
     saveGiveaway(attrs, this.attrs.giveaway?.id)

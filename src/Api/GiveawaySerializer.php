@@ -18,6 +18,9 @@ class GiveawaySerializer
         $canManage = $actor->hasPermission('giveaways.manage')
             || ($g->user_id && (int) $actor->id === (int) $g->user_id && $actor->hasPermission('giveaways.create'));
 
+        // The actor's own winner row (if they won), for the claim flow.
+        $myWin = $actor->isGuest() ? null : $g->winners()->where('user_id', $actor->id)->first();
+
         $data = [
             'id'           => (int) $g->id,
             'title'        => $g->title,
@@ -39,6 +42,10 @@ class GiveawaySerializer
             'minPosts'     => (int) ($s['min_posts'] ?? 0),
             'minAgeDays'   => (int) ($s['min_age_days'] ?? 0),
             'canManage'    => $canManage,
+            'iWon'         => (bool) $myWin,
+            'myClaimedAt'  => $myWin ? optional($myWin->claimed_at)->toIso8601String() : null,
+            // Instructions are only meaningful to winners and managers.
+            'claimInstructions' => ($myWin || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
             'createdBy'    => $g->user ? self::user($g->user) : null,
             'category'     => $g->category ? [
                 'id'    => (int) $g->category->id,

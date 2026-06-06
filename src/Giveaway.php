@@ -63,10 +63,11 @@ class Giveaway extends AbstractModel
     {
         $s = json_decode((string) $this->settings, true) ?: [];
         return array_merge([
-            'post_bonus'    => 0,   // bonus entries for posting during the window (0 = off)
-            'min_posts'     => 0,
-            'min_age_days'  => 0,
-            'announce'      => true,
+            'post_bonus'         => 0,   // bonus entries for posting during the window (0 = off)
+            'min_posts'          => 0,
+            'min_age_days'       => 0,
+            'announce'           => true,
+            'claim_instructions' => '',  // shown to winners when they claim their prize
         ], $s);
     }
 

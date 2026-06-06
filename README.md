@@ -18,6 +18,7 @@ Run **provably-fair giveaways** on your [Flarum](https://flarum.org) community. 
 - 🎯 **Eligibility rules** — optionally require a minimum post count or account age to enter.
 - ⏱️ **Scheduled auto-draw** — set an end time and the winners are drawn automatically by the scheduler. Hosts can also **draw now** at any time.
 - 🔔 **Winner notifications** — every winner gets an in-app alert linking straight to the giveaway.
+- 📦 **Prize claiming** — winners get a "You won!" banner with a one-click **Claim** button; the host is notified and can see per-winner claim status, plus optional claim instructions (e.g. "DM me your address").
 - 🛡️ **Provably fair** — every draw publishes a random **seed** and a **SHA-256 hash** of the full entrant list, so the result is independently reproducible and tamper-evident.
 - 🏆 **Multiple winners** — draw any number of weighted winners in a single fair pass.
 - 🔐 **Granular permissions** — separate *enter*, *create own*, and *manage all* permissions.
