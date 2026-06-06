@@ -1,0 +1,36 @@
+{
+    "name": "ernestdefoe/giveaways",
+    "description": "Run provably-fair giveaways and raffles on your Flarum 2 forum — earn-entries engine, scheduled auto-draws, winner notifications.",
+    "type": "flarum-extension",
+    "license": "MIT",
+    "keywords": ["flarum", "extension", "giveaway", "raffle", "contest", "sweepstakes"],
+    "authors": [
+        {
+            "name": "Ernestdefoe",
+            "email": "ernestdefoe@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ernestdefoe/giveaways/issues",
+        "source": "https://github.com/ernestdefoe/giveaways"
+    },
+    "require": {
+        "flarum/core": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ErnestDefoe\\Giveaways\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Giveaways",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-gift",
+                "backgroundColor": "#69c6b9",
+                "color": "#1A2744"
+            }
+        }
+    }
+}
