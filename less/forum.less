@@ -290,3 +290,93 @@
   gap: 14px;
   @media (max-width: 540px) { grid-template-columns: 1fr; }
 }
+
+// ---- Categories ----
+.GiveawaysPage-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.GiveawayCard-category {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+  .icon { margin-right: 3px; }
+}
+
+.GiveawaysPage-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.GiveawayFilter {
+  background: transparent;
+  border: 1px solid var(--control-bg);
+  color: var(--muted-color);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  .icon { margin-right: 4px; }
+
+  &:hover { filter: brightness(1.1); }
+  &.is-active { background: @gv-accent; border-color: @gv-accent; color: #fff; }
+}
+
+.GiveawayPage-category {
+  display: inline-block;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-left: 8px;
+  .icon { margin-right: 3px; }
+}
+
+.CategoryManager-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+}
+.CategoryManager-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.CategoryManager-color {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--control-bg);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.CategoryManager-name { flex: 1 1 auto; }
+.CategoryManager-icon { flex: 0 0 130px; }
+.CategoryManager-count {
+  flex: 0 0 auto;
+  min-width: 24px;
+  text-align: center;
+  color: var(--muted-color);
+  font-size: 0.85rem;
+}
+.CategoryManager-delete { color: var(--alert-error-color, #b00); }
+.CategoryManager-empty { color: var(--muted-color); padding: 8px 0; }
+.CategoryManager-add {
+  border-top: 1px solid var(--control-bg);
+  padding-top: 16px;
+  h4 { margin-bottom: 10px; .icon { color: @gv-accent; } }
+}

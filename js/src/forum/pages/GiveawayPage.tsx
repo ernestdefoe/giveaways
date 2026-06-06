@@ -104,6 +104,11 @@ export default class GiveawayPage extends Page {
               <span className={`GiveawayCard-status GiveawayCard-status--${g.status}`}>
                 {app.translator.trans(`ernestdefoe-giveaways.forum.status_${g.status}`)}
               </span>
+              {g.category && (
+                <span className="GiveawayPage-category" style={{ backgroundColor: g.category.color }}>
+                  {g.category.icon && <Icon name={g.category.icon} />} {g.category.name}
+                </span>
+              )}
               <h1 className="GiveawayPage-title">{g.title}</h1>
               <div className="GiveawayPage-prize">
                 <Icon name="fas fa-trophy" /> {g.prize}

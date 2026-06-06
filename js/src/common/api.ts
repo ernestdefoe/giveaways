@@ -13,6 +13,16 @@ export interface GiveawayWinner {
   claimedAt: string | null;
 }
 
+export interface GiveawayCategory {
+  id: number;
+  name: string;
+  slug: string;
+  color: string;
+  icon: string | null;
+  position?: number;
+  count?: number;
+}
+
 export interface Giveaway {
   id: number;
   title: string;
@@ -35,6 +45,7 @@ export interface Giveaway {
   minAgeDays: number;
   canManage: boolean;
   createdBy: GiveawayUser | null;
+  category: { id: number; name: string; slug: string; color: string; icon: string | null } | null;
   winners?: GiveawayWinner[];
   drawSeed?: string | null;
   entrantHash?: string | null;
@@ -75,4 +86,24 @@ export function saveGiveaway(attributes: Record<string, unknown>, id?: number): 
     url: id ? `${base()}/${id}` : base(),
     body: { data: { attributes } },
   });
+}
+
+function catBase(): string {
+  return app.forum.attribute('apiUrl') + '/giveaway-categories';
+}
+
+export function listCategories(): Promise<{ data: GiveawayCategory[] }> {
+  return app.request<{ data: GiveawayCategory[] }>({ method: 'GET', url: catBase() });
+}
+
+export function saveCategory(attributes: Record<string, unknown>, id?: number): Promise<{ data: GiveawayCategory }> {
+  return app.request<{ data: GiveawayCategory }>({
+    method: id ? 'PATCH' : 'POST',
+    url: id ? `${catBase()}/${id}` : catBase(),
+    body: { data: { attributes } },
+  });
+}
+
+export function deleteCategory(id: number): Promise<unknown> {
+  return app.request({ method: 'DELETE', url: `${catBase()}/${id}` });
 }

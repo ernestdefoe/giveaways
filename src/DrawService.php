@@ -3,6 +3,9 @@
 namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
+use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
+use Flarum\Notification\NotificationSyncer;
+use Flarum\User\User;
 
 /**
  * Provably-fair winner selection. At draw time we publish:
@@ -13,6 +16,10 @@ use Carbon\Carbon;
  */
 class DrawService
 {
+    public function __construct(protected NotificationSyncer $notifications)
+    {
+    }
+
     public function draw(Giveaway $giveaway): void
     {
         if ($giveaway->status !== 'active') {
@@ -42,6 +49,26 @@ class DrawService
         $giveaway->entrant_hash = $hash;
         $giveaway->drawn_at = Carbon::now();
         $giveaway->save();
+
+        $this->notifyWinners($giveaway, $winnerIds);
+    }
+
+    /** Send each winner a "you won" alert. Failures here never block the draw. */
+    protected function notifyWinners(Giveaway $giveaway, array $winnerIds): void
+    {
+        foreach ($winnerIds as $pos => $uid) {
+            try {
+                $user = User::find($uid);
+                if ($user) {
+                    $this->notifications->sync(
+                        new GiveawayWonBlueprint($giveaway, $pos + 1),
+                        [$user]
+                    );
+                }
+            } catch (\Throwable $e) {
+                // Best-effort: a notification failure must not undo a completed draw.
+            }
+        }
     }
 
     /**

@@ -5,11 +5,12 @@ import type Mithril from 'mithril';
 import Button from 'flarum/common/components/Button';
 import Stream from 'flarum/common/utils/Stream';
 
-import { saveGiveaway } from '../../common/api';
-import type { Giveaway } from '../../common/api';
+import { saveGiveaway, listCategories } from '../../common/api';
+import type { Giveaway, GiveawayCategory } from '../../common/api';
 
 export interface GiveawayFormAttrs extends IInternalModalAttrs {
   giveaway?: Giveaway;
+  categories?: GiveawayCategory[];
   onsave?: () => void;
 }
 
@@ -37,10 +38,17 @@ export default class GiveawayFormModal extends Modal<GiveawayFormAttrs> {
   postBonus!: Stream<number>;
   minPosts!: Stream<number>;
   minAgeDays!: Stream<number>;
+  categoryId!: Stream<number>;
+  categories: GiveawayCategory[] = [];
 
   oninit(vnode: Mithril.Vnode<GiveawayFormAttrs>) {
     super.oninit(vnode);
     const g = this.attrs.giveaway;
+    this.categories = this.attrs.categories || [];
+    if (!this.categories.length) {
+      listCategories().then((res) => { this.categories = res.data || []; m.redraw(); });
+    }
+    this.categoryId = Stream(g?.category?.id || 0);
     this.titleInput = Stream(g?.title || '');
     this.prize = Stream(g?.prize || '');
     this.description = Stream(g?.description || '');
@@ -83,6 +91,15 @@ export default class GiveawayFormModal extends Modal<GiveawayFormAttrs> {
           {this.field(t('cover_label'), (
             <input className="FormControl" value={this.coverUrl()} placeholder={t('cover_placeholder') as string}
               oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)} />
+          ))}
+          {this.categories.length > 0 && this.field(t('category_label'), (
+            <select className="FormControl" value={this.categoryId()}
+              onchange={(e: Event) => this.categoryId(parseInt((e.target as HTMLSelectElement).value, 10) || 0)}>
+              <option value={0}>{t('category_none')}</option>
+              {this.categories.map((c) => (
+                <option value={c.id} selected={this.categoryId() === c.id}>{c.name}</option>
+              ))}
+            </select>
           ))}
 
           <div className="GiveawayFormModal-row">
@@ -150,6 +167,7 @@ export default class GiveawayFormModal extends Modal<GiveawayFormAttrs> {
       postBonus: this.postBonus(),
       minPosts: this.minPosts(),
       minAgeDays: this.minAgeDays(),
+      categoryId: this.categoryId() || null,
     };
 
     saveGiveaway(attrs, this.attrs.giveaway?.id)

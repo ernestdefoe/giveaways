@@ -28,6 +28,11 @@ export default class GiveawayCard extends Component<GiveawayCardAttrs> {
         </div>
 
         <div className="GiveawayCard-body">
+          {g.category && (
+            <span className="GiveawayCard-category" style={{ color: g.category.color }}>
+              {g.category.icon && <Icon name={g.category.icon} />} {g.category.name}
+            </span>
+          )}
           <h3 className="GiveawayCard-title">{g.title}</h3>
           <div className="GiveawayCard-prize">
             <Icon name="fas fa-trophy" /> {g.prize}

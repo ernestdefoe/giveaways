@@ -69,6 +69,10 @@ class SaveGiveawayController implements RequestHandlerInterface
         if (array_key_exists('winnerCount', $attrs)) {
             $g->winner_count = max(1, min(100, (int) $attrs['winnerCount']));
         }
+        if (array_key_exists('categoryId', $attrs)) {
+            $cid = $attrs['categoryId'] ? (int) $attrs['categoryId'] : null;
+            $g->category_id = ($cid && \ErnestDefoe\Giveaways\GiveawayCategory::whereKey($cid)->exists()) ? $cid : null;
+        }
 
         // Entry-method + eligibility settings.
         $s = $g->settingsArray();
@@ -91,7 +95,7 @@ class SaveGiveawayController implements RequestHandlerInterface
         }
         $g->updated_at = Carbon::now();
         $g->save();
-        $g->load('user');
+        $g->load(['user', 'category']);
 
         return new JsonResponse(['data' => GiveawaySerializer::serialize($g, $actor, true)], $id ? 200 : 201);
     }

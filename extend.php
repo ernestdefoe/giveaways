@@ -9,6 +9,8 @@
 use ErnestDefoe\Giveaways\Api\Controller;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
 use ErnestDefoe\Giveaways\Listener\AwardPostBonus;
+use ErnestDefoe\Giveaways\Api\Resource;
+use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
 use Flarum\Extend;
 use Flarum\Post\Event\Posted;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
@@ -37,10 +39,19 @@ return [
         ->patch('/giveaways/{id}', 'giveaways.update', Controller\SaveGiveawayController::class)
         ->delete('/giveaways/{id}', 'giveaways.delete', Controller\DeleteGiveawayController::class)
         ->post('/giveaways/{id}/enter', 'giveaways.enter', Controller\EnterGiveawayController::class)
-        ->post('/giveaways/{id}/draw', 'giveaways.draw', Controller\DrawGiveawayController::class),
+        ->post('/giveaways/{id}/draw', 'giveaways.draw', Controller\DrawGiveawayController::class)
+        ->get('/giveaway-categories', 'giveaways.categories.index', Controller\ListCategoriesController::class)
+        ->post('/giveaway-categories', 'giveaways.categories.create', Controller\SaveCategoryController::class)
+        ->patch('/giveaway-categories/{id}', 'giveaways.categories.update', Controller\SaveCategoryController::class)
+        ->delete('/giveaway-categories/{id}', 'giveaways.categories.delete', Controller\DeleteCategoryController::class),
 
     (new Extend\Event())
         ->listen(Posted::class, AwardPostBonus::class),
+
+    (new Extend\ApiResource(Resource\GiveawayResource::class)),
+
+    (new Extend\Notification())
+        ->type(GiveawayWonBlueprint::class, ['alert']),
 
     (new Extend\Console())
         ->command(DrawDueCommand::class)

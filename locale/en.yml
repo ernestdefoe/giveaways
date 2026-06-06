@@ -50,6 +50,20 @@ ernestdefoe-giveaways:
     hash_label: Entrant hash
     fairness_help: The entrant hash is a SHA-256 fingerprint of the full entrant list, captured at draw time. Combined with the seed, the winner selection is fully reproducible.
 
+    # Notifications
+    notification:
+      won_content: You won a giveaway!
+
+    # Categories
+    categories:
+      manage: Categories
+      manage_title: Manage categories
+      all: All
+      none: No categories yet.
+      add: Add category
+      name_placeholder: Category name
+      confirm_delete: Delete this category? Giveaways in it will become uncategorized.
+
     # Create / edit
     create: New giveaway
     edit: Edit
@@ -68,6 +82,8 @@ ernestdefoe-giveaways:
       description_placeholder: Rules, eligibility, how the prize is delivered…
       cover_label: Cover image URL
       cover_placeholder: https://…
+      category_label: Category
+      category_none: "— None —"
       ends_label: Ends at
       starts_label: Starts at (optional)
       winner_count_label: Number of winners

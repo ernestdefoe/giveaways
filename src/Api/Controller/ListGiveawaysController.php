@@ -17,7 +17,7 @@ class ListGiveawaysController implements RequestHandlerInterface
     {
         $actor = RequestUtil::getActor($request);
 
-        $giveaways = Giveaway::query()->with('user')
+        $giveaways = Giveaway::query()->with(['user', 'category'])
             ->orderByRaw("FIELD(status, 'active', 'drawn', 'cancelled')")
             ->orderBy('ends_at', 'desc')
             ->limit(100)->get();

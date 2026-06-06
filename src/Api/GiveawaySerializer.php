@@ -40,6 +40,13 @@ class GiveawaySerializer
             'minAgeDays'   => (int) ($s['min_age_days'] ?? 0),
             'canManage'    => $canManage,
             'createdBy'    => $g->user ? self::user($g->user) : null,
+            'category'     => $g->category ? [
+                'id'    => (int) $g->category->id,
+                'name'  => $g->category->name,
+                'slug'  => $g->category->slug,
+                'color' => $g->category->color,
+                'icon'  => $g->category->icon,
+            ] : null,
         ];
 
         if ($full) {

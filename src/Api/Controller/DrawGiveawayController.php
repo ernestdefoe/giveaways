@@ -26,7 +26,7 @@ class DrawGiveawayController implements RequestHandlerInterface
         $actor->assertRegistered();
 
         $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
-        $g = Giveaway::query()->with('user')->findOrFail($id);
+        $g = Giveaway::query()->with(['user', 'category'])->findOrFail($id);
 
         $canManage = $actor->hasPermission('giveaways.manage')
             || ($g->user_id && (int) $actor->id === (int) $g->user_id && $actor->hasPermission('giveaways.create'));
@@ -36,7 +36,7 @@ class DrawGiveawayController implements RequestHandlerInterface
 
         $this->draws->draw($g);
         $g->refresh();
-        $g->load('user');
+        $g->load(['user', 'category']);
 
         return new JsonResponse(['data' => GiveawaySerializer::serialize($g, $actor, true)]);
     }
