@@ -7,16 +7,30 @@ Run **provably-fair giveaways** on your [Flarum](https://flarum.org) community. 
 
 ![status](https://img.shields.io/badge/status-MVP-69c6b9)
 
+![Giveaways page](docs/img/index.png)
+
 ## Features
 
 - 🎁 **Beautiful giveaways page** — a dedicated `/giveaways` page with cards, live countdowns, status badges and entrant counts.
 - 🎟️ **One-click entry** — registered members enter instantly. The button shows their current entry count.
 - ⭐ **Earn-entries engine** — grant a one-time bonus when entrants post in the community, rewarding real activity.
+- 🗂️ **Categories** — organise giveaways into colour-coded categories with filter pills, badges and an inline manager.
 - 🎯 **Eligibility rules** — optionally require a minimum post count or account age to enter.
 - ⏱️ **Scheduled auto-draw** — set an end time and the winners are drawn automatically by the scheduler. Hosts can also **draw now** at any time.
+- 🔔 **Winner notifications** — every winner gets an in-app alert linking straight to the giveaway.
 - 🛡️ **Provably fair** — every draw publishes a random **seed** and a **SHA-256 hash** of the full entrant list, so the result is independently reproducible and tamper-evident.
 - 🏆 **Multiple winners** — draw any number of weighted winners in a single fair pass.
 - 🔐 **Granular permissions** — separate *enter*, *create own*, and *manage all* permissions.
+
+## Screenshots
+
+### Giveaway page — enter, requirements & live countdown
+
+![Giveaway detail](docs/img/detail.png)
+
+### Provably-fair results — published winners, seed & entrant hash
+
+![Drawn giveaway with winners and fairness data](docs/img/winners.png)
 
 ## Installation
 
