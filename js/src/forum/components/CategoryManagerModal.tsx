@@ -63,6 +63,9 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
                     value={c.name}
                     oninput={(e: Event) => { c.name = (e.target as HTMLInputElement).value; }}
                   />
+                  <span className="CategoryManager-iconPreview" style={{ color: c.color }} aria-hidden="true">
+                    <Icon name={c.icon || 'fas fa-tag'} />
+                  </span>
                   <input
                     className="FormControl CategoryManager-icon"
                     placeholder="fas fa-tag"
@@ -108,6 +111,9 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
                   value={this.newName}
                   oninput={(e: Event) => { this.newName = (e.target as HTMLInputElement).value; }}
                 />
+                <span className="CategoryManager-iconPreview" style={{ color: this.newColor }} aria-hidden="true">
+                  <Icon name={this.newIcon || 'fas fa-tag'} />
+                </span>
                 <input
                   className="FormControl CategoryManager-icon"
                   placeholder="fas fa-tag"
