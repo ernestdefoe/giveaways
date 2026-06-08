@@ -19,7 +19,6 @@ return Migration::createTable('giveaways', function (Blueprint $table) {
     $table->string('draw_seed', 64)->nullable();         // provably-fair seed
     $table->string('entrant_hash', 64)->nullable();      // sha256 of entrant list at draw
     $table->dateTime('drawn_at')->nullable();
-    $table->unsignedInteger('discussion_id')->nullable();
     $table->dateTime('created_at')->nullable();
     $table->dateTime('updated_at')->nullable();
 

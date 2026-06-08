@@ -3,7 +3,7 @@
 namespace ErnestDefoe\Giveaways\Api\Controller;
 
 use Carbon\Carbon;
-use ErnestDefoe\Giveaways\Api\GiveawaySerializer;
+use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use Flarum\Foundation\ValidationException;
@@ -56,6 +56,6 @@ class ClaimGiveawayController implements RequestHandlerInterface
             }
         }
 
-        return new JsonResponse(['data' => GiveawaySerializer::serialize($g, $actor, true)]);
+        return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)]);
     }
 }

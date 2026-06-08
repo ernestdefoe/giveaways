@@ -2,7 +2,7 @@
 
 namespace ErnestDefoe\Giveaways\Api\Controller;
 
-use ErnestDefoe\Giveaways\Api\GiveawaySerializer;
+use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\EntryService;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Foundation\ValidationException;
@@ -36,6 +36,6 @@ class EnterGiveawayController implements RequestHandlerInterface
 
         $this->entries->enter($g, $actor);
 
-        return new JsonResponse(['data' => GiveawaySerializer::serialize($g, $actor, true)]);
+        return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)]);
     }
 }

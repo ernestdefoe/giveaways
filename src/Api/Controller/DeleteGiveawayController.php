@@ -24,12 +24,12 @@ class DeleteGiveawayController implements RequestHandlerInterface
         $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
         $g = Giveaway::query()->findOrFail($id);
 
-        $canManage = $actor->hasPermission('giveaways.manage')
-            || ($g->user_id && (int) $actor->id === (int) $g->user_id && $actor->hasPermission('giveaways.create'));
-        if (! $canManage) {
+        if (! $g->canBeManagedBy($actor)) {
             throw new PermissionDeniedException();
         }
 
+        // Children also cascade at the DB level (FK constraints), but delete them
+        // explicitly too so cleanup works even on a driver without FK enforcement.
         GiveawayEntry::where('giveaway_id', $g->id)->delete();
         GiveawayWinner::where('giveaway_id', $g->id)->delete();
         $g->delete();

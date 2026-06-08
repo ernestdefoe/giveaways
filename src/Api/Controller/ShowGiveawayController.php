@@ -2,7 +2,7 @@
 
 namespace ErnestDefoe\Giveaways\Api\Controller;
 
-use ErnestDefoe\Giveaways\Api\GiveawaySerializer;
+use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Http\RequestUtil;
 use Illuminate\Support\Arr;
@@ -24,6 +24,6 @@ class ShowGiveawayController implements RequestHandlerInterface
             ? $query->findOrFail((int) $key)
             : $query->where('slug', $key)->firstOrFail();
 
-        return new JsonResponse(['data' => GiveawaySerializer::serialize($g, $actor, true)]);
+        return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)]);
     }
 }

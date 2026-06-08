@@ -2,7 +2,7 @@
 
 namespace ErnestDefoe\Giveaways\Api\Controller;
 
-use ErnestDefoe\Giveaways\Api\GiveawaySerializer;
+use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\DrawService;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Http\RequestUtil;
@@ -28,9 +28,7 @@ class DrawGiveawayController implements RequestHandlerInterface
         $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
         $g = Giveaway::query()->with(['user', 'category'])->findOrFail($id);
 
-        $canManage = $actor->hasPermission('giveaways.manage')
-            || ($g->user_id && (int) $actor->id === (int) $g->user_id && $actor->hasPermission('giveaways.create'));
-        if (! $canManage) {
+        if (! $g->canBeManagedBy($actor)) {
             throw new PermissionDeniedException();
         }
 
@@ -38,6 +36,6 @@ class DrawGiveawayController implements RequestHandlerInterface
         $g->refresh();
         $g->load(['user', 'category']);
 
-        return new JsonResponse(['data' => GiveawaySerializer::serialize($g, $actor, true)]);
+        return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)]);
     }
 }

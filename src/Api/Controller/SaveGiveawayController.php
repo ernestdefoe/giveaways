@@ -3,7 +3,7 @@
 namespace ErnestDefoe\Giveaways\Api\Controller;
 
 use Carbon\Carbon;
-use ErnestDefoe\Giveaways\Api\GiveawaySerializer;
+use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
@@ -105,14 +105,12 @@ class SaveGiveawayController implements RequestHandlerInterface
         $g->save();
         $g->load(['user', 'category']);
 
-        return new JsonResponse(['data' => GiveawaySerializer::serialize($g, $actor, true)], $id ? 200 : 201);
+        return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)], $id ? 200 : 201);
     }
 
     private function assertCanManage($actor, Giveaway $g): void
     {
-        $ok = $actor->hasPermission('giveaways.manage')
-            || ($g->user_id && (int) $actor->id === (int) $g->user_id && $actor->hasPermission('giveaways.create'));
-        if (! $ok) {
+        if (! $g->canBeManagedBy($actor)) {
             throw new \Flarum\User\Exception\PermissionDeniedException();
         }
     }
@@ -131,6 +129,12 @@ class SaveGiveawayController implements RequestHandlerInterface
     {
         $v = trim((string) $v);
         if ($v === '') return null;
+
+        // The cover URL is interpolated into a CSS `url("...")` on the frontend,
+        // so strip any character that could break out of the quoted value (quotes,
+        // parens, backslash, whitespace/newlines) before it's ever stored.
+        $v = str_replace(['"', "'", '(', ')', '\\', "\n", "\r", "\t", ' '], '', $v);
+
         $ok = filter_var($v, FILTER_VALIDATE_URL) || (str_starts_with($v, '/') && ! str_starts_with($v, '//'));
         return $ok ? mb_substr($v, 0, 600) : null;
     }

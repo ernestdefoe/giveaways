@@ -2,7 +2,7 @@
 
 namespace ErnestDefoe\Giveaways\Api\Controller;
 
-use ErnestDefoe\Giveaways\Api\GiveawaySerializer;
+use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Http\RequestUtil;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -18,11 +18,14 @@ class ListGiveawaysController implements RequestHandlerInterface
         $actor = RequestUtil::getActor($request);
 
         $giveaways = Giveaway::query()->with(['user', 'category'])
-            ->orderByRaw("FIELD(status, 'active', 'drawn', 'cancelled')")
+            // Portable ordering — FIELD() is MySQL-only (breaks PG/SQLite).
+            ->orderByRaw("CASE status WHEN 'active' THEN 0 WHEN 'drawn' THEN 1 WHEN 'cancelled' THEN 2 ELSE 3 END")
             ->orderBy('ends_at', 'desc')
             ->limit(100)->get();
 
-        $data = $giveaways->map(fn (Giveaway $g) => GiveawaySerializer::serialize($g, $actor, false))->all();
+        // Batch-load per-row aggregates + the actor's own entry/win once (no N+1).
+        $presenter = GiveawayPresenter::forList($actor, $giveaways);
+        $data = $giveaways->map(fn (Giveaway $g) => $presenter->present($g, false))->all();
 
         return new JsonResponse([
             'data' => $data,

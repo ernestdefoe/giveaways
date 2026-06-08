@@ -13,4 +13,8 @@ return Migration::createTable('giveaway_winners', function (Blueprint $table) {
 
     $table->index('giveaway_id');
     $table->index('user_id');
+
+    // Clean up winner rows automatically when a giveaway or user is removed.
+    $table->foreign('giveaway_id')->references('id')->on('giveaways')->cascadeOnDelete();
+    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
 });

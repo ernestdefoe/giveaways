@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $draw_seed
  * @property string|null $entrant_hash
  * @property \Carbon\Carbon|null $drawn_at
- * @property int|null $discussion_id
  * @property int|null $category_id
  */
 class Giveaway extends AbstractModel
@@ -56,6 +55,17 @@ class Giveaway extends AbstractModel
     public function category(): BelongsTo
     {
         return $this->belongsTo(GiveawayCategory::class, 'category_id');
+    }
+
+    /**
+     * Can $actor manage this giveaway? True for global managers, or for the
+     * giveaway's own author who still holds the create permission. Centralised
+     * here so the presenter and every controller share one rule.
+     */
+    public function canBeManagedBy(User $actor): bool
+    {
+        return $actor->hasPermission('giveaways.manage')
+            || ($this->user_id && (int) $actor->id === (int) $this->user_id && $actor->hasPermission('giveaways.create'));
     }
 
     /** Decoded settings (entry methods + eligibility) with defaults. */
