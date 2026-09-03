@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import type Mithril from 'mithril';
-import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
+import GwSkeleton, { rememberSections } from '../components/GwSkeleton';
 import Button from 'flarum/common/components/Button';
 import Icon from 'flarum/common/components/Icon';
 
@@ -114,7 +114,7 @@ export default class GiveawaysPage extends Page {
           )}
 
           {this.loading ? (
-            <LoadingIndicator />
+            <GwSkeleton />
           ) : filtered.length === 0 ? (
             <div className="GiveawaysPage-empty">
               {app.translator.trans('ernestdefoe-giveaways.forum.empty')}
@@ -122,7 +122,13 @@ export default class GiveawaysPage extends Page {
           ) : (
             [
               active.length > 0 && (
-                <section>
+                <section
+                  /* 🚨 Measured on the element's own lifecycle, not after the
+                     fetch: a requestAnimationFrame there races Mithril's
+                     redraw and can run before anything has been drawn. */
+                  oncreate={() => rememberSections([active.length, past.length])}
+                  onupdate={() => rememberSections([active.length, past.length])}
+                >
                   <h2 className="GiveawaysPage-sectionTitle">
                     {app.translator.trans('ernestdefoe-giveaways.forum.active_heading')}
                   </h2>
@@ -134,7 +140,12 @@ export default class GiveawaysPage extends Page {
                 </section>
               ),
               past.length > 0 && (
-                <section>
+                <section
+                  /* Also here: a forum with only finished giveaways renders no
+                     active section, and would otherwise remember nothing. */
+                  oncreate={() => rememberSections([active.length, past.length])}
+                  onupdate={() => rememberSections([active.length, past.length])}
+                >
                   <h2 className="GiveawaysPage-sectionTitle">
                     {app.translator.trans('ernestdefoe-giveaways.forum.past_heading')}
                   </h2>

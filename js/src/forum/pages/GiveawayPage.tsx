@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 import Page from 'flarum/common/components/Page';
 import type Mithril from 'mithril';
-import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
+import { GwDetailSkeleton } from '../components/GwSkeleton';
 import Button from 'flarum/common/components/Button';
 import Link from 'flarum/common/components/Link';
 import Icon from 'flarum/common/components/Icon';
@@ -96,7 +96,7 @@ export default class GiveawayPage extends Page {
   }
 
   view(): Mithril.Children {
-    if (this.loading) return <div className="GiveawayPage"><LoadingIndicator /></div>;
+    if (this.loading) return <div className="GiveawayPage container"><GwDetailSkeleton /></div>;
     const g = this.giveaway;
     if (!g) {
       return (

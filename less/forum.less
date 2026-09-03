@@ -432,3 +432,65 @@
   padding-top: 16px;
   h4 { margin-bottom: 10px; .icon { color: @gv-accent; } }
 }
+
+/* ── loading skeleton ──────────────────────────────────────────────────────
+ *
+ * 🚨 Colours come from the theme's own tokens. A literal grey is invisible on
+ * half the forums this ships to.
+ */
+.GwSkeleton-grid {
+  /* Matches .GiveawaysPage-grid exactly, or swapping one for the other moves
+   * the page. */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.GwSkeleton-section + .GwSkeleton-section { margin-top: 28px; }
+
+.GwSkeleton-bar,
+.GwSkeleton-card {
+  display: block;
+  border-radius: 8px;
+  background: var(--control-bg);
+  background-image: linear-gradient(
+    90deg,
+    var(--control-bg) 0%,
+    var(--body-bg) 40%,
+    var(--control-bg) 80%
+  );
+  background-size: 300% 100%;
+  animation: GwSkeletonSheen 1.4s ease-in-out infinite;
+}
+
+/* .GiveawaysPage-sectionTitle is 23px with 14 under it. */
+.GwSkeleton-bar--heading { height: 23px; width: 26%; margin-bottom: 14px; border-radius: 4px; }
+
+/* .GiveawayCard, measured. */
+.GwSkeleton-card { height: 256px; }
+
+@keyframes GwSkeletonSheen {
+  from { background-position: 150% 0; }
+  to   { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .GwSkeleton-bar,
+  .GwSkeleton-card { animation: none; }
+}
+
+/* The single-giveaway view. */
+.GwSkeleton--detail { max-width: 860px; }
+
+.GwSkeleton-bar--heading2 { height: 34px; width: 58%; margin-bottom: 10px; border-radius: 4px; }
+.GwSkeleton-bar--meta     { height: 20px; width: 34%; margin-bottom: 22px; border-radius: 4px; }
+.GwSkeleton-card--panel   { height: 150px; margin-bottom: 24px; }
+.GwSkeleton-bar--line     { height: 20px; border-radius: 4px; }
+.GwSkeleton-bar--short    { height: 20px; width: 52%; border-radius: 4px; }
+
+.GwSkeleton-para {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
