@@ -80,12 +80,33 @@ export default class GwSkeleton extends Component {
  */
 export class GwDetailSkeleton extends Component {
   view() {
+    // 🚨 NOT ONE OF THESE MAY CARRY A `key`.
+    //
+    // Mithril's rule is per children array, not per element: every vnode in
+    // one array either has a key or none of them do. These three bars are
+    // written out by hand and cannot have keys, so the two paragraphs spread
+    // in after them must not either. Keying only the mapped ones — which is
+    // the reflex, because a .map() usually wants keys — throws
+    //
+    //     TypeError: In fragments, vnodes must either all have keys or none
+    //
+    // out of m.render before anything is drawn, so the WHOLE PAGE is blank and
+    // a second error follows from the half-updated DOM:
+    //
+    //     NotFoundError: Failed to execute 'removeChild' on 'Node'
+    //
+    // which is a symptom, not a second bug. That shipped in 0.2.3 and broke
+    // every single-giveaway page view for everybody, because this skeleton is
+    // the first thing that page renders.
+    //
+    // The keys bought nothing anyway: it is two paragraphs, always in the same
+    // order, that never reorder or get added to.
     return m('.GwSkeleton.GwSkeleton--detail', { 'aria-hidden': 'true' }, [
       m('.GwSkeleton-bar.GwSkeleton-bar--heading2'),
       m('.GwSkeleton-bar.GwSkeleton-bar--meta'),
       m('.GwSkeleton-card.GwSkeleton-card--panel'),
-      ...[0, 1].map((p) =>
-        m('.GwSkeleton-para', { key: p }, [
+      ...[0, 1].map(() =>
+        m('.GwSkeleton-para', [
           m('.GwSkeleton-bar.GwSkeleton-bar--line'),
           m('.GwSkeleton-bar.GwSkeleton-bar--line'),
           m('.GwSkeleton-bar.GwSkeleton-bar--short'),
