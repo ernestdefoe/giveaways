@@ -16,6 +16,8 @@ Run **provably-fair giveaways** on your [Flarum](https://flarum.org) community. 
 - ⭐ **Earn-entries engine** — grant a one-time bonus when entrants post in the community, rewarding real activity.
 - 🗂️ **Categories** — organise giveaways into colour-coded categories with filter pills, badges and an inline manager.
 - 🎯 **Eligibility rules** — optionally require a minimum post count or account age to enter.
+- 📜 **Official rules** — publish the full terms (eligibility, how winners are selected, deadlines, odds, sponsor) in their own section on the giveaway page, separate from the short description, for communities whose local law requires them.
+- ➗ **Skill-testing question** — optionally require a correct answer before an entry counts, for jurisdictions (Canada among them) where a pure game of chance would be an illegal lottery. Answer checking ignores case, spaces and thousands separators, and compares numeric answers as numbers.
 - ⏱️ **Scheduled auto-draw** — set an end time and the winners are drawn automatically by the scheduler. Hosts can also **draw now** at any time.
 - 🔔 **Winner notifications** — every winner gets an in-app alert linking straight to the giveaway.
 - 📦 **Prize claiming** — winners get a "You won!" banner with a one-click **Claim** button; the host is notified and can see per-winner claim status, plus optional claim instructions (e.g. "DM me your address").

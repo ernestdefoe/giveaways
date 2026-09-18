@@ -330,6 +330,49 @@
 }
 
 // ---- Modal ----
+// ---- Official rules ----
+.GiveawayPage-rules {
+  .GiveawayPage-rulesBody {
+    max-height: 460px;
+    overflow-y: auto;
+    padding-right: 4px;
+    p { margin-bottom: 10px; }
+  }
+}
+
+.GiveawayPage-skillQuestion {
+  background: var(--control-bg);
+  border-left: 3px solid @gv-accent;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted-color);
+    margin-bottom: 4px;
+  }
+  .GiveawayPage-skillQuestion-q { font-weight: 600; margin: 0 0 4px; }
+  .helpText { margin: 0; }
+}
+
+.GiveawayPage-skillAnswer {
+  margin-bottom: 10px;
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+}
+
+.GiveawayFormModal-skillHelp { margin-top: -6px; }
+
 .GiveawayFormModal-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -68,6 +68,9 @@ class SaveGiveawayController implements RequestHandlerInterface
         if (array_key_exists('description', $attrs)) {
             $g->description = mb_substr((string) $attrs['description'], 0, 20000) ?: null;
         }
+        if (array_key_exists('rules', $attrs)) {
+            $g->rules = mb_substr(trim((string) $attrs['rules']), 0, 20000) ?: null;
+        }
         if (array_key_exists('coverUrl', $attrs)) {
             $g->cover_url = $this->url($attrs['coverUrl']);
         }
@@ -88,6 +91,17 @@ class SaveGiveawayController implements RequestHandlerInterface
         }
         if (array_key_exists('claimInstructions', $attrs)) {
             $s['claim_instructions'] = mb_substr(trim((string) $attrs['claimInstructions']), 0, 2000);
+        }
+        if (array_key_exists('skillQuestion', $attrs)) {
+            $s['skill_question'] = mb_substr(trim((string) $attrs['skillQuestion']), 0, 300);
+        }
+        if (array_key_exists('skillAnswer', $attrs)) {
+            $s['skill_answer'] = mb_substr(trim((string) $attrs['skillAnswer']), 0, 120);
+        }
+        // A question with no answer could never be answered correctly, which
+        // would lock everyone out of the giveaway — treat it as not set.
+        if (($s['skill_question'] ?? '') !== '' && ($s['skill_answer'] ?? '') === '') {
+            $errors['skillAnswer'] = $this->translator->trans('ernestdefoe-giveaways.api.skill_answer_required');
         }
         $g->settings = json_encode($s);
 

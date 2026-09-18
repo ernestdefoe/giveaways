@@ -17,6 +17,7 @@ export default class GiveawayPage extends Page {
   loading = true;
   entering = false;
   claiming = false;
+  answer = '';
   giveaway: Giveaway | null = null;
 
   oninit(vnode: Mithril.Vnode) {
@@ -46,11 +47,16 @@ export default class GiveawayPage extends Page {
       app.modal.show(LogInModal);
       return;
     }
+    if (g.skillQuestion && !this.answer.trim()) {
+      app.alerts.show({ type: 'error' }, app.translator.trans('ernestdefoe-giveaways.api.skill_answer_missing'));
+      return;
+    }
     this.entering = true;
-    enterGiveaway(g.id)
+    enterGiveaway(g.id, this.answer.trim())
       .then((res) => {
         this.giveaway = res.data;
         this.entering = false;
+        this.answer = '';
         app.alerts.show({ type: 'success' }, app.translator.trans('ernestdefoe-giveaways.forum.enter_success'));
         m.redraw();
       })
@@ -138,6 +144,7 @@ export default class GiveawayPage extends Page {
           <div className="GiveawayPage-main">
             {this.winnerBanner(g)}
             {this.descriptionBlock(g)}
+            {this.rulesBlock(g)}
             {this.requirementsBlock(g)}
             {this.winnersBlock(g)}
             {this.fairnessBlock(g)}
@@ -197,12 +204,40 @@ export default class GiveawayPage extends Page {
     );
   }
 
+  /**
+   * Official rules, in their own section rather than folded into the details
+   * blurb: where contest law requires them they have to be published in full,
+   * and they can run long. Rendered as plain text with line breaks preserved.
+   */
+  rulesBlock(g: Giveaway): Mithril.Children {
+    if (!g.rules && !g.skillQuestion) return null;
+    return (
+      <section className="GiveawayPage-section GiveawayPage-rules">
+        <h2><Icon name="fas fa-scroll" /> {app.translator.trans('ernestdefoe-giveaways.forum.rules_label')}</h2>
+        {g.skillQuestion && (
+          <div className="GiveawayPage-skillQuestion">
+            <label>{app.translator.trans('ernestdefoe-giveaways.forum.skill_question_label')}</label>
+            <p className="GiveawayPage-skillQuestion-q">{g.skillQuestion}</p>
+            <p className="helpText">{app.translator.trans('ernestdefoe-giveaways.forum.skill_question_note')}</p>
+          </div>
+        )}
+        {g.rules && (
+          <div className="GiveawayPage-rulesBody">
+            {g.rules.split('\n').map((line) => (line.trim() ? <p>{line}</p> : null))}
+          </div>
+        )}
+      </section>
+    );
+  }
+
   requirementsBlock(g: Giveaway): Mithril.Children {
     const reqs: Mithril.Children[] = [];
     if (g.minPosts > 0)
       reqs.push(<li><Icon name="fas fa-comment" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_posts', { count: g.minPosts })}</li>);
     if (g.minAgeDays > 0)
       reqs.push(<li><Icon name="fas fa-hourglass-half" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_age', { count: g.minAgeDays })}</li>);
+    if (g.skillQuestion)
+      reqs.push(<li><Icon name="fas fa-square-root-alt" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_skill_question')}</li>);
 
     return (
       <section className="GiveawayPage-section">
@@ -304,14 +339,35 @@ export default class GiveawayPage extends Page {
               {app.translator.trans('ernestdefoe-giveaways.forum.login_to_enter')}
             </Button>
           ) : (
-            <Button
-              className="Button Button--primary Button--block"
-              icon="fas fa-ticket-alt"
-              loading={this.entering}
-              onclick={() => this.enter()}
-            >
-              {app.translator.trans('ernestdefoe-giveaways.forum.enter')}
-            </Button>
+            [
+              g.skillQuestion ? (
+                <div className="GiveawayPage-skillAnswer">
+                  <label>{g.skillQuestion}</label>
+                  <input
+                    className="FormControl"
+                    type="text"
+                    autocomplete="off"
+                    value={this.answer}
+                    placeholder={app.translator.trans('ernestdefoe-giveaways.forum.answer_placeholder') as string}
+                    oninput={(e: Event) => (this.answer = (e.target as HTMLInputElement).value)}
+                    onkeydown={(e: KeyboardEvent) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.enter();
+                      }
+                    }}
+                  />
+                </div>
+              ) : null,
+              <Button
+                className="Button Button--primary Button--block"
+                icon="fas fa-ticket-alt"
+                loading={this.entering}
+                onclick={() => this.enter()}
+              >
+                {app.translator.trans('ernestdefoe-giveaways.forum.enter')}
+              </Button>,
+            ]
           ))}
 
         {active && entered && g.postBonus > 0 && this.earnMore(g)}

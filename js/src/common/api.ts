@@ -29,6 +29,11 @@ export interface Giveaway {
   slug: string;
   prize: string;
   description: string | null;
+  rules: string | null;
+  /** Public question entrants must answer; null when none is set. */
+  skillQuestion: string | null;
+  /** Expected answer — only sent to managers, for the edit form. */
+  skillAnswer: string | null;
   coverUrl: string | null;
   winnerCount: number;
   status: 'active' | 'drawn' | 'cancelled';
@@ -71,8 +76,12 @@ export function showGiveaway(idOrSlug: number | string): Promise<{ data: Giveawa
   return app.request<{ data: Giveaway }>({ method: 'GET', url: `${base()}/${idOrSlug}` });
 }
 
-export function enterGiveaway(id: number): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/enter` });
+export function enterGiveaway(id: number, answer?: string): Promise<{ data: Giveaway }> {
+  return app.request<{ data: Giveaway }>({
+    method: 'POST',
+    url: `${base()}/${id}/enter`,
+    body: { data: { attributes: { answer: answer ?? '' } } },
+  });
 }
 
 export function drawGiveaway(id: number): Promise<{ data: Giveaway }> {

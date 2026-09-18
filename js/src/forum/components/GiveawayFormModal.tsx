@@ -31,6 +31,9 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
   titleInput!: Stream<string>;
   prize!: Stream<string>;
   description!: Stream<string>;
+  rules!: Stream<string>;
+  skillQuestion!: Stream<string>;
+  skillAnswer!: Stream<string>;
   coverUrl!: Stream<string>;
   endsAt!: Stream<string>;
   startsAt!: Stream<string>;
@@ -54,6 +57,9 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     this.titleInput = Stream(g?.title || '');
     this.prize = Stream(g?.prize || '');
     this.description = Stream(g?.description || '');
+    this.rules = Stream(g?.rules || '');
+    this.skillQuestion = Stream(g?.skillQuestion || '');
+    this.skillAnswer = Stream(g?.skillAnswer || '');
     this.coverUrl = Stream(g?.coverUrl || '');
     this.endsAt = Stream(toLocalInput(g?.endsAt));
     this.startsAt = Stream(toLocalInput(g?.startsAt));
@@ -90,6 +96,21 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
             <textarea className="FormControl" rows={4} value={this.description()} placeholder={t('description_placeholder') as string}
               oninput={(e: Event) => this.description((e.target as HTMLTextAreaElement).value)} />
           ))}
+          {this.field(t('rules_label'), (
+            <textarea className="FormControl" rows={8} value={this.rules()} placeholder={t('rules_placeholder') as string}
+              oninput={(e: Event) => this.rules((e.target as HTMLTextAreaElement).value)} />
+          ), t('rules_help'))}
+          <div className="GiveawayFormModal-row">
+            {this.field(t('skill_question_label'), (
+              <input className="FormControl" value={this.skillQuestion()} placeholder={t('skill_question_placeholder') as string}
+                oninput={(e: Event) => this.skillQuestion((e.target as HTMLInputElement).value)} />
+            ))}
+            {this.field(t('skill_answer_label'), (
+              <input className="FormControl" value={this.skillAnswer()}
+                oninput={(e: Event) => this.skillAnswer((e.target as HTMLInputElement).value)} />
+            ))}
+          </div>
+          <p className="helpText GiveawayFormModal-skillHelp">{t('skill_answer_help')}</p>
           {this.field(t('cover_label'), (
             <input className="FormControl" value={this.coverUrl()} placeholder={t('cover_placeholder') as string}
               oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)} />
@@ -167,6 +188,9 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
       title: this.titleInput(),
       prize: this.prize(),
       description: this.description(),
+      rules: this.rules(),
+      skillQuestion: this.skillQuestion(),
+      skillAnswer: this.skillAnswer(),
       coverUrl: this.coverUrl(),
       endsAt: toIso(this.endsAt()),
       startsAt: toIso(this.startsAt()),

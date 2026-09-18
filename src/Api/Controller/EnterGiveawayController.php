@@ -34,6 +34,15 @@ class EnterGiveawayController implements RequestHandlerInterface
             throw new ValidationException(['enter' => $reason]);
         }
 
+        // A skill-testing question, where set, must be answered correctly for
+        // the entry to exist at all — that is what keeps entry a game of skill
+        // rather than a pure lottery.
+        $answer = Arr::get((array) $request->getParsedBody(), 'data.attributes.answer');
+        $skillError = $this->entries->skillAnswerError($g, is_string($answer) ? $answer : null);
+        if ($skillError) {
+            throw new ValidationException(['answer' => $skillError]);
+        }
+
         $this->entries->enter($g, $actor);
 
         return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)]);

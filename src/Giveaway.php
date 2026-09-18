@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $slug
  * @property string $prize
  * @property string|null $description
+ * @property string|null $rules
  * @property string|null $cover_url
  * @property int $winner_count
  * @property string $status
@@ -78,7 +79,52 @@ class Giveaway extends AbstractModel
             'min_age_days'       => 0,
             'announce'           => true,
             'claim_instructions' => '',  // shown to winners when they claim their prize
+            'skill_question'     => '',  // skill-testing question (empty = off)
+            'skill_answer'       => '',  // its expected answer; never sent to entrants
         ], $s);
+    }
+
+    /**
+     * Whether entry requires answering a skill-testing question. Where a pure
+     * game of chance would be an illegal lottery (Canada, among others), a
+     * correct answer is what makes entry a game of mixed skill.
+     */
+    public function requiresSkillAnswer(): bool
+    {
+        $s = $this->settingsArray();
+
+        return trim((string) $s['skill_question']) !== '' && trim((string) $s['skill_answer']) !== '';
+    }
+
+    /**
+     * Check an entrant's answer leniently: case, surrounding whitespace, a
+     * trailing full stop and thousands separators are ignored, and two numeric
+     * answers are compared as numbers so "7.0" matches "7".
+     */
+    public function skillAnswerMatches(?string $given): bool
+    {
+        if (! $this->requiresSkillAnswer()) {
+            return true;
+        }
+
+        $expected = self::normalizeAnswer((string) $this->settingsArray()['skill_answer']);
+        $actual = self::normalizeAnswer((string) $given);
+        if ($actual === '') {
+            return false;
+        }
+
+        if (is_numeric($expected) && is_numeric($actual)) {
+            return abs((float) $expected - (float) $actual) < 0.000001;
+        }
+
+        return $expected === $actual;
+    }
+
+    private static function normalizeAnswer(string $value): string
+    {
+        $value = rtrim(trim(mb_strtolower($value)), '.');
+
+        return (string) preg_replace('/[\s,]+/u', '', $value);
     }
 
     public function isRunning(): bool

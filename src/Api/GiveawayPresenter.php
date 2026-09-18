@@ -81,6 +81,12 @@ class GiveawayPresenter
             'slug'         => $g->slug,
             'prize'        => $g->prize,
             'description'  => $g->description,
+            'rules'        => $g->rules,
+            // The question is public so entrants can answer it; the expected
+            // answer only ever goes back to someone who can manage the giveaway
+            // (it populates the edit form) — never to an entrant.
+            'skillQuestion' => $g->requiresSkillAnswer() ? (string) $s['skill_question'] : null,
+            'skillAnswer'  => $canManage ? (string) ($s['skill_answer'] ?? '') : null,
             'coverUrl'     => $g->cover_url,
             'winnerCount'  => (int) $g->winner_count,
             'status'       => $g->status,
