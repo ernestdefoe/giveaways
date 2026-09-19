@@ -95,6 +95,11 @@ class SaveGiveawayController implements RequestHandlerInterface
         if (array_key_exists('skillQuestion', $attrs)) {
             $s['skill_question'] = mb_substr(trim((string) $attrs['skillQuestion']), 0, 300);
         }
+        if (array_key_exists('skillAttempts', $attrs)) {
+            // 0 = unlimited retries, no forfeit. Capped so a typo can't make a
+            // giveaway effectively unclaimable.
+            $s['skill_attempts'] = max(0, min(10, (int) $attrs['skillAttempts']));
+        }
         if (array_key_exists('skillAnswer', $attrs)) {
             $s['skill_answer'] = mb_substr(trim((string) $attrs['skillAnswer']), 0, 120);
         }

@@ -81,6 +81,7 @@ class Giveaway extends AbstractModel
             'claim_instructions' => '',  // shown to winners when they claim their prize
             'skill_question'     => '',  // skill-testing question (empty = off)
             'skill_answer'       => '',  // its expected answer; never sent to entrants
+            'skill_attempts'     => 0,   // wrong answers allowed before forfeit (0 = unlimited)
         ], $s);
     }
 
@@ -94,6 +95,15 @@ class Giveaway extends AbstractModel
         $s = $this->settingsArray();
 
         return trim((string) $s['skill_question']) !== '' && trim((string) $s['skill_answer']) !== '';
+    }
+
+    /**
+     * How many wrong answers the winner may give before forfeiting the prize.
+     * 0 means unlimited — they can keep trying and nothing is redrawn.
+     */
+    public function skillAttemptLimit(): int
+    {
+        return $this->requiresSkillAnswer() ? max(0, (int) $this->settingsArray()['skill_attempts']) : 0;
     }
 
     /**

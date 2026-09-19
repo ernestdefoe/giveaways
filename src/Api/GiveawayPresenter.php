@@ -87,6 +87,8 @@ class GiveawayPresenter
             // (it populates the edit form) — never to an entrant.
             'skillQuestion' => $g->requiresSkillAnswer() ? (string) $s['skill_question'] : null,
             'skillAnswer'  => $canManage ? (string) ($s['skill_answer'] ?? '') : null,
+            // Wrong answers allowed before the winner forfeits (0 = unlimited).
+            'skillAttempts' => $g->skillAttemptLimit(),
             'coverUrl'     => $g->cover_url,
             'winnerCount'  => (int) $g->winner_count,
             'status'       => $g->status,
@@ -104,6 +106,11 @@ class GiveawayPresenter
             'canManage'    => $canManage,
             'iWon'         => (bool) $myWin,
             'myClaimedAt'  => $myWin ? optional($myWin->claimed_at)->toIso8601String() : null,
+            'myForfeited'  => $myWin ? $myWin->isForfeited() : false,
+            // Null when there is no limit; otherwise what this winner has left.
+            'myAttemptsLeft' => ($myWin && $g->skillAttemptLimit() > 0)
+                ? max(0, $g->skillAttemptLimit() - (int) $myWin->skill_attempts)
+                : null,
             // Instructions are only meaningful to winners and managers.
             'claimInstructions' => ($myWin || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
             'createdBy'    => $g->user ? self::user($g->user) : null,
@@ -117,11 +124,14 @@ class GiveawayPresenter
         ];
 
         if ($full) {
-            $data['winners'] = $g->winners()->orderBy('position')->with('user')->get()
+            $data['winners'] = $g->winners()->orderBy('position')->orderBy('id')->with('user')->get()
                 ->map(fn ($w) => [
                     'position'  => (int) $w->position,
                     'user'      => $w->user ? self::user($w->user) : null,
                     'claimedAt' => optional($w->claimed_at)->toIso8601String(),
+                    // Kept in the list on purpose: a forfeited winner is part of
+                    // the record of how the prize moved.
+                    'forfeited' => $w->isForfeited(),
                 ])->all();
             $data['drawSeed'] = $g->draw_seed;
             $data['entrantHash'] = $g->entrant_hash;

@@ -11,6 +11,8 @@ export interface GiveawayWinner {
   position: number;
   user: GiveawayUser | null;
   claimedAt: string | null;
+  /** Kept in the list: a forfeited winner is part of how the prize moved. */
+  forfeited: boolean;
 }
 
 export interface GiveawayCategory {
@@ -34,6 +36,8 @@ export interface Giveaway {
   skillQuestion: string | null;
   /** Expected answer — only sent to managers, for the edit form. */
   skillAnswer: string | null;
+  /** Wrong answers allowed before the winner forfeits; 0 = unlimited. */
+  skillAttempts: number;
   coverUrl: string | null;
   winnerCount: number;
   status: 'active' | 'drawn' | 'cancelled';
@@ -51,6 +55,9 @@ export interface Giveaway {
   canManage: boolean;
   iWon: boolean;
   myClaimedAt: string | null;
+  myForfeited: boolean;
+  /** Null when unlimited; otherwise what this winner has left. */
+  myAttemptsLeft: number | null;
   claimInstructions: string | null;
   createdBy: GiveawayUser | null;
   category: { id: number; name: string; slug: string; color: string; icon: string | null } | null;

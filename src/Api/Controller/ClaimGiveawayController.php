@@ -4,6 +4,7 @@ namespace ErnestDefoe\Giveaways\Api\Controller;
 
 use Carbon\Carbon;
 use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
+use ErnestDefoe\Giveaways\DrawService;
 use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use Flarum\Foundation\ValidationException;
@@ -22,7 +23,8 @@ class ClaimGiveawayController implements RequestHandlerInterface
 {
     public function __construct(
         protected NotificationSyncer $notifications,
-        protected TranslatorInterface $translator
+        protected TranslatorInterface $translator,
+        protected DrawService $draws
     ) {
     }
 
@@ -44,14 +46,38 @@ class ClaimGiveawayController implements RequestHandlerInterface
         // correctly, which is what makes the award a contest of mixed skill.
         // An already-claimed prize is never re-gated.
         if (! $win->claimed_at && $g->requiresSkillAnswer()) {
+            if ($win->isForfeited()) {
+                throw new ValidationException(['answer' => $this->translator->trans('ernestdefoe-giveaways.api.skill_already_forfeited')]);
+            }
+
             $answer = Arr::get((array) $request->getParsedBody(), 'data.attributes.answer');
-            $answer = is_string($answer) ? $answer : null;
+            $answer = is_string($answer) ? trim($answer) : '';
+
+            // No answer is not a wrong answer: it never burns an attempt.
+            if ($answer === '') {
+                throw new ValidationException(['answer' => $this->translator->trans('ernestdefoe-giveaways.api.skill_answer_missing')]);
+            }
+
             if (! $g->skillAnswerMatches($answer)) {
-                throw new ValidationException(['answer' => $this->translator->trans(
-                    trim((string) $answer) === ''
-                        ? 'ernestdefoe-giveaways.api.skill_answer_missing'
-                        : 'ernestdefoe-giveaways.api.skill_answer_wrong'
-                )]);
+                $win->skill_attempts = (int) $win->skill_attempts + 1;
+                $limit = $g->skillAttemptLimit();
+                $outOfAttempts = $limit > 0 && $win->skill_attempts >= $limit;
+
+                if ($outOfAttempts) {
+                    // Forfeit, then promote the next entrant the published seed
+                    // would have revealed. The row stays as part of the record.
+                    $win->forfeited_at = Carbon::now();
+                    $win->save();
+                    $this->draws->drawReplacement($g, $win);
+
+                    throw new ValidationException(['answer' => $this->translator->trans('ernestdefoe-giveaways.api.skill_forfeited')]);
+                }
+
+                $win->save();
+
+                throw new ValidationException(['answer' => $limit > 0
+                    ? $this->translator->trans('ernestdefoe-giveaways.api.skill_answer_wrong_attempts', ['count' => $limit - $win->skill_attempts])
+                    : $this->translator->trans('ernestdefoe-giveaways.api.skill_answer_wrong')]);
             }
         }
 

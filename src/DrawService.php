@@ -53,15 +53,67 @@ class DrawService
         $this->notifyWinners($giveaway, $winnerIds);
     }
 
+    /**
+     * Replace a forfeited winner, deterministically and verifiably.
+     *
+     * The replacement is NOT a fresh random pick — that would break the
+     * published proof. pick() eliminates each chosen entrant as it goes, so
+     * asking it for (winner_count + forfeits) winners simply continues the same
+     * seeded sequence; the extra id at the end is the one the draw would have
+     * revealed next. A verifier holding the seed and entrant list can
+     * reproduce it exactly, and confirm the prize moved on the seed rather
+     * than on the operator's say-so.
+     *
+     * Returns the new winner row, or null if the entrant pool is exhausted.
+     */
+    public function drawReplacement(Giveaway $giveaway, GiveawayWinner $forfeited): ?GiveawayWinner
+    {
+        if (! $giveaway->draw_seed) {
+            return null;
+        }
+
+        $entries = $giveaway->entries()->orderBy('user_id')->get(['user_id', 'entries']);
+        $pool = $entries->map(fn ($e) => ['user_id' => (int) $e->user_id, 'entries' => max(1, (int) $e->entries)])->values()->all();
+
+        $forfeits = $giveaway->winners()->whereNotNull('forfeited_at')->count();
+        $sequence = $this->pick($pool, $giveaway->draw_seed, (int) $giveaway->winner_count + $forfeits);
+
+        // Everyone already on the board — current winners and forfeited alike —
+        // is spent. The first id in the sequence that is neither is the
+        // replacement.
+        $taken = $giveaway->winners()->pluck('user_id')->map(fn ($id) => (int) $id)->all();
+        $replacementId = null;
+        foreach ($sequence as $uid) {
+            if (! in_array((int) $uid, $taken, true)) {
+                $replacementId = (int) $uid;
+                break;
+            }
+        }
+        if ($replacementId === null) {
+            return null; // no entrants left to promote
+        }
+
+        $w = new GiveawayWinner();
+        $w->giveaway_id = $giveaway->id;
+        $w->user_id = $replacementId;
+        $w->position = (int) $forfeited->position; // takes the forfeited slot
+        $w->created_at = Carbon::now();
+        $w->save();
+
+        $this->notifyWinners($giveaway, [$replacementId], (int) $forfeited->position);
+
+        return $w;
+    }
+
     /** Send each winner a "you won" alert. Failures here never block the draw. */
-    protected function notifyWinners(Giveaway $giveaway, array $winnerIds): void
+    protected function notifyWinners(Giveaway $giveaway, array $winnerIds, ?int $position = null): void
     {
         foreach ($winnerIds as $pos => $uid) {
             try {
                 $user = User::find($uid);
                 if ($user) {
                     $this->notifications->sync(
-                        new GiveawayWonBlueprint($giveaway, $pos + 1),
+                        new GiveawayWonBlueprint($giveaway, $position ?? $pos + 1),
                         [$user]
                     );
                 }

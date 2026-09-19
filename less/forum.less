@@ -308,6 +308,14 @@
     &:hover { background: #f2f2f2; }
   }
 }
+.GiveawayPage-winnerBanner--forfeited {
+  background: linear-gradient(135deg, #8a94a6, #5d6577);
+  .GiveawayPage-winnerBanner-head .icon { color: #ffd9d9; }
+}
+.GiveawayPage-winner.is-forfeited {
+  opacity: 0.65;
+  .GiveawayPage-winner-user span { text-decoration: line-through; }
+}
 .GiveawayPage-claimed {
   font-weight: 700;
   .icon { margin-right: 4px; }
@@ -372,6 +380,12 @@
   .GiveawayPage-claimSkill-intro {
     margin: 0 0 8px;
     font-size: 0.85rem;
+    opacity: 0.9;
+  }
+  .GiveawayPage-claimSkill-attempts {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
     opacity: 0.9;
   }
   label {

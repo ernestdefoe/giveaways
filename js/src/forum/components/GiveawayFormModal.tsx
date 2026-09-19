@@ -34,6 +34,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
   rules!: Stream<string>;
   skillQuestion!: Stream<string>;
   skillAnswer!: Stream<string>;
+  skillAttempts!: Stream<number>;
   coverUrl!: Stream<string>;
   endsAt!: Stream<string>;
   startsAt!: Stream<string>;
@@ -60,6 +61,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     this.rules = Stream(g?.rules || '');
     this.skillQuestion = Stream(g?.skillQuestion || '');
     this.skillAnswer = Stream(g?.skillAnswer || '');
+    this.skillAttempts = Stream(g?.skillAttempts || 0);
     this.coverUrl = Stream(g?.coverUrl || '');
     this.endsAt = Stream(toLocalInput(g?.endsAt));
     this.startsAt = Stream(toLocalInput(g?.startsAt));
@@ -111,6 +113,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
             ))}
           </div>
           <p className="helpText GiveawayFormModal-skillHelp">{t('skill_answer_help')}</p>
+          {this.numberField(t('skill_attempts_label'), this.skillAttempts, 0, t('skill_attempts_help'))}
           {this.field(t('cover_label'), (
             <input className="FormControl" value={this.coverUrl()} placeholder={t('cover_placeholder') as string}
               oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)} />
@@ -191,6 +194,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
       rules: this.rules(),
       skillQuestion: this.skillQuestion(),
       skillAnswer: this.skillAnswer(),
+      skillAttempts: this.skillAttempts(),
       coverUrl: this.coverUrl(),
       endsAt: toIso(this.endsAt()),
       startsAt: toIso(this.startsAt()),
