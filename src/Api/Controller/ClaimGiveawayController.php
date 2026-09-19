@@ -39,6 +39,22 @@ class ClaimGiveawayController implements RequestHandlerInterface
             throw new ValidationException(['claim' => $this->translator->trans('ernestdefoe-giveaways.api.claim_not_winner')]);
         }
 
+        // The skill-testing question is put to the drawn winner, not to every
+        // entrant: the prize is only awarded once this person answers it
+        // correctly, which is what makes the award a contest of mixed skill.
+        // An already-claimed prize is never re-gated.
+        if (! $win->claimed_at && $g->requiresSkillAnswer()) {
+            $answer = Arr::get((array) $request->getParsedBody(), 'data.attributes.answer');
+            $answer = is_string($answer) ? $answer : null;
+            if (! $g->skillAnswerMatches($answer)) {
+                throw new ValidationException(['answer' => $this->translator->trans(
+                    trim((string) $answer) === ''
+                        ? 'ernestdefoe-giveaways.api.skill_answer_missing'
+                        : 'ernestdefoe-giveaways.api.skill_answer_wrong'
+                )]);
+            }
+        }
+
         if (! $win->claimed_at) {
             $win->claimed_at = Carbon::now();
             $win->save();

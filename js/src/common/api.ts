@@ -30,7 +30,7 @@ export interface Giveaway {
   prize: string;
   description: string | null;
   rules: string | null;
-  /** Public question entrants must answer; null when none is set. */
+  /** Public question the drawn winner must answer to claim; null when none is set. */
   skillQuestion: string | null;
   /** Expected answer — only sent to managers, for the edit form. */
   skillAnswer: string | null;
@@ -76,20 +76,21 @@ export function showGiveaway(idOrSlug: number | string): Promise<{ data: Giveawa
   return app.request<{ data: Giveaway }>({ method: 'GET', url: `${base()}/${idOrSlug}` });
 }
 
-export function enterGiveaway(id: number, answer?: string): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({
-    method: 'POST',
-    url: `${base()}/${id}/enter`,
-    body: { data: { attributes: { answer: answer ?? '' } } },
-  });
+export function enterGiveaway(id: number): Promise<{ data: Giveaway }> {
+  return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/enter` });
 }
 
 export function drawGiveaway(id: number): Promise<{ data: Giveaway }> {
   return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/draw` });
 }
 
-export function claimGiveaway(id: number): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/claim` });
+/** `answer` is the skill-testing answer, required only when the giveaway sets one. */
+export function claimGiveaway(id: number, answer?: string): Promise<{ data: Giveaway }> {
+  return app.request<{ data: Giveaway }>({
+    method: 'POST',
+    url: `${base()}/${id}/claim`,
+    body: { data: { attributes: { answer: answer ?? '' } } },
+  });
 }
 
 export function deleteGiveaway(id: number): Promise<unknown> {

@@ -47,16 +47,11 @@ export default class GiveawayPage extends Page {
       app.modal.show(LogInModal);
       return;
     }
-    if (g.skillQuestion && !this.answer.trim()) {
-      app.alerts.show({ type: 'error' }, app.translator.trans('ernestdefoe-giveaways.api.skill_answer_missing'));
-      return;
-    }
     this.entering = true;
-    enterGiveaway(g.id, this.answer.trim())
+    enterGiveaway(g.id)
       .then((res) => {
         this.giveaway = res.data;
         this.entering = false;
-        this.answer = '';
         app.alerts.show({ type: 'success' }, app.translator.trans('ernestdefoe-giveaways.forum.enter_success'));
         m.redraw();
       })
@@ -77,11 +72,18 @@ export default class GiveawayPage extends Page {
 
   claim() {
     const g = this.giveaway!;
+    // The skill-testing question is answered here, by the drawn winner, not by
+    // every entrant at entry time.
+    if (g.skillQuestion && !this.answer.trim()) {
+      app.alerts.show({ type: 'error' }, app.translator.trans('ernestdefoe-giveaways.api.skill_answer_missing'));
+      return;
+    }
     this.claiming = true;
-    claimGiveaway(g.id)
+    claimGiveaway(g.id, this.answer.trim())
       .then((res) => {
         this.giveaway = res.data;
         this.claiming = false;
+        this.answer = '';
         app.alerts.show({ type: 'success' }, app.translator.trans('ernestdefoe-giveaways.forum.claim_success'));
         m.redraw();
       })
@@ -173,14 +175,38 @@ export default class GiveawayPage extends Page {
             <Icon name="fas fa-check-circle" /> {app.translator.trans('ernestdefoe-giveaways.forum.claimed')}
           </div>
         ) : (
-          <Button
-            className="Button Button--primary"
-            icon="fas fa-box-open"
-            loading={this.claiming}
-            onclick={() => this.claim()}
-          >
-            {app.translator.trans('ernestdefoe-giveaways.forum.claim')}
-          </Button>
+          [
+            g.skillQuestion ? (
+              <div className="GiveawayPage-claimSkill">
+                <p className="GiveawayPage-claimSkill-intro">
+                  {app.translator.trans('ernestdefoe-giveaways.forum.claim_skill_intro')}
+                </p>
+                <label>{g.skillQuestion}</label>
+                <input
+                  className="FormControl"
+                  type="text"
+                  autocomplete="off"
+                  value={this.answer}
+                  placeholder={app.translator.trans('ernestdefoe-giveaways.forum.claim_answer_placeholder') as string}
+                  oninput={(e: Event) => (this.answer = (e.target as HTMLInputElement).value)}
+                  onkeydown={(e: KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      this.claim();
+                    }
+                  }}
+                />
+              </div>
+            ) : null,
+            <Button
+              className="Button Button--primary"
+              icon="fas fa-box-open"
+              loading={this.claiming}
+              onclick={() => this.claim()}
+            >
+              {app.translator.trans('ernestdefoe-giveaways.forum.claim')}
+            </Button>,
+          ]
         )}
         {claimed && g.claimInstructions ? (
           <div className="GiveawayPage-claimInstructions">
@@ -236,8 +262,6 @@ export default class GiveawayPage extends Page {
       reqs.push(<li><Icon name="fas fa-comment" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_posts', { count: g.minPosts })}</li>);
     if (g.minAgeDays > 0)
       reqs.push(<li><Icon name="fas fa-hourglass-half" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_age', { count: g.minAgeDays })}</li>);
-    if (g.skillQuestion)
-      reqs.push(<li><Icon name="fas fa-square-root-alt" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_skill_question')}</li>);
 
     return (
       <section className="GiveawayPage-section">
@@ -339,35 +363,14 @@ export default class GiveawayPage extends Page {
               {app.translator.trans('ernestdefoe-giveaways.forum.login_to_enter')}
             </Button>
           ) : (
-            [
-              g.skillQuestion ? (
-                <div className="GiveawayPage-skillAnswer">
-                  <label>{g.skillQuestion}</label>
-                  <input
-                    className="FormControl"
-                    type="text"
-                    autocomplete="off"
-                    value={this.answer}
-                    placeholder={app.translator.trans('ernestdefoe-giveaways.forum.answer_placeholder') as string}
-                    oninput={(e: Event) => (this.answer = (e.target as HTMLInputElement).value)}
-                    onkeydown={(e: KeyboardEvent) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        this.enter();
-                      }
-                    }}
-                  />
-                </div>
-              ) : null,
-              <Button
-                className="Button Button--primary Button--block"
-                icon="fas fa-ticket-alt"
-                loading={this.entering}
-                onclick={() => this.enter()}
-              >
-                {app.translator.trans('ernestdefoe-giveaways.forum.enter')}
-              </Button>,
-            ]
+            <Button
+              className="Button Button--primary Button--block"
+              icon="fas fa-ticket-alt"
+              loading={this.entering}
+              onclick={() => this.enter()}
+            >
+              {app.translator.trans('ernestdefoe-giveaways.forum.enter')}
+            </Button>
           ))}
 
         {active && entered && g.postBonus > 0 && this.earnMore(g)}

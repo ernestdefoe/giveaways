@@ -32,23 +32,6 @@ class EntryService
         return null;
     }
 
-    /**
-     * Returns a reason the skill-testing answer doesn't let this entry through,
-     * or null if it does (including when no question is set). Kept apart from
-     * ineligibleReason() because it judges what the entrant just submitted
-     * rather than who they are.
-     */
-    public function skillAnswerError(Giveaway $giveaway, ?string $answer): ?string
-    {
-        if (! $giveaway->requiresSkillAnswer() || $giveaway->skillAnswerMatches($answer)) {
-            return null;
-        }
-
-        return $this->translator->trans(trim((string) $answer) === ''
-            ? 'ernestdefoe-giveaways.api.skill_answer_missing'
-            : 'ernestdefoe-giveaways.api.skill_answer_wrong');
-    }
-
     /** Idempotent base entry. Caller should check ineligibleReason() first. */
     public function enter(Giveaway $giveaway, User $user): GiveawayEntry
     {

@@ -11,7 +11,7 @@ ernestdefoe-giveaways:
     enter_closed: This giveaway is not open for entries.
     enter_min_posts: "You need at least {count} posts to enter."
     enter_too_new: Your account is too new to enter this giveaway.
-    skill_answer_missing: Answer the skill-testing question to enter.
+    skill_answer_missing: Answer the skill-testing question to claim your prize.
     skill_answer_wrong: That answer isn't right — check the question and try again.
     skill_answer_required: Give the correct answer to your skill-testing question.
     claim_not_winner: You're not a winner of this giveaway.
@@ -39,8 +39,6 @@ ernestdefoe-giveaways:
 
     # Enter
     enter: Enter giveaway
-    answer_label: Your answer
-    answer_placeholder: Answer to enter
     entered: You're entered!
     enter_again: You're entered
     login_to_enter: Log in to enter
@@ -56,9 +54,8 @@ ernestdefoe-giveaways:
     rules_label: Official rules
     rules_intro: The full terms of this giveaway, as published when it opened.
     skill_question_label: Skill-testing question
-    skill_question_note: Entrants must answer this correctly for their entry to count.
+    skill_question_note: The drawn winner must answer this correctly before the prize is awarded.
     requirements_label: Requirements
-    req_skill_question: A skill-testing question must be answered correctly
     req_min_posts: "At least {count} {count, plural, one {post} other {posts}}"
     req_min_age: "Account at least {count} {count, plural, one {day} other {days}} old"
     no_requirements: Open to all members
@@ -81,6 +78,8 @@ ernestdefoe-giveaways:
     claimed: Claimed
     unclaimed: Unclaimed
     claim_next_steps: How to claim
+    claim_skill_intro: "Before your prize can be awarded, answer this skill-testing question:"
+    claim_answer_placeholder: Your answer
 
     # Notifications
     notification:
@@ -119,7 +118,7 @@ ernestdefoe-giveaways:
       skill_question_label: Skill-testing question (optional)
       skill_question_placeholder: "e.g. What is 12 + 7 × 2?"
       skill_answer_label: Correct answer
-      skill_answer_help: Where a pure game of chance isn't allowed, entrants must answer this correctly before their entry counts. Case, spaces and thousands separators are ignored.
+      skill_answer_help: Where a pure game of chance isn't allowed, the drawn winner must answer this correctly before they can claim the prize — entering stays one click. Case, spaces and thousands separators are ignored.
       cover_label: Cover image URL
       cover_placeholder: https://…
       category_label: Category

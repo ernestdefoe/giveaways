@@ -360,14 +360,29 @@
   .helpText { margin: 0; }
 }
 
-.GiveawayPage-skillAnswer {
-  margin-bottom: 10px;
+// The skill-testing question is answered by the drawn winner, inside the
+// winner banner — so this sits on the banner's accent gradient, not on the
+// page background.
+.GiveawayPage-claimSkill {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
 
+  .GiveawayPage-claimSkill-intro {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
   label {
     display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 6px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .FormControl {
+    background: #fff;
+    color: @gv-ink;
+    border-color: transparent;
   }
 }
 
