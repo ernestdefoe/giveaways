@@ -22,34 +22,49 @@ class DrawService
 
     public function draw(Giveaway $giveaway): void
     {
-        if ($giveaway->status !== 'active') {
-            return;
+        // Claim the draw atomically. The scheduled run and a manager's "Draw now"
+        // (or a double click) can arrive together; each used to see "active" on
+        // its own copy of the row and draw, giving two seeds and two sets of
+        // winners. Locking the row and re-reading the status inside one
+        // transaction lets exactly one of them through.
+        $winnerIds = $giveaway->getConnection()->transaction(function () use ($giveaway) {
+            $locked = Giveaway::query()->whereKey($giveaway->id)->lockForUpdate()->first();
+            if (! $locked || $locked->status !== 'active') {
+                return null;
+            }
+
+            $entries = $locked->entries()->orderBy('user_id')->get(['user_id', 'entries']);
+
+            $canonical = $entries->map(fn ($e) => $e->user_id . ':' . $e->entries)->implode(',');
+            $hash = hash('sha256', $canonical);
+            $seed = bin2hex(random_bytes(16));
+
+            $pool = $entries->map(fn ($e) => ['user_id' => (int) $e->user_id, 'entries' => max(1, (int) $e->entries)])->values()->all();
+            $winnerIds = $this->pick($pool, $seed, (int) $locked->winner_count);
+
+            foreach ($winnerIds as $pos => $uid) {
+                $w = new GiveawayWinner();
+                $w->giveaway_id = $locked->id;
+                $w->user_id = $uid;
+                $w->position = $pos + 1;
+                $w->created_at = Carbon::now();
+                $w->save();
+            }
+
+            $locked->status = 'drawn';
+            $locked->draw_seed = $seed;
+            $locked->entrant_hash = $hash;
+            $locked->drawn_at = Carbon::now();
+            $locked->save();
+
+            return $winnerIds;
+        });
+
+        if ($winnerIds === null) {
+            return; // already drawn (or cancelled) by someone else
         }
 
-        $entries = $giveaway->entries()->orderBy('user_id')->get(['user_id', 'entries']);
-
-        $canonical = $entries->map(fn ($e) => $e->user_id . ':' . $e->entries)->implode(',');
-        $hash = hash('sha256', $canonical);
-        $seed = bin2hex(random_bytes(16));
-
-        $pool = $entries->map(fn ($e) => ['user_id' => (int) $e->user_id, 'entries' => max(1, (int) $e->entries)])->values()->all();
-        $winnerIds = $this->pick($pool, $seed, (int) $giveaway->winner_count);
-
-        foreach ($winnerIds as $pos => $uid) {
-            $w = new GiveawayWinner();
-            $w->giveaway_id = $giveaway->id;
-            $w->user_id = $uid;
-            $w->position = $pos + 1;
-            $w->created_at = Carbon::now();
-            $w->save();
-        }
-
-        $giveaway->status = 'drawn';
-        $giveaway->draw_seed = $seed;
-        $giveaway->entrant_hash = $hash;
-        $giveaway->drawn_at = Carbon::now();
-        $giveaway->save();
-
+        $giveaway->refresh();
         $this->notifyWinners($giveaway, $winnerIds);
     }
 
