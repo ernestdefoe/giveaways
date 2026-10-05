@@ -6,12 +6,10 @@ import Button from 'flarum/common/components/Button';
 import Link from 'flarum/common/components/Link';
 import Icon from 'flarum/common/components/Icon';
 import humanTime from 'flarum/common/helpers/humanTime';
-import LogInModal from 'flarum/forum/components/LogInModal';
 
 import { showGiveaway, enterGiveaway, drawGiveaway, deleteGiveaway, claimGiveaway } from '../../common/api';
 import type { Giveaway } from '../../common/api';
 import { countdown } from '../../common/format';
-import GiveawayFormModal from '../components/GiveawayFormModal';
 
 export default class GiveawayPage extends Page {
   loading = true;
@@ -44,7 +42,7 @@ export default class GiveawayPage extends Page {
   enter() {
     const g = this.giveaway!;
     if (!app.session.user) {
-      app.modal.show(LogInModal);
+      app.modal.show(() => import('flarum/forum/components/LogInModal'));
       return;
     }
     this.entering = true;
@@ -94,7 +92,7 @@ export default class GiveawayPage extends Page {
   }
 
   edit() {
-    app.modal.show(GiveawayFormModal, { giveaway: this.giveaway, onsave: () => this.load() });
+    app.modal.show(() => import('../components/GiveawayFormModal'), { giveaway: this.giveaway, onsave: () => this.load() });
   }
 
   remove() {

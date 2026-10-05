@@ -8,8 +8,6 @@ import Icon from 'flarum/common/components/Icon';
 import { listGiveaways, listCategories } from '../../common/api';
 import type { Giveaway, GiveawayCategory } from '../../common/api';
 import GiveawayCard from '../components/GiveawayCard';
-import GiveawayFormModal from '../components/GiveawayFormModal';
-import CategoryManagerModal from '../components/CategoryManagerModal';
 
 export default class GiveawaysPage extends Page {
   loading = true;
@@ -50,11 +48,11 @@ export default class GiveawaysPage extends Page {
   }
 
   create() {
-    app.modal.show(GiveawayFormModal, { categories: this.categories, onsave: () => this.load() });
+    app.modal.show(() => import('../components/GiveawayFormModal'), { categories: this.categories, onsave: () => this.load() });
   }
 
   manageCategories() {
-    app.modal.show(CategoryManagerModal, { onchange: () => this.loadCategories() });
+    app.modal.show(() => import('../components/CategoryManagerModal'), { onchange: () => this.loadCategories() });
   }
 
   matchesFilter(g: Giveaway): boolean {

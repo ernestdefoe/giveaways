@@ -3,16 +3,14 @@ import { extend } from 'flarum/common/extend';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import LinkButton from 'flarum/common/components/LinkButton';
 
-import GiveawaysPage from './pages/GiveawaysPage';
-import GiveawayPage from './pages/GiveawayPage';
 import GiveawayWonNotification from './components/GiveawayWonNotification';
 import GiveawayClaimedNotification from './components/GiveawayClaimedNotification';
 
 export { default as extend } from '../common/extend';
 
 app.initializers.add('ernestdefoe-giveaways', () => {
-  app.routes['giveaways.index'] = { path: '/giveaways', component: GiveawaysPage };
-  app.routes['giveaways.show'] = { path: '/giveaways/:slug', component: GiveawayPage };
+  app.routes['giveaways.index'] = { path: '/giveaways', component: () => import('./pages/GiveawaysPage') };
+  app.routes['giveaways.show'] = { path: '/giveaways/:slug', component: () => import('./pages/GiveawayPage') };
 
   app.notificationComponents.giveawayWon = GiveawayWonNotification;
   app.notificationComponents.giveawayClaimed = GiveawayClaimedNotification;
