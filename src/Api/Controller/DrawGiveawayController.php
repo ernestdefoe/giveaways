@@ -5,7 +5,9 @@ namespace ErnestDefoe\Giveaways\Api\Controller;
 use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\DrawService;
 use ErnestDefoe\Giveaways\Giveaway;
+use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\Locale\TranslatorInterface;
 use Flarum\User\Exception\PermissionDeniedException;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -16,7 +18,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 /** POST /api/giveaways/{id}/draw — manually run the provably-fair draw now. */
 class DrawGiveawayController implements RequestHandlerInterface
 {
-    public function __construct(protected DrawService $draws)
+    public function __construct(protected DrawService $draws, protected TranslatorInterface $translator)
     {
     }
 
@@ -30,6 +32,9 @@ class DrawGiveawayController implements RequestHandlerInterface
 
         if (! $g->canBeManagedBy($actor)) {
             throw new PermissionDeniedException();
+        }
+        if ($g->status === 'active' && ! $g->canBeDrawnBy($actor)) {
+            throw new ValidationException(['draw' => $this->translator->trans('ernestdefoe-giveaways.api.draw_not_ended')]);
         }
 
         $this->draws->draw($g);

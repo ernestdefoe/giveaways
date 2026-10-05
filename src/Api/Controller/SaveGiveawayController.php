@@ -44,6 +44,10 @@ class SaveGiveawayController implements RequestHandlerInterface
 
         $errors = [];
 
+        // What decided the draw, as it stood before this edit (see below).
+        $before = $id ? $this->drawTerms($g) : null;
+        $beforeEnds = $id ? $g->ends_at?->copy() : null;
+
         if (array_key_exists('title', $attrs) || ! $id) {
             $title = trim((string) ($attrs['title'] ?? ''));
             $title === '' ? $errors['title'] = $this->translator->trans('ernestdefoe-giveaways.api.title_required') : $g->title = mb_substr($title, 0, 255);
@@ -110,6 +114,24 @@ class SaveGiveawayController implements RequestHandlerInterface
         }
         $g->settings = json_encode($s);
 
+        if ($id) {
+            // Once drawn, the terms the winners were picked and judged under are
+            // fixed. Changing the skill answer afterwards could fail the winner's
+            // correct answer and move the prize on to someone else.
+            if ($g->status !== 'active' && $this->drawTerms($g) !== $before) {
+                $errors['draw'] = $this->translator->trans('ernestdefoe-giveaways.api.locked_after_draw');
+            }
+
+            // A host may extend a giveaway people have entered, but not cut it
+            // short: that is an early draw against a small pool by another route.
+            if ($g->status === 'active' && $beforeEnds && $g->ends_at
+                && $g->ends_at->copy()->startOfMinute()->lt($beforeEnds->copy()->startOfMinute())
+                && ! $actor->hasPermission('giveaways.manage')
+                && $g->entries()->exists()) {
+                $errors['endsAt'] = $this->translator->trans('ernestdefoe-giveaways.api.ends_no_earlier');
+            }
+        }
+
         if ($errors) {
             throw new ValidationException($errors);
         }
@@ -125,6 +147,23 @@ class SaveGiveawayController implements RequestHandlerInterface
         $g->load(['user', 'category']);
 
         return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)], $id ? 200 : 201);
+    }
+
+    /** The settings a draw was made and judged under, normalised for comparison. */
+    private function drawTerms(Giveaway $g): array
+    {
+        // Effective values, the same ones the edit form is filled from, so an
+        // unchanged form saves cleanly.
+        $s = $g->settingsArray();
+        $skill = $g->requiresSkillAnswer();
+
+        return [
+            $skill ? trim((string) $s['skill_question']) : '',
+            $skill ? trim((string) $s['skill_answer']) : '',
+            $g->skillAttemptLimit(),
+            (int) $g->winner_count,
+            $g->ends_at ? $g->ends_at->copy()->startOfMinute()->getTimestamp() : null,
+        ];
     }
 
     private function assertCanManage($actor, Giveaway $g): void

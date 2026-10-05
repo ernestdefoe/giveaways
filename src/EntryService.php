@@ -19,6 +19,10 @@ class EntryService
         if ($user->isGuest()) {
             return $this->translator->trans('ernestdefoe-giveaways.api.enter_login');
         }
+        // The host does not get a ticket in their own draw.
+        if ($giveaway->user_id && (int) $giveaway->user_id === (int) $user->id) {
+            return $this->translator->trans('ernestdefoe-giveaways.api.enter_own');
+        }
         if (! $giveaway->isRunning()) {
             return $this->translator->trans('ernestdefoe-giveaways.api.enter_closed');
         }

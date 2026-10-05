@@ -69,6 +69,27 @@ class Giveaway extends AbstractModel
             || ($this->user_id && (int) $actor->id === (int) $this->user_id && $actor->hasPermission('giveaways.create'));
     }
 
+    /**
+     * Can $actor run the draw right now? A giveaway's author may only draw once
+     * it has ended; closing it early against a small pool is a manager's call.
+     */
+    public function canBeDrawnBy(User $actor): bool
+    {
+        return $this->status === 'active'
+            && $this->canBeManagedBy($actor)
+            && ($actor->hasPermission('giveaways.manage') || $this->hasEnded());
+    }
+
+    /**
+     * Can $actor delete this giveaway? Once drawn it is the record of who won,
+     * so only a manager may remove it; the author can no longer erase it.
+     */
+    public function canBeDeletedBy(User $actor): bool
+    {
+        return $this->canBeManagedBy($actor)
+            && ($this->status === 'active' || $actor->hasPermission('giveaways.manage'));
+    }
+
     /** Decoded settings (entry methods + eligibility) with defaults. */
     public function settingsArray(): array
     {

@@ -397,6 +397,10 @@ export default class GiveawayPage extends Page {
               <Icon name="fas fa-check-circle" />{' '}
               {app.translator.trans('ernestdefoe-giveaways.forum.your_entries', { count: g.myEntries })}
             </div>
+          ) : g.isHost ? (
+            <div className="GiveawayPage-entered GiveawayPage-hosting">
+              <Icon name="fas fa-gift" /> {app.translator.trans('ernestdefoe-giveaways.forum.hosting')}
+            </div>
           ) : !app.session.user ? (
             <Button className="Button Button--primary Button--block" onclick={() => this.enter()}>
               {app.translator.trans('ernestdefoe-giveaways.forum.login_to_enter')}
@@ -439,14 +443,16 @@ export default class GiveawayPage extends Page {
         <Button className="Button Button--block" icon="fas fa-pencil-alt" onclick={() => this.edit()}>
           {app.translator.trans('ernestdefoe-giveaways.forum.edit')}
         </Button>
-        {g.status === 'active' && (
+        {g.canDraw && (
           <Button className="Button Button--block" icon="fas fa-dice" onclick={() => this.draw()}>
             {app.translator.trans('ernestdefoe-giveaways.forum.draw_now')}
           </Button>
         )}
-        <Button className="Button Button--block GiveawayPage-delete" icon="fas fa-trash" onclick={() => this.remove()}>
-          {app.translator.trans('ernestdefoe-giveaways.forum.delete')}
-        </Button>
+        {g.canDelete && (
+          <Button className="Button Button--block GiveawayPage-delete" icon="fas fa-trash" onclick={() => this.remove()}>
+            {app.translator.trans('ernestdefoe-giveaways.forum.delete')}
+          </Button>
+        )}
       </div>
     );
   }

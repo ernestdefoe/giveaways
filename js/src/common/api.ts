@@ -53,6 +53,12 @@ export interface Giveaway {
   minPosts: number;
   minAgeDays: number;
   canManage: boolean;
+  /** Can run the draw now (a host only once it has ended). */
+  canDraw: boolean;
+  /** Can delete it (a drawn giveaway only by a manager). */
+  canDelete: boolean;
+  /** The viewer is hosting it, so cannot enter. */
+  isHost: boolean;
   iWon: boolean;
   myClaimedAt: string | null;
   myForfeited: boolean;

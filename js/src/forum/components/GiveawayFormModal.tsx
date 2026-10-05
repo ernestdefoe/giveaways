@@ -104,16 +104,16 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
           ), t('rules_help'))}
           <div className="GiveawayFormModal-row">
             {this.field(t('skill_question_label'), (
-              <input className="FormControl" value={this.skillQuestion()} placeholder={t('skill_question_placeholder') as string}
+              <input className="FormControl" value={this.skillQuestion()} disabled={this.drawn()} placeholder={t('skill_question_placeholder') as string}
                 oninput={(e: Event) => this.skillQuestion((e.target as HTMLInputElement).value)} />
             ))}
             {this.field(t('skill_answer_label'), (
-              <input className="FormControl" value={this.skillAnswer()}
+              <input className="FormControl" value={this.skillAnswer()} disabled={this.drawn()}
                 oninput={(e: Event) => this.skillAnswer((e.target as HTMLInputElement).value)} />
             ))}
           </div>
           <p className="helpText GiveawayFormModal-skillHelp">{t('skill_answer_help')}</p>
-          {this.numberField(t('skill_attempts_label'), this.skillAttempts, 0, t('skill_attempts_help'))}
+          {this.numberField(t('skill_attempts_label'), this.skillAttempts, 0, t('skill_attempts_help'), this.drawn())}
           {this.field(t('cover_label'), (
             <input className="FormControl" value={this.coverUrl()} placeholder={t('cover_placeholder') as string}
               oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)} />
@@ -134,13 +134,13 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
                 oninput={(e: Event) => this.startsAt((e.target as HTMLInputElement).value)} />
             ))}
             {this.field(t('ends_label'), (
-              <input type="datetime-local" className="FormControl" value={this.endsAt()}
+              <input type="datetime-local" className="FormControl" value={this.endsAt()} disabled={this.drawn()}
                 oninput={(e: Event) => this.endsAt((e.target as HTMLInputElement).value)} />
             ))}
           </div>
 
           <div className="GiveawayFormModal-row">
-            {this.numberField(t('winner_count_label'), this.winnerCount, 1)}
+            {this.numberField(t('winner_count_label'), this.winnerCount, 1, undefined, this.drawn())}
             {this.numberField(t('post_bonus_label'), this.postBonus, 0, t('post_bonus_help'))}
           </div>
           <div className="GiveawayFormModal-row">
@@ -172,11 +172,16 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     );
   }
 
-  numberField(label: Mithril.Children, stream: Stream<number>, min: number, help?: Mithril.Children): Mithril.Children {
+  /** The terms a draw was made and judged under are fixed once it has run. */
+  drawn(): boolean {
+    return !!this.attrs.giveaway && this.attrs.giveaway.status !== 'active';
+  }
+
+  numberField(label: Mithril.Children, stream: Stream<number>, min: number, help?: Mithril.Children, disabled = false): Mithril.Children {
     return (
       <div className="Form-group">
         <label>{label}</label>
-        <input type="number" className="FormControl" min={min} value={stream()}
+        <input type="number" className="FormControl" min={min} value={stream()} disabled={disabled}
           oninput={(e: Event) => stream(parseInt((e.target as HTMLInputElement).value, 10) || 0)} />
         {help && <p className="helpText">{help}</p>}
       </div>

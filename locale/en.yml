@@ -18,6 +18,10 @@ ernestdefoe-giveaways:
     skill_already_forfeited: This prize was redrawn after the skill-testing question went unanswered.
     skill_answer_required: Give the correct answer to your skill-testing question.
     claim_not_winner: You're not a winner of this giveaway.
+    enter_own: You can't enter a giveaway you are hosting.
+    draw_not_ended: This giveaway can be drawn once it ends.
+    locked_after_draw: This can't be changed after the draw.
+    ends_no_earlier: Once people have entered, the end can be moved later but not earlier.
 
   forum:
     # Navigation & page titles
@@ -42,6 +46,7 @@ ernestdefoe-giveaways:
 
     # Enter
     enter: Enter giveaway
+    hosting: You're hosting this giveaway.
     entered: You're entered!
     enter_again: You're entered
     login_to_enter: Log in to enter

@@ -24,7 +24,7 @@ class DeleteGiveawayController implements RequestHandlerInterface
         $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
         $g = Giveaway::query()->findOrFail($id);
 
-        if (! $g->canBeManagedBy($actor)) {
+        if (! $g->canBeDeletedBy($actor)) {
             throw new PermissionDeniedException();
         }
 
