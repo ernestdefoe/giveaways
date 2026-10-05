@@ -65,9 +65,17 @@ class GiveawayPresenter
 
     public function present(Giveaway $g, bool $full = false): array
     {
-        $agg = $this->aggregates?->get($g->id);
-        $entrantCount = $agg ? (int) $agg->entrant_count : (int) $g->entries()->count();
-        $totalEntries = $agg ? (int) $agg->total_entries : (int) $g->entries()->sum('entries');
+        // On a list the aggregates were batch-loaded; a giveaway missing from
+        // them has no entries, so it reads as zero rather than falling back to
+        // two queries of its own (which made every empty giveaway an N+1).
+        if ($this->aggregates !== null) {
+            $agg = $this->aggregates->get($g->id);
+            $entrantCount = $agg ? (int) $agg->entrant_count : 0;
+            $totalEntries = $agg ? (int) $agg->total_entries : 0;
+        } else {
+            $entrantCount = (int) $g->entries()->count();
+            $totalEntries = (int) $g->entries()->sum('entries');
+        }
 
         $myEntry = $this->myEntry($g);
         $myWin = $this->myWin($g);
