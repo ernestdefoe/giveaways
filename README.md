@@ -80,6 +80,10 @@ Because the seed and entrant hash are published on the giveaway page, anyone can
 - **Show a "Giveaways" link in the main navigation** — toggle the nav item.
 - **Navigation label** — customise the link text.
 
+## Discuss
+
+Questions, ideas and release notes: [Giveaways on discuss.flarum.org](https://discuss.flarum.org/d/39385-giveaways).
+
 ## License
 
 [MIT](./LICENSE) © ernestdefoe
