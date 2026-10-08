@@ -32,8 +32,11 @@ return [
     new Extend\Locales(__DIR__ . '/locale'),
 
     (new Extend\Settings())
+        // On until switched off. A fourth serializeToForum() argument is
+        // ignored on Flarum 2; the default has to be registered.
+        ->default('ernestdefoe-giveaways.show_nav', true)
         ->serializeToForum('giveawaysNavLabel', 'ernestdefoe-giveaways.nav_label')
-        ->serializeToForum('giveawaysShowNav', 'ernestdefoe-giveaways.show_nav', 'boolval', true),
+        ->serializeToForum('giveawaysShowNav', 'ernestdefoe-giveaways.show_nav', 'boolval'),
 
     (new Extend\Routes('api'))
         ->get('/giveaways', 'giveaways.index', Controller\ListGiveawaysController::class)
