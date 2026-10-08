@@ -102,7 +102,12 @@ export default class GiveawayPage extends Page {
   }
 
   view(): Mithril.Children {
-    if (this.loading) return <div className="GiveawayPage container"><GwDetailSkeleton /></div>;
+    if (this.loading)
+      return (
+        <div className="GiveawayPage container">
+          <GwDetailSkeleton />
+        </div>
+      );
     const g = this.giveaway;
     if (!g) {
       return (
@@ -121,8 +126,7 @@ export default class GiveawayPage extends Page {
           <div className="GiveawayPage-hero-overlay">
             <div className="container">
               <Link className="GiveawayPage-back" href={app.route('giveaways.index')}>
-                <Icon name="fas fa-chevron-left" />{' '}
-                {app.translator.trans('ernestdefoe-giveaways.forum.nav')}
+                <Icon name="fas fa-chevron-left" /> {app.translator.trans('ernestdefoe-giveaways.forum.nav')}
               </Link>
               <span className={`GiveawayCard-status GiveawayCard-status--${g.status}`}>
                 {app.translator.trans(`ernestdefoe-giveaways.forum.status_${g.status}`)}
@@ -191,9 +195,7 @@ export default class GiveawayPage extends Page {
           [
             g.skillQuestion ? (
               <div className="GiveawayPage-claimSkill">
-                <p className="GiveawayPage-claimSkill-intro">
-                  {app.translator.trans('ernestdefoe-giveaways.forum.claim_skill_intro')}
-                </p>
+                <p className="GiveawayPage-claimSkill-intro">{app.translator.trans('ernestdefoe-giveaways.forum.claim_skill_intro')}</p>
                 <label>{g.skillQuestion}</label>
                 {g.myAttemptsLeft !== null && (
                   <p className="GiveawayPage-claimSkill-attempts">
@@ -216,12 +218,7 @@ export default class GiveawayPage extends Page {
                 />
               </div>
             ) : null,
-            <Button
-              className="Button Button--primary"
-              icon="fas fa-box-open"
-              loading={this.claiming}
-              onclick={() => this.claim()}
-            >
+            <Button className="Button Button--primary" icon="fas fa-box-open" loading={this.claiming} onclick={() => this.claim()}>
               {app.translator.trans('ernestdefoe-giveaways.forum.claim')}
             </Button>,
           ]
@@ -241,9 +238,7 @@ export default class GiveawayPage extends Page {
     return (
       <section className="GiveawayPage-section">
         <h2>{app.translator.trans('ernestdefoe-giveaways.forum.description_label')}</h2>
-        <div className="GiveawayPage-description">
-          {g.description.split('\n').map((line) => (line.trim() ? <p>{line}</p> : null))}
-        </div>
+        <div className="GiveawayPage-description">{g.description.split('\n').map((line) => (line.trim() ? <p>{line}</p> : null))}</div>
       </section>
     );
   }
@@ -257,24 +252,20 @@ export default class GiveawayPage extends Page {
     if (!g.rules && !g.skillQuestion) return null;
     return (
       <section className="GiveawayPage-section GiveawayPage-rules">
-        <h2><Icon name="fas fa-scroll" /> {app.translator.trans('ernestdefoe-giveaways.forum.rules_label')}</h2>
+        <h2>
+          <Icon name="fas fa-scroll" /> {app.translator.trans('ernestdefoe-giveaways.forum.rules_label')}
+        </h2>
         {g.skillQuestion && (
           <div className="GiveawayPage-skillQuestion">
             <label>{app.translator.trans('ernestdefoe-giveaways.forum.skill_question_label')}</label>
             <p className="GiveawayPage-skillQuestion-q">{g.skillQuestion}</p>
             <p className="helpText">{app.translator.trans('ernestdefoe-giveaways.forum.skill_question_note')}</p>
             {g.skillAttempts > 0 && (
-              <p className="helpText">
-                {app.translator.trans('ernestdefoe-giveaways.forum.skill_attempts_note', { count: g.skillAttempts })}
-              </p>
+              <p className="helpText">{app.translator.trans('ernestdefoe-giveaways.forum.skill_attempts_note', { count: g.skillAttempts })}</p>
             )}
           </div>
         )}
-        {g.rules && (
-          <div className="GiveawayPage-rulesBody">
-            {g.rules.split('\n').map((line) => (line.trim() ? <p>{line}</p> : null))}
-          </div>
-        )}
+        {g.rules && <div className="GiveawayPage-rulesBody">{g.rules.split('\n').map((line) => (line.trim() ? <p>{line}</p> : null))}</div>}
       </section>
     );
   }
@@ -282,15 +273,29 @@ export default class GiveawayPage extends Page {
   requirementsBlock(g: Giveaway): Mithril.Children {
     const reqs: Mithril.Children[] = [];
     if (g.minPosts > 0)
-      reqs.push(<li><Icon name="fas fa-comment" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_posts', { count: g.minPosts })}</li>);
+      reqs.push(
+        <li>
+          <Icon name="fas fa-comment" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_posts', { count: g.minPosts })}
+        </li>
+      );
     if (g.minAgeDays > 0)
-      reqs.push(<li><Icon name="fas fa-hourglass-half" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_age', { count: g.minAgeDays })}</li>);
+      reqs.push(
+        <li>
+          <Icon name="fas fa-hourglass-half" /> {app.translator.trans('ernestdefoe-giveaways.forum.req_min_age', { count: g.minAgeDays })}
+        </li>
+      );
 
     return (
       <section className="GiveawayPage-section">
         <h2>{app.translator.trans('ernestdefoe-giveaways.forum.requirements_label')}</h2>
         <ul className="GiveawayPage-reqs">
-          {reqs.length ? reqs : <li><Icon name="fas fa-check" /> {app.translator.trans('ernestdefoe-giveaways.forum.no_requirements')}</li>}
+          {reqs.length ? (
+            reqs
+          ) : (
+            <li>
+              <Icon name="fas fa-check" /> {app.translator.trans('ernestdefoe-giveaways.forum.no_requirements')}
+            </li>
+          )}
         </ul>
       </section>
     );
@@ -318,21 +323,15 @@ export default class GiveawayPage extends Page {
                   <span className="GiveawayPage-winner-user">—</span>
                 )}
                 <span className={'GiveawayPage-winner-claim' + (w.claimedAt ? ' is-claimed' : '')}>
-                  {w.forfeited ? (
-                    [
-                      <Icon name="fas fa-rotate" />,
-                      ' ',
-                      app.translator.trans('ernestdefoe-giveaways.forum.winner_forfeited'),
-                    ]
-                  ) : (
-                    [
-                      <Icon name={w.claimedAt ? 'fas fa-check-circle' : 'far fa-clock'} />,
-                      ' ',
-                      w.claimedAt
-                        ? app.translator.trans('ernestdefoe-giveaways.forum.claimed')
-                        : app.translator.trans('ernestdefoe-giveaways.forum.unclaimed'),
-                    ]
-                  )}
+                  {w.forfeited
+                    ? [<Icon name="fas fa-rotate" />, ' ', app.translator.trans('ernestdefoe-giveaways.forum.winner_forfeited')]
+                    : [
+                        <Icon name={w.claimedAt ? 'fas fa-check-circle' : 'far fa-clock'} />,
+                        ' ',
+                        w.claimedAt
+                          ? app.translator.trans('ernestdefoe-giveaways.forum.claimed')
+                          : app.translator.trans('ernestdefoe-giveaways.forum.unclaimed'),
+                      ]}
                 </span>
               </li>
             ))}
@@ -346,7 +345,9 @@ export default class GiveawayPage extends Page {
     if (g.status !== 'drawn' || !g.drawSeed) return null;
     return (
       <section className="GiveawayPage-section GiveawayPage-fairness">
-        <h2><Icon name="fas fa-shield-alt" /> {app.translator.trans('ernestdefoe-giveaways.forum.fairness_label')}</h2>
+        <h2>
+          <Icon name="fas fa-shield-alt" /> {app.translator.trans('ernestdefoe-giveaways.forum.fairness_label')}
+        </h2>
         <p>{app.translator.trans('ernestdefoe-giveaways.forum.fairness_intro')}</p>
         <div className="GiveawayPage-fairnessField">
           <label>{app.translator.trans('ernestdefoe-giveaways.forum.seed_label')}</label>
@@ -357,13 +358,9 @@ export default class GiveawayPage extends Page {
           <code>{g.entrantHash}</code>
         </div>
         {(g.winners || []).some((w) => w.forfeited) && (
-          <p className="GiveawayPage-fairnessHelp helpText">
-            {app.translator.trans('ernestdefoe-giveaways.forum.fairness_forfeit_help')}
-          </p>
+          <p className="GiveawayPage-fairnessHelp helpText">{app.translator.trans('ernestdefoe-giveaways.forum.fairness_forfeit_help')}</p>
         )}
-        <p className="GiveawayPage-fairnessHelp helpText">
-          {app.translator.trans('ernestdefoe-giveaways.forum.fairness_help')}
-        </p>
+        <p className="GiveawayPage-fairnessHelp helpText">{app.translator.trans('ernestdefoe-giveaways.forum.fairness_help')}</p>
       </section>
     );
   }
@@ -381,21 +378,19 @@ export default class GiveawayPage extends Page {
 
         {active ? (
           <div className="GiveawayPage-countdown">
-            <Icon name="fas fa-clock" />{' '}
-            {app.translator.trans('ernestdefoe-giveaways.forum.ends_in', { time: countdown(g.endsAt) })}
+            <Icon name="fas fa-clock" /> {app.translator.trans('ernestdefoe-giveaways.forum.ends_in', { time: countdown(g.endsAt) })}
           </div>
         ) : (
           <div className="GiveawayPage-countdown">
             {app.translator.trans('ernestdefoe-giveaways.forum.ended')}
-            {g.drawnAt ? [' · ', humanTime(g.drawnAt)] : null}
+            {g.drawnAt ? [' · ', humanTime(new Date(g.drawnAt))] : null}
           </div>
         )}
 
         {active &&
           (entered ? (
             <div className="GiveawayPage-entered">
-              <Icon name="fas fa-check-circle" />{' '}
-              {app.translator.trans('ernestdefoe-giveaways.forum.your_entries', { count: g.myEntries })}
+              <Icon name="fas fa-check-circle" /> {app.translator.trans('ernestdefoe-giveaways.forum.your_entries', { count: g.myEntries })}
             </div>
           ) : g.isHost ? (
             <div className="GiveawayPage-entered GiveawayPage-hosting">
@@ -406,12 +401,7 @@ export default class GiveawayPage extends Page {
               {app.translator.trans('ernestdefoe-giveaways.forum.login_to_enter')}
             </Button>
           ) : (
-            <Button
-              className="Button Button--primary Button--block"
-              icon="fas fa-ticket-alt"
-              loading={this.entering}
-              onclick={() => this.enter()}
-            >
+            <Button className="Button Button--primary Button--block" icon="fas fa-ticket-alt" loading={this.entering} onclick={() => this.enter()}>
               {app.translator.trans('ernestdefoe-giveaways.forum.enter')}
             </Button>
           ))}
