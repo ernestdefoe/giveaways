@@ -7,6 +7,7 @@ use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
+use Flarum\User\User;
 use Flarum\Locale\TranslatorInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -166,14 +167,14 @@ class SaveGiveawayController implements RequestHandlerInterface
         ];
     }
 
-    private function assertCanManage($actor, Giveaway $g): void
+    private function assertCanManage(User $actor, Giveaway $g): void
     {
         if (! $g->canBeManagedBy($actor)) {
             throw new \Flarum\User\Exception\PermissionDeniedException();
         }
     }
 
-    private function date($value): ?Carbon
+    private function date(mixed $value): ?Carbon
     {
         if ($value === null || $value === '') return null;
         try {
@@ -183,7 +184,7 @@ class SaveGiveawayController implements RequestHandlerInterface
         }
     }
 
-    private function url($v): ?string
+    private function url(mixed $v): ?string
     {
         $v = trim((string) $v);
         if ($v === '') return null;
@@ -197,7 +198,7 @@ class SaveGiveawayController implements RequestHandlerInterface
         return $ok ? mb_substr($v, 0, 600) : null;
     }
 
-    private function uniqueSlug(string $title, $ignoreId = null): string
+    private function uniqueSlug(string $title, ?int $ignoreId = null): string
     {
         $base = Str::slug($title) ?: 'giveaway';
         $slug = $base;

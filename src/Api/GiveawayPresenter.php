@@ -24,9 +24,9 @@ use Illuminate\Support\Collection;
 class GiveawayPresenter
 {
     /**
-     * @param Collection<int, GiveawayEntry>|null  $myEntries  actor's entry, keyed by giveaway_id
-     * @param Collection<int, GiveawayWinner>|null $myWins     actor's winner row, keyed by giveaway_id
-     * @param Collection<int, object>|null         $aggregates entrant_count + total_entries, keyed by giveaway_id
+     * @param Collection<array-key, GiveawayEntry>|null  $myEntries  actor's entry, keyed by giveaway_id
+     * @param Collection<array-key, GiveawayWinner>|null $myWins     actor's winner row, keyed by giveaway_id
+     * @param Collection<array-key, GiveawayEntry>|null  $aggregates entrant_count + total_entries, keyed by giveaway_id
      */
     public function __construct(
         protected User $actor,
@@ -70,8 +70,9 @@ class GiveawayPresenter
         // two queries of its own (which made every empty giveaway an N+1).
         if ($this->aggregates !== null) {
             $agg = $this->aggregates->get($g->id);
-            $entrantCount = $agg ? (int) $agg->entrant_count : 0;
-            $totalEntries = $agg ? (int) $agg->total_entries : 0;
+            // Aggregate columns from the grouped query, not model attributes.
+            $entrantCount = $agg ? (int) $agg->getAttribute('entrant_count') : 0;
+            $totalEntries = $agg ? (int) $agg->getAttribute('total_entries') : 0;
         } else {
             $entrantCount = (int) $g->entries()->count();
             $totalEntries = (int) $g->entries()->sum('entries');

@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\Carbon|null $claimed_at
  * @property int $skill_attempts
  * @property \Carbon\Carbon|null $forfeited_at
+ * @property \Carbon\Carbon|null $created_at
+ * @property-read Giveaway|null $giveaway
+ * @property-read User|null $user
  */
 class GiveawayWinner extends AbstractModel
 {
@@ -34,11 +37,13 @@ class GiveawayWinner extends AbstractModel
         return $this->forfeited_at !== null;
     }
 
+    /** @return BelongsTo<Giveaway, $this> */
     public function giveaway(): BelongsTo
     {
         return $this->belongsTo(Giveaway::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

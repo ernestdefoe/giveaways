@@ -26,6 +26,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $entrant_hash
  * @property \Carbon\Carbon|null $drawn_at
  * @property int|null $category_id
+ * @property \Carbon\Carbon|null $created_at
+ * @property \Carbon\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, GiveawayEntry> $entries
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, GiveawayWinner> $winners
+ * @property-read User|null $user
+ * @property-read GiveawayCategory|null $category
  */
 class Giveaway extends AbstractModel
 {
@@ -38,21 +44,25 @@ class Giveaway extends AbstractModel
         'winner_count' => 'integer',
     ];
 
+    /** @return HasMany<GiveawayEntry, $this> */
     public function entries(): HasMany
     {
         return $this->hasMany(GiveawayEntry::class);
     }
 
+    /** @return HasMany<GiveawayWinner, $this> */
     public function winners(): HasMany
     {
         return $this->hasMany(GiveawayWinner::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<GiveawayCategory, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(GiveawayCategory::class, 'category_id');

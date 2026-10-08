@@ -63,7 +63,7 @@ return [
 
     (new Extend\Console())
         ->command(DrawDueCommand::class)
-        ->schedule('giveaways:draw-due', function (ScheduledEvent $event) {
+        ->schedule(DrawDueCommand::class, function (ScheduledEvent $event) {
             $event->everyMinute()->withoutOverlapping();
         }),
 ];

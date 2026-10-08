@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $color
  * @property string|null $icon
  * @property int $position
+ * @property \Carbon\Carbon|null $created_at
+ * @property \Carbon\Carbon|null $updated_at
  */
 class GiveawayCategory extends AbstractModel
 {
@@ -21,6 +23,7 @@ class GiveawayCategory extends AbstractModel
         'position' => 'integer',
     ];
 
+    /** @return HasMany<Giveaway, $this> */
     public function giveaways(): HasMany
     {
         return $this->hasMany(Giveaway::class, 'category_id');
