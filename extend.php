@@ -55,7 +55,7 @@ return [
     (new Extend\Event())
         ->listen(Posted::class, AwardPostBonus::class),
 
-    (new Extend\ApiResource(Resource\GiveawayResource::class)),
+    new Extend\ApiResource(Resource\GiveawayResource::class),
 
     (new Extend\Notification())
         ->type(GiveawayWonBlueprint::class, ['alert'])
