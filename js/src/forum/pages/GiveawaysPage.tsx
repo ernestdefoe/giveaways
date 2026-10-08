@@ -68,12 +68,8 @@ export default class GiveawaysPage extends Page {
       <div className="GiveawaysPage">
         <div className="GiveawaysPage-hero">
           <div className="container">
-            <h1 className="GiveawaysPage-title">
-              {app.translator.trans('ernestdefoe-giveaways.forum.heading')}
-            </h1>
-            <p className="GiveawaysPage-subtitle">
-              {app.translator.trans('ernestdefoe-giveaways.forum.subheading')}
-            </p>
+            <h1 className="GiveawaysPage-title">{app.translator.trans('ernestdefoe-giveaways.forum.heading')}</h1>
+            <p className="GiveawaysPage-subtitle">{app.translator.trans('ernestdefoe-giveaways.forum.subheading')}</p>
             <div className="GiveawaysPage-actions">
               {this.canCreate && (
                 <Button className="Button Button--primary" icon="fas fa-plus" onclick={() => this.create()}>
@@ -94,7 +90,9 @@ export default class GiveawaysPage extends Page {
             <div className="GiveawaysPage-filters">
               <button
                 className={'GiveawayFilter' + (this.filter === null ? ' is-active' : '')}
-                onclick={() => { this.filter = null; }}
+                onclick={() => {
+                  this.filter = null;
+                }}
               >
                 {app.translator.trans('ernestdefoe-giveaways.forum.categories.all')}
               </button>
@@ -102,8 +100,14 @@ export default class GiveawaysPage extends Page {
                 <button
                   key={c.id}
                   className={'GiveawayFilter' + (this.filter === c.id ? ' is-active' : '')}
-                  style={this.filter === c.id ? { backgroundColor: c.color, borderColor: c.color, color: '#fff' } : { color: c.color, borderColor: c.color }}
-                  onclick={() => { this.filter = c.id; }}
+                  style={
+                    this.filter === c.id
+                      ? { backgroundColor: c.color, borderColor: c.color, color: '#fff' }
+                      : { color: c.color, borderColor: c.color }
+                  }
+                  onclick={() => {
+                    this.filter = c.id;
+                  }}
                 >
                   {c.icon && <Icon name={c.icon} />} {c.name}
                 </button>
@@ -114,9 +118,7 @@ export default class GiveawaysPage extends Page {
           {this.loading ? (
             <GwSkeleton />
           ) : filtered.length === 0 ? (
-            <div className="GiveawaysPage-empty">
-              {app.translator.trans('ernestdefoe-giveaways.forum.empty')}
-            </div>
+            <div className="GiveawaysPage-empty">{app.translator.trans('ernestdefoe-giveaways.forum.empty')}</div>
           ) : (
             [
               active.length > 0 && (
@@ -127,9 +129,7 @@ export default class GiveawaysPage extends Page {
                   oncreate={() => rememberSections([active.length, past.length])}
                   onupdate={() => rememberSections([active.length, past.length])}
                 >
-                  <h2 className="GiveawaysPage-sectionTitle">
-                    {app.translator.trans('ernestdefoe-giveaways.forum.active_heading')}
-                  </h2>
+                  <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.active_heading')}</h2>
                   <div className="GiveawaysPage-grid">
                     {active.map((g) => (
                       <GiveawayCard key={g.id} giveaway={g} />
@@ -144,9 +144,7 @@ export default class GiveawaysPage extends Page {
                   oncreate={() => rememberSections([active.length, past.length])}
                   onupdate={() => rememberSections([active.length, past.length])}
                 >
-                  <h2 className="GiveawaysPage-sectionTitle">
-                    {app.translator.trans('ernestdefoe-giveaways.forum.past_heading')}
-                  </h2>
+                  <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.past_heading')}</h2>
                   <div className="GiveawaysPage-grid">
                     {past.map((g) => (
                       <GiveawayCard key={g.id} giveaway={g} />

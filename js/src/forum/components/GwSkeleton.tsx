@@ -46,9 +46,7 @@ function recalledSections(): number[] {
     // stale number reserving screens of empty page.
     if (!Array.isArray(parsed) || !parsed.length) return DEFAULT;
 
-    return parsed
-      .slice(0, 2)
-      .map((n: unknown) => (Number.isFinite(n) ? Math.min(12, Math.max(1, Number(n))) : 3));
+    return parsed.slice(0, 2).map((n: unknown) => (Number.isFinite(n) ? Math.min(12, Math.max(1, Number(n))) : 3));
   } catch {
     return DEFAULT;
   }

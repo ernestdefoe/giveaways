@@ -56,12 +56,16 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
                     type="color"
                     className="CategoryManager-color"
                     value={c.color}
-                    oninput={(e: Event) => { c.color = (e.target as HTMLInputElement).value; }}
+                    oninput={(e: Event) => {
+                      c.color = (e.target as HTMLInputElement).value;
+                    }}
                   />
                   <input
                     className="FormControl CategoryManager-name"
                     value={c.name}
-                    oninput={(e: Event) => { c.name = (e.target as HTMLInputElement).value; }}
+                    oninput={(e: Event) => {
+                      c.name = (e.target as HTMLInputElement).value;
+                    }}
                   />
                   <span className="CategoryManager-iconPreview" aria-hidden="true">
                     <Icon name={c.icon || 'fas fa-tag'} />
@@ -70,7 +74,9 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
                     className="FormControl CategoryManager-icon"
                     placeholder="fas fa-tag"
                     value={c.icon || ''}
-                    oninput={(e: Event) => { c.icon = (e.target as HTMLInputElement).value; }}
+                    oninput={(e: Event) => {
+                      c.icon = (e.target as HTMLInputElement).value;
+                    }}
                   />
                   <span className="CategoryManager-count">{c.count ?? 0}</span>
                   <Button
@@ -88,9 +94,7 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
                 </li>
               ))}
               {this.categories.length === 0 && (
-                <li className="CategoryManager-empty">
-                  {app.translator.trans('ernestdefoe-giveaways.forum.categories.none')}
-                </li>
+                <li className="CategoryManager-empty">{app.translator.trans('ernestdefoe-giveaways.forum.categories.none')}</li>
               )}
             </ul>
 
@@ -103,13 +107,17 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
                   type="color"
                   className="CategoryManager-color"
                   value={this.newColor}
-                  oninput={(e: Event) => { this.newColor = (e.target as HTMLInputElement).value; }}
+                  oninput={(e: Event) => {
+                    this.newColor = (e.target as HTMLInputElement).value;
+                  }}
                 />
                 <input
                   className="FormControl CategoryManager-name"
                   placeholder={app.translator.trans('ernestdefoe-giveaways.forum.categories.name_placeholder') as string}
                   value={this.newName}
-                  oninput={(e: Event) => { this.newName = (e.target as HTMLInputElement).value; }}
+                  oninput={(e: Event) => {
+                    this.newName = (e.target as HTMLInputElement).value;
+                  }}
                 />
                 <span className="CategoryManager-iconPreview" aria-hidden="true">
                   <Icon name={this.newIcon || 'fas fa-tag'} />
@@ -118,7 +126,9 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
                   className="FormControl CategoryManager-icon"
                   placeholder="fas fa-tag"
                   value={this.newIcon}
-                  oninput={(e: Event) => { this.newIcon = (e.target as HTMLInputElement).value; }}
+                  oninput={(e: Event) => {
+                    this.newIcon = (e.target as HTMLInputElement).value;
+                  }}
                 />
                 <Button className="Button Button--primary" icon="fas fa-plus" loading={this.loading} onclick={() => this.add()}>
                   {app.translator.trans('ernestdefoe-giveaways.forum.categories.add')}
@@ -141,7 +151,10 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
         this.attrs.onchange?.();
         this.load();
       })
-      .catch(() => { this.loading = false; m.redraw(); });
+      .catch(() => {
+        this.loading = false;
+        m.redraw();
+      });
   }
 
   save(c: GiveawayCategory) {

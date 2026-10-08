@@ -46,15 +46,13 @@ export default class GiveawayCard extends Component<GiveawayCardAttrs> {
                 : app.translator.trans('ernestdefoe-giveaways.forum.ended')}
             </span>
             <span>
-              <Icon name="fas fa-users" />{' '}
-              {app.translator.trans('ernestdefoe-giveaways.forum.entrants', { count: g.entrantCount })}
+              <Icon name="fas fa-users" /> {app.translator.trans('ernestdefoe-giveaways.forum.entrants', { count: g.entrantCount })}
             </span>
           </div>
 
           {g.myEntries > 0 && (
             <div className="GiveawayCard-entered">
-              <Icon name="fas fa-check-circle" />{' '}
-              {app.translator.trans('ernestdefoe-giveaways.forum.your_entries', { count: g.myEntries })}
+              <Icon name="fas fa-check-circle" /> {app.translator.trans('ernestdefoe-giveaways.forum.your_entries', { count: g.myEntries })}
             </div>
           )}
         </div>

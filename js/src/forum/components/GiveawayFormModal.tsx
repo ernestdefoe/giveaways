@@ -51,7 +51,10 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     const g = this.attrs.giveaway;
     this.categories = this.attrs.categories || [];
     if (!this.categories.length) {
-      listCategories().then((res) => { this.categories = res.data || []; m.redraw(); });
+      listCategories().then((res) => {
+        this.categories = res.data || [];
+        m.redraw();
+      });
     }
     this.categoryId = Stream(g?.category?.id || 0);
     this.claimInstructions = Stream(g?.claimInstructions || '');
@@ -86,57 +89,114 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     return (
       <div className="Modal-body">
         <div className="Form">
-          {this.field(t('title_label'), (
-            <input className="FormControl" value={this.titleInput()} placeholder={t('title_placeholder') as string}
-              oninput={(e: Event) => this.titleInput((e.target as HTMLInputElement).value)} />
-          ))}
-          {this.field(t('prize_label'), (
-            <input className="FormControl" value={this.prize()} placeholder={t('prize_placeholder') as string}
-              oninput={(e: Event) => this.prize((e.target as HTMLInputElement).value)} />
-          ))}
-          {this.field(t('description_label'), (
-            <textarea className="FormControl" rows={4} value={this.description()} placeholder={t('description_placeholder') as string}
-              oninput={(e: Event) => this.description((e.target as HTMLTextAreaElement).value)} />
-          ))}
-          {this.field(t('rules_label'), (
-            <textarea className="FormControl" rows={8} value={this.rules()} placeholder={t('rules_placeholder') as string}
-              oninput={(e: Event) => this.rules((e.target as HTMLTextAreaElement).value)} />
-          ), t('rules_help'))}
+          {this.field(
+            t('title_label'),
+            <input
+              className="FormControl"
+              value={this.titleInput()}
+              placeholder={t('title_placeholder') as string}
+              oninput={(e: Event) => this.titleInput((e.target as HTMLInputElement).value)}
+            />
+          )}
+          {this.field(
+            t('prize_label'),
+            <input
+              className="FormControl"
+              value={this.prize()}
+              placeholder={t('prize_placeholder') as string}
+              oninput={(e: Event) => this.prize((e.target as HTMLInputElement).value)}
+            />
+          )}
+          {this.field(
+            t('description_label'),
+            <textarea
+              className="FormControl"
+              rows={4}
+              value={this.description()}
+              placeholder={t('description_placeholder') as string}
+              oninput={(e: Event) => this.description((e.target as HTMLTextAreaElement).value)}
+            />
+          )}
+          {this.field(
+            t('rules_label'),
+            <textarea
+              className="FormControl"
+              rows={8}
+              value={this.rules()}
+              placeholder={t('rules_placeholder') as string}
+              oninput={(e: Event) => this.rules((e.target as HTMLTextAreaElement).value)}
+            />,
+            t('rules_help')
+          )}
           <div className="GiveawayFormModal-row">
-            {this.field(t('skill_question_label'), (
-              <input className="FormControl" value={this.skillQuestion()} disabled={this.drawn()} placeholder={t('skill_question_placeholder') as string}
-                oninput={(e: Event) => this.skillQuestion((e.target as HTMLInputElement).value)} />
-            ))}
-            {this.field(t('skill_answer_label'), (
-              <input className="FormControl" value={this.skillAnswer()} disabled={this.drawn()}
-                oninput={(e: Event) => this.skillAnswer((e.target as HTMLInputElement).value)} />
-            ))}
+            {this.field(
+              t('skill_question_label'),
+              <input
+                className="FormControl"
+                value={this.skillQuestion()}
+                disabled={this.drawn()}
+                placeholder={t('skill_question_placeholder') as string}
+                oninput={(e: Event) => this.skillQuestion((e.target as HTMLInputElement).value)}
+              />
+            )}
+            {this.field(
+              t('skill_answer_label'),
+              <input
+                className="FormControl"
+                value={this.skillAnswer()}
+                disabled={this.drawn()}
+                oninput={(e: Event) => this.skillAnswer((e.target as HTMLInputElement).value)}
+              />
+            )}
           </div>
           <p className="helpText GiveawayFormModal-skillHelp">{t('skill_answer_help')}</p>
           {this.numberField(t('skill_attempts_label'), this.skillAttempts, 0, t('skill_attempts_help'), this.drawn())}
-          {this.field(t('cover_label'), (
-            <input className="FormControl" value={this.coverUrl()} placeholder={t('cover_placeholder') as string}
-              oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)} />
-          ))}
-          {this.categories.length > 0 && this.field(t('category_label'), (
-            <select className="FormControl" value={this.categoryId()}
-              onchange={(e: Event) => this.categoryId(parseInt((e.target as HTMLSelectElement).value, 10) || 0)}>
-              <option value={0}>{t('category_none')}</option>
-              {this.categories.map((c) => (
-                <option value={c.id} selected={this.categoryId() === c.id}>{c.name}</option>
-              ))}
-            </select>
-          ))}
+          {this.field(
+            t('cover_label'),
+            <input
+              className="FormControl"
+              value={this.coverUrl()}
+              placeholder={t('cover_placeholder') as string}
+              oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)}
+            />
+          )}
+          {this.categories.length > 0 &&
+            this.field(
+              t('category_label'),
+              <select
+                className="FormControl"
+                value={this.categoryId()}
+                onchange={(e: Event) => this.categoryId(parseInt((e.target as HTMLSelectElement).value, 10) || 0)}
+              >
+                <option value={0}>{t('category_none')}</option>
+                {this.categories.map((c) => (
+                  <option value={c.id} selected={this.categoryId() === c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
 
           <div className="GiveawayFormModal-row">
-            {this.field(t('starts_label'), (
-              <input type="datetime-local" className="FormControl" value={this.startsAt()}
-                oninput={(e: Event) => this.startsAt((e.target as HTMLInputElement).value)} />
-            ))}
-            {this.field(t('ends_label'), (
-              <input type="datetime-local" className="FormControl" value={this.endsAt()} disabled={this.drawn()}
-                oninput={(e: Event) => this.endsAt((e.target as HTMLInputElement).value)} />
-            ))}
+            {this.field(
+              t('starts_label'),
+              <input
+                type="datetime-local"
+                className="FormControl"
+                value={this.startsAt()}
+                oninput={(e: Event) => this.startsAt((e.target as HTMLInputElement).value)}
+              />
+            )}
+            {this.field(
+              t('ends_label'),
+              <input
+                type="datetime-local"
+                className="FormControl"
+                value={this.endsAt()}
+                disabled={this.drawn()}
+                oninput={(e: Event) => this.endsAt((e.target as HTMLInputElement).value)}
+              />
+            )}
           </div>
 
           <div className="GiveawayFormModal-row">
@@ -147,10 +207,17 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
             {this.numberField(t('min_posts_label'), this.minPosts, 0)}
             {this.numberField(t('min_age_label'), this.minAgeDays, 0)}
           </div>
-          {this.field(t('claim_label'), (
-            <textarea className="FormControl" rows={3} value={this.claimInstructions()} placeholder={t('claim_placeholder') as string}
-              oninput={(e: Event) => this.claimInstructions((e.target as HTMLTextAreaElement).value)} />
-          ), t('claim_help'))}
+          {this.field(
+            t('claim_label'),
+            <textarea
+              className="FormControl"
+              rows={3}
+              value={this.claimInstructions()}
+              placeholder={t('claim_placeholder') as string}
+              oninput={(e: Event) => this.claimInstructions((e.target as HTMLTextAreaElement).value)}
+            />,
+            t('claim_help')
+          )}
 
           <div className="Form-group">
             <Button type="submit" className="Button Button--primary" loading={this.loading}>
@@ -181,8 +248,14 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     return (
       <div className="Form-group">
         <label>{label}</label>
-        <input type="number" className="FormControl" min={min} value={stream()} disabled={disabled}
-          oninput={(e: Event) => stream(parseInt((e.target as HTMLInputElement).value, 10) || 0)} />
+        <input
+          type="number"
+          className="FormControl"
+          min={min}
+          value={stream()}
+          disabled={disabled}
+          oninput={(e: Event) => stream(parseInt((e.target as HTMLInputElement).value, 10) || 0)}
+        />
         {help && <p className="helpText">{help}</p>}
       </div>
     );

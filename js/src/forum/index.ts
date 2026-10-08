@@ -20,14 +20,8 @@ app.initializers.add('ernestdefoe-giveaways', () => {
   extend(IndexSidebar.prototype, 'navItems', function (items: any) {
     if (app.forum.attribute('giveawaysShowNav') === false) return;
 
-    const label =
-      app.forum.attribute<string>('giveawaysNavLabel') ||
-      app.translator.trans('ernestdefoe-giveaways.forum.nav');
+    const label = app.forum.attribute<string>('giveawaysNavLabel') || app.translator.trans('ernestdefoe-giveaways.forum.nav');
 
-    items.add(
-      'giveaways',
-      LinkButton.component({ href: app.route('giveaways.index'), icon: 'fas fa-gift' }, label),
-      5
-    );
+    items.add('giveaways', LinkButton.component({ href: app.route('giveaways.index'), icon: 'fas fa-gift' }, label), 5);
   });
 });
