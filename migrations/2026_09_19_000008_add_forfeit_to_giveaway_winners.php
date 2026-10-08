@@ -11,5 +11,5 @@ use Flarum\Database\Migration;
  */
 return Migration::addColumns('giveaway_winners', [
     'skill_attempts' => ['integer', 'unsigned' => true, 'default' => 0],
-    'forfeited_at'   => ['dateTime', 'nullable' => true],
+    'forfeited_at' => ['dateTime', 'nullable' => true],
 ]);

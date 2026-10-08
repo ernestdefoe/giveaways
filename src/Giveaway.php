@@ -38,9 +38,9 @@ class Giveaway extends AbstractModel
     protected $table = 'giveaways';
 
     protected $casts = [
-        'starts_at'    => 'datetime',
-        'ends_at'      => 'datetime',
-        'drawn_at'     => 'datetime',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'drawn_at' => 'datetime',
         'winner_count' => 'integer',
     ];
 
@@ -104,15 +104,16 @@ class Giveaway extends AbstractModel
     public function settingsArray(): array
     {
         $s = json_decode((string) $this->settings, true) ?: [];
+
         return array_merge([
-            'post_bonus'         => 0,   // bonus entries for posting during the window (0 = off)
-            'min_posts'          => 0,
-            'min_age_days'       => 0,
-            'announce'           => true,
+            'post_bonus' => 0,   // bonus entries for posting during the window (0 = off)
+            'min_posts' => 0,
+            'min_age_days' => 0,
+            'announce' => true,
             'claim_instructions' => '',  // shown to winners when they claim their prize
-            'skill_question'     => '',  // skill-testing question (empty = off)
-            'skill_answer'       => '',  // its expected answer; never sent to entrants
-            'skill_attempts'     => 0,   // wrong answers allowed before forfeit (0 = unlimited)
+            'skill_question' => '',  // skill-testing question (empty = off)
+            'skill_answer' => '',  // its expected answer; never sent to entrants
+            'skill_attempts' => 0,   // wrong answers allowed before forfeit (0 = unlimited)
         ], $s);
     }
 
@@ -171,6 +172,7 @@ class Giveaway extends AbstractModel
     public function isRunning(): bool
     {
         $now = Carbon::now();
+
         return $this->status === 'active'
             && (! $this->starts_at || $this->starts_at->lte($now))
             && $this->ends_at->gt($now);

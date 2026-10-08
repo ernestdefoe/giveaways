@@ -33,6 +33,7 @@ class EntryService
         if (($s['min_age_days'] ?? 0) > 0 && $user->joined_at && $user->joined_at->gt(Carbon::now()->subDays((int) $s['min_age_days']))) {
             return $this->translator->trans('ernestdefoe-giveaways.api.enter_too_new');
         }
+
         return null;
     }
 

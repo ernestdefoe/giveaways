@@ -35,7 +35,7 @@ class DrawService
 
             $entries = $locked->entries()->orderBy('user_id')->get(['user_id', 'entries']);
 
-            $canonical = $entries->map(fn ($e) => $e->user_id . ':' . $e->entries)->implode(',');
+            $canonical = $entries->map(fn ($e) => $e->user_id.':'.$e->entries)->implode(',');
             $hash = hash('sha256', $canonical);
             $seed = bin2hex(random_bytes(16));
 
@@ -156,7 +156,7 @@ class DrawService
                 break;
             }
             // 60 bits of the per-slot hash → fits a 64-bit int → uniform-ish mod total.
-            $r = hexdec(substr(hash('sha256', $seed . ':' . $i), 0, 15)) % $total;
+            $r = hexdec(substr(hash('sha256', $seed.':'.$i), 0, 15)) % $total;
 
             $acc = 0;
             $pickIdx = count($pool) - 1;

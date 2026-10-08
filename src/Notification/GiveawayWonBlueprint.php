@@ -34,9 +34,9 @@ class GiveawayWonBlueprint implements BlueprintInterface, AlertableInterface
     public function getData(): mixed
     {
         return [
-            'title'    => $this->giveaway->title,
-            'slug'     => $this->giveaway->slug,
-            'prize'    => $this->giveaway->prize,
+            'title' => $this->giveaway->title,
+            'slug' => $this->giveaway->slug,
+            'prize' => $this->giveaway->prize,
             'position' => $this->position,
         ];
     }

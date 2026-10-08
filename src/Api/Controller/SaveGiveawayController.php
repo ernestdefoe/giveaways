@@ -7,8 +7,8 @@ use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
-use Flarum\User\User;
 use Flarum\Locale\TranslatorInterface;
+use Flarum\User\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -18,7 +18,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 /**
  * POST  /api/giveaways         create  (requires giveaways.create)
- * PATCH /api/giveaways/{id}    update  (manager or author)
+ * PATCH /api/giveaways/{id}    update  (manager or author).
  */
 class SaveGiveawayController implements RequestHandlerInterface
 {
@@ -176,7 +176,10 @@ class SaveGiveawayController implements RequestHandlerInterface
 
     private function date(mixed $value): ?Carbon
     {
-        if ($value === null || $value === '') return null;
+        if ($value === null || $value === '') {
+            return null;
+        }
+
         try {
             return Carbon::parse((string) $value);
         } catch (\Throwable $e) {
@@ -187,7 +190,9 @@ class SaveGiveawayController implements RequestHandlerInterface
     private function url(mixed $v): ?string
     {
         $v = trim((string) $v);
-        if ($v === '') return null;
+        if ($v === '') {
+            return null;
+        }
 
         // The cover URL is interpolated into a CSS `url("...")` on the frontend,
         // so strip any character that could break out of the quoted value (quotes,
@@ -195,6 +200,7 @@ class SaveGiveawayController implements RequestHandlerInterface
         $v = str_replace(['"', "'", '(', ')', '\\', "\n", "\r", "\t", ' '], '', $v);
 
         $ok = filter_var($v, FILTER_VALIDATE_URL) || (str_starts_with($v, '/') && ! str_starts_with($v, '//'));
+
         return $ok ? mb_substr($v, 0, 600) : null;
     }
 
@@ -204,8 +210,9 @@ class SaveGiveawayController implements RequestHandlerInterface
         $slug = $base;
         $i = 2;
         while (Giveaway::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {
-            $slug = $base . '-' . $i++;
+            $slug = $base.'-'.$i++;
         }
+
         return $slug;
     }
 }

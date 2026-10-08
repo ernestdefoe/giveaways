@@ -7,9 +7,9 @@
  */
 
 use ErnestDefoe\Giveaways\Api\Controller;
+use ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
 use ErnestDefoe\Giveaways\Listener\AwardPostBonus;
-use ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
 use Flarum\Extend;
@@ -18,18 +18,18 @@ use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 
 return [
     (new Extend\Frontend('forum'))
-        ->js(__DIR__ . '/js/dist/forum.js')
+        ->js(__DIR__.'/js/dist/forum.js')
         // The giveaway pages and modals are their own chunks; this publishes them.
-        ->jsDirectory(__DIR__ . '/js/dist/forum')
-        ->css(__DIR__ . '/less/forum.less')
+        ->jsDirectory(__DIR__.'/js/dist/forum')
+        ->css(__DIR__.'/less/forum.less')
         ->route('/giveaways', 'giveaways.index')
         ->route('/giveaways/{slug}', 'giveaways.show'),
 
     (new Extend\Frontend('admin'))
-        ->js(__DIR__ . '/js/dist/admin.js')
-        ->css(__DIR__ . '/less/admin.less'),
+        ->js(__DIR__.'/js/dist/admin.js')
+        ->css(__DIR__.'/less/admin.less'),
 
-    new Extend\Locales(__DIR__ . '/locale'),
+    new Extend\Locales(__DIR__.'/locale'),
 
     (new Extend\Settings())
         // On until switched off. A fourth serializeToForum() argument is

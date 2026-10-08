@@ -18,13 +18,13 @@ class ListCategoriesController implements RequestHandlerInterface
             ->orderBy('position')->orderBy('name')->get();
 
         $data = $cats->map(fn (GiveawayCategory $c) => [
-            'id'       => (int) $c->id,
-            'name'     => $c->name,
-            'slug'     => $c->slug,
-            'color'    => $c->color,
-            'icon'     => $c->icon,
+            'id' => (int) $c->id,
+            'name' => $c->name,
+            'slug' => $c->slug,
+            'color' => $c->color,
+            'icon' => $c->icon,
             'position' => (int) $c->position,
-            'count'    => (int) ($c->giveaways_count ?? 0),
+            'count' => (int) ($c->giveaways_count ?? 0),
         ])->all();
 
         return new JsonResponse(['data' => $data]);

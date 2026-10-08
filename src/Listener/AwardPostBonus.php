@@ -22,7 +22,8 @@ class AwardPostBonus
     public function __construct(
         protected EntryService $entries,
         protected LoggerInterface $log
-    ) {}
+    ) {
+    }
 
     public function handle(Posted $event): void
     {
@@ -51,7 +52,7 @@ class AwardPostBonus
         } catch (\Throwable $e) {
             // Never let bonus accounting break the act of posting.
             $this->log->warning('[giveaways] post-bonus award failed for user '
-                . $user->id . ': ' . $e->getMessage());
+                .$user->id.': '.$e->getMessage());
         }
     }
 }

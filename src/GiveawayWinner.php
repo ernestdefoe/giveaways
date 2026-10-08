@@ -25,9 +25,9 @@ class GiveawayWinner extends AbstractModel
     public $timestamps = false;
 
     protected $casts = [
-        'claimed_at'     => 'datetime',
-        'forfeited_at'   => 'datetime',
-        'position'       => 'integer',
+        'claimed_at' => 'datetime',
+        'forfeited_at' => 'datetime',
+        'position' => 'integer',
         'skill_attempts' => 'integer',
     ];
 

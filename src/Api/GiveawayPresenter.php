@@ -33,7 +33,8 @@ class GiveawayPresenter
         protected ?Collection $myEntries = null,
         protected ?Collection $myWins = null,
         protected ?Collection $aggregates = null
-    ) {}
+    ) {
+    }
 
     /** A presenter for a single giveaway (per-row lookups are fine for one row). */
     public static function forActor(User $actor): self
@@ -85,61 +86,61 @@ class GiveawayPresenter
         $canManage = $g->canBeManagedBy($this->actor);
 
         $data = [
-            'id'           => (int) $g->id,
-            'title'        => $g->title,
-            'slug'         => $g->slug,
-            'prize'        => $g->prize,
-            'description'  => $g->description,
-            'rules'        => $g->rules,
+            'id' => (int) $g->id,
+            'title' => $g->title,
+            'slug' => $g->slug,
+            'prize' => $g->prize,
+            'description' => $g->description,
+            'rules' => $g->rules,
             // The question is public so entrants can answer it; the expected
             // answer only ever goes back to someone who can manage the giveaway
             // (it populates the edit form) — never to an entrant.
             'skillQuestion' => $g->requiresSkillAnswer() ? (string) $s['skill_question'] : null,
-            'skillAnswer'  => $canManage ? (string) ($s['skill_answer'] ?? '') : null,
+            'skillAnswer' => $canManage ? (string) ($s['skill_answer'] ?? '') : null,
             // Wrong answers allowed before the winner forfeits (0 = unlimited).
             'skillAttempts' => $g->skillAttemptLimit(),
-            'coverUrl'     => $g->cover_url,
-            'winnerCount'  => (int) $g->winner_count,
-            'status'       => $g->status,
-            'startsAt'     => optional($g->starts_at)->toIso8601String(),
-            'endsAt'       => optional($g->ends_at)->toIso8601String(),
-            'drawnAt'      => optional($g->drawn_at)->toIso8601String(),
-            'running'      => $g->isRunning(),
+            'coverUrl' => $g->cover_url,
+            'winnerCount' => (int) $g->winner_count,
+            'status' => $g->status,
+            'startsAt' => optional($g->starts_at)->toIso8601String(),
+            'endsAt' => optional($g->ends_at)->toIso8601String(),
+            'drawnAt' => optional($g->drawn_at)->toIso8601String(),
+            'running' => $g->isRunning(),
             'entrantCount' => $entrantCount,
             'totalEntries' => $totalEntries,
-            'myEntries'    => $myEntry ? (int) $myEntry->entries : 0,
-            'mySources'    => $myEntry ? $myEntry->sourcesArray() : null,
-            'postBonus'    => (int) ($s['post_bonus'] ?? 0),
-            'minPosts'     => (int) ($s['min_posts'] ?? 0),
-            'minAgeDays'   => (int) ($s['min_age_days'] ?? 0),
-            'canManage'    => $canManage,
-            'canDraw'      => $canManage && $g->canBeDrawnBy($this->actor),
-            'canDelete'    => $canManage && $g->canBeDeletedBy($this->actor),
-            'isHost'       => ! $this->actor->isGuest() && $g->user_id && (int) $g->user_id === (int) $this->actor->id,
-            'iWon'         => (bool) $myWin,
-            'myClaimedAt'  => $myWin ? optional($myWin->claimed_at)->toIso8601String() : null,
-            'myForfeited'  => $myWin ? $myWin->isForfeited() : false,
+            'myEntries' => $myEntry ? (int) $myEntry->entries : 0,
+            'mySources' => $myEntry ? $myEntry->sourcesArray() : null,
+            'postBonus' => (int) ($s['post_bonus'] ?? 0),
+            'minPosts' => (int) ($s['min_posts'] ?? 0),
+            'minAgeDays' => (int) ($s['min_age_days'] ?? 0),
+            'canManage' => $canManage,
+            'canDraw' => $canManage && $g->canBeDrawnBy($this->actor),
+            'canDelete' => $canManage && $g->canBeDeletedBy($this->actor),
+            'isHost' => ! $this->actor->isGuest() && $g->user_id && (int) $g->user_id === (int) $this->actor->id,
+            'iWon' => (bool) $myWin,
+            'myClaimedAt' => $myWin ? optional($myWin->claimed_at)->toIso8601String() : null,
+            'myForfeited' => $myWin ? $myWin->isForfeited() : false,
             // Null when there is no limit; otherwise what this winner has left.
             'myAttemptsLeft' => ($myWin && $g->skillAttemptLimit() > 0)
                 ? max(0, $g->skillAttemptLimit() - (int) $myWin->skill_attempts)
                 : null,
             // Instructions are only meaningful to winners and managers.
             'claimInstructions' => ($myWin || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
-            'createdBy'    => $g->user ? self::user($g->user) : null,
-            'category'     => $g->category ? [
-                'id'    => (int) $g->category->id,
-                'name'  => $g->category->name,
-                'slug'  => $g->category->slug,
+            'createdBy' => $g->user ? self::user($g->user) : null,
+            'category' => $g->category ? [
+                'id' => (int) $g->category->id,
+                'name' => $g->category->name,
+                'slug' => $g->category->slug,
                 'color' => $g->category->color,
-                'icon'  => $g->category->icon,
+                'icon' => $g->category->icon,
             ] : null,
         ];
 
         if ($full) {
             $data['winners'] = $g->winners()->orderBy('position')->orderBy('id')->with('user')->get()
                 ->map(fn ($w) => [
-                    'position'  => (int) $w->position,
-                    'user'      => $w->user ? self::user($w->user) : null,
+                    'position' => (int) $w->position,
+                    'user' => $w->user ? self::user($w->user) : null,
                     'claimedAt' => optional($w->claimed_at)->toIso8601String(),
                     // Kept in the list on purpose: a forfeited winner is part of
                     // the record of how the prize moved.
@@ -160,6 +161,7 @@ class GiveawayPresenter
         if ($this->myEntries !== null) {
             return $this->myEntries->get($g->id);
         }
+
         return $g->entries()->where('user_id', $this->actor->id)->first();
     }
 
@@ -171,16 +173,17 @@ class GiveawayPresenter
         if ($this->myWins !== null) {
             return $this->myWins->get($g->id);
         }
+
         return $g->winners()->where('user_id', $this->actor->id)->first();
     }
 
     private static function user(User $u): array
     {
         return [
-            'id'          => (int) $u->id,
-            'username'    => $u->username,
+            'id' => (int) $u->id,
+            'username' => $u->username,
             'displayName' => $u->display_name,
-            'avatarUrl'   => $u->avatar_url,
+            'avatarUrl' => $u->avatar_url,
         ];
     }
 }

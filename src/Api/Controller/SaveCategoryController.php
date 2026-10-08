@@ -16,7 +16,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 /**
  * POST  /api/giveaway-categories         create  (giveaways.manage)
- * PATCH /api/giveaway-categories/{id}     update  (giveaways.manage)
+ * PATCH /api/giveaway-categories/{id}     update  (giveaways.manage).
  */
 class SaveCategoryController implements RequestHandlerInterface
 {
@@ -64,13 +64,13 @@ class SaveCategoryController implements RequestHandlerInterface
 
         return new JsonResponse([
             'data' => [
-                'id'       => (int) $cat->id,
-                'name'     => $cat->name,
-                'slug'     => $cat->slug,
-                'color'    => $cat->color,
-                'icon'     => $cat->icon,
+                'id' => (int) $cat->id,
+                'name' => $cat->name,
+                'slug' => $cat->slug,
+                'color' => $cat->color,
+                'icon' => $cat->icon,
                 'position' => (int) $cat->position,
-                'count'    => 0,
+                'count' => 0,
             ],
         ], $id ? 200 : 201);
     }
@@ -81,8 +81,9 @@ class SaveCategoryController implements RequestHandlerInterface
         $slug = $base;
         $i = 2;
         while (GiveawayCategory::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {
-            $slug = $base . '-' . $i++;
+            $slug = $base.'-'.$i++;
         }
+
         return $slug;
     }
 }

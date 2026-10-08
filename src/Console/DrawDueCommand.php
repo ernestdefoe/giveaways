@@ -31,6 +31,7 @@ class DrawDueCommand extends AbstractCommand
 
         if ($due->isEmpty()) {
             $this->info('No giveaways are due.');
+
             return 0;
         }
 
