@@ -3,7 +3,14 @@
     "description": "Run provably-fair giveaways and raffles on your Flarum 2 forum — earn-entries engine, scheduled auto-draws, winner notifications.",
     "type": "flarum-extension",
     "license": "MIT",
-    "keywords": ["flarum", "extension", "giveaway", "raffle", "contest", "sweepstakes"],
+    "keywords": [
+        "flarum",
+        "extension",
+        "giveaway",
+        "raffle",
+        "contest",
+        "sweepstakes"
+    ],
     "authors": [
         {
             "name": "Ernestdefoe",
@@ -24,6 +31,11 @@
             "ErnestDefoe\\Giveaways\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "ErnestDefoe\\Giveaways\\Tests\\": "tests/"
+        }
+    },
     "extra": {
         "flarum-extension": {
             "title": "Giveaways",
@@ -34,5 +46,25 @@
                 "color": "#1A2744"
             }
         }
-    }
+    },
+    "require-dev": {
+        "flarum/phpstan": "^2.0",
+        "flarum/testing": "^2.0"
+    },
+    "scripts": {
+        "test": [
+            "@test:integration"
+        ],
+        "test:integration": "phpunit -c tests/phpunit.integration.xml",
+        "test:setup": "@php tests/integration/setup.php",
+        "analyse:phpstan": "phpstan analyse"
+    },
+    "scripts-descriptions": {
+        "test": "Runs all tests.",
+        "test:integration": "Runs all integration tests.",
+        "test:setup": "Sets up a database for use with integration tests. Execute this only once.",
+        "analyse:phpstan": "Run static analysis"
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true
 }
