@@ -15,7 +15,7 @@ export const extend = [
       type: 'text',
       label: app.translator.trans('ernestdefoe-giveaways.admin.nav_label_setting'),
       help: app.translator.trans('ernestdefoe-giveaways.admin.nav_label_help'),
-      placeholder: 'Giveaways',
+      placeholder: app.translator.trans('ernestdefoe-giveaways.admin.nav_label_placeholder', {}, true),
     }))
     .permission(
       () => ({
