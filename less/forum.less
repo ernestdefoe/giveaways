@@ -280,8 +280,19 @@
   .icon { color: var(--muted-color); }
   &.is-done { color: @gv-accent; .icon { color: @gv-accent; } }
 }
-.GiveawayPage-manage .Button { margin-bottom: 8px; }
-.GiveawayPage-delete { color: var(--alert-error-color, #b00); }
+.GiveawayPage-manage {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+
+  // Side by side where the box is wide (under the page on a tablet), one per
+  // row in the sidebar and on a phone.
+  .Button {
+    flex: 1 1 160px;
+    margin: 0;
+  }
+}
 
 // ---- Winner claim ----
 .GiveawayPage-winnerBanner {

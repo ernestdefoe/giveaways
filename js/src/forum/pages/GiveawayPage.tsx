@@ -430,16 +430,16 @@ export default class GiveawayPage extends Page {
   manageBox(g: Giveaway): Mithril.Children {
     return (
       <div className="GiveawayPage-manage">
-        <Button className="Button Button--block" icon="fas fa-pencil-alt" onclick={() => this.edit()}>
+        <Button className="Button" icon="fas fa-pencil-alt" onclick={() => this.edit()}>
           {app.translator.trans('ernestdefoe-giveaways.forum.edit')}
         </Button>
         {g.canDraw && (
-          <Button className="Button Button--block" icon="fas fa-dice" onclick={() => this.draw()}>
+          <Button className="Button" icon="fas fa-dice" onclick={() => this.draw()}>
             {app.translator.trans('ernestdefoe-giveaways.forum.draw_now')}
           </Button>
         )}
         {g.canDelete && (
-          <Button className="Button Button--block GiveawayPage-delete" icon="fas fa-trash" onclick={() => this.remove()}>
+          <Button className="Button Button--danger" icon="fas fa-trash" onclick={() => this.remove()}>
             {app.translator.trans('ernestdefoe-giveaways.forum.delete')}
           </Button>
         )}
