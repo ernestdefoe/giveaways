@@ -20,3 +20,16 @@ export function countdown(iso: string | null): string {
 export function isPast(iso: string | null): boolean {
   return !!iso && new Date(iso).getTime() <= Date.now();
 }
+
+/** A full, localized date and time, e.g. "October 19, 2026 9:00 PM" (dayjs is a Flarum global). */
+export function dateTime(iso: string | null): string {
+  return iso ? dayjs(iso).format('LLL') : '';
+}
+
+/** What the giveaway is doing now, as the cards and page label it. */
+export type Phase = 'draft' | 'upcoming' | 'active' | 'drawn' | 'cancelled';
+
+export function phase(g: { status: string; startsAt: string | null }): Phase {
+  if (g.status === 'active' && g.startsAt && !isPast(g.startsAt)) return 'upcoming';
+  return g.status as Phase;
+}

@@ -123,10 +123,12 @@ class DrawService
     /** Send each winner a "you won" alert. Failures here never block the draw. */
     protected function notifyWinners(Giveaway $giveaway, array $winnerIds, ?int $position = null): void
     {
+        // One query for every winner, not one each.
+        $users = User::query()->whereIn('id', $winnerIds)->get()->keyBy('id');
+
         foreach ($winnerIds as $pos => $uid) {
             try {
-                $user = User::find($uid);
-                if ($user) {
+                if ($user = $users->get($uid)) {
                     $this->notifications->sync(
                         new GiveawayWonBlueprint($giveaway, $position ?? $pos + 1),
                         [$user]

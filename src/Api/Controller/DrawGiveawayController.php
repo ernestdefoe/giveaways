@@ -28,7 +28,8 @@ class DrawGiveawayController implements RequestHandlerInterface
         $actor->assertRegistered();
 
         $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
-        $g = Giveaway::query()->with(['user', 'category'])->findOrFail($id);
+        // Relations are loaded after the draw: refresh() would reload them twice.
+        $g = Giveaway::query()->visibleTo($actor)->findOrFail($id);
 
         if (! $g->canBeManagedBy($actor)) {
             throw new PermissionDeniedException();

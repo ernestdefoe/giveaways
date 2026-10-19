@@ -5,6 +5,7 @@ namespace ErnestDefoe\Giveaways;
 use Carbon\Carbon;
 use Flarum\Database\AbstractModel;
 use Flarum\User\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -26,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $entrant_hash
  * @property \Carbon\Carbon|null $drawn_at
  * @property int|null $category_id
+ * @property int|null $post_id
+ * @property int|null $discussion_id
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, GiveawayEntry> $entries
@@ -43,6 +46,28 @@ class Giveaway extends AbstractModel
         'drawn_at' => 'datetime',
         'winner_count' => 'integer',
     ];
+
+    /**
+     * A draft is seen by the member who made it and nobody else — not even a
+     * manager — until it is published (by hand, or by posting the post it was
+     * made in).
+     *
+     * @param Builder<Giveaway> $query
+     */
+    public function scopeVisibleTo(Builder $query, User $actor): void
+    {
+        $query->where(function (Builder $q) use ($actor) {
+            $q->where('status', '!=', 'draft');
+            if (! $actor->isGuest()) {
+                $q->orWhere(fn (Builder $q) => $q->where('status', 'draft')->where('user_id', $actor->id));
+            }
+        });
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->status === 'draft';
+    }
 
     /** @return HasMany<GiveawayEntry, $this> */
     public function entries(): HasMany
@@ -97,7 +122,7 @@ class Giveaway extends AbstractModel
     public function canBeDeletedBy(User $actor): bool
     {
         return $this->canBeManagedBy($actor)
-            && ($this->status === 'active' || $actor->hasPermission('giveaways.manage'));
+            && (in_array($this->status, ['active', 'draft'], true) || $actor->hasPermission('giveaways.manage'));
     }
 
     /** Decoded settings (entry methods + eligibility) with defaults. */
@@ -110,7 +135,8 @@ class Giveaway extends AbstractModel
             'min_posts' => 0,
             'min_age_days' => 0,
             'announce' => true,
-            'claim_instructions' => '',  // shown to winners when they claim their prize
+            'claim_instructions' => '',  // shown to every winner once they claim
+            'claim_lines' => '',  // one per line: winner #1 gets line 1, and so on
             'skill_question' => '',  // skill-testing question (empty = off)
             'skill_answer' => '',  // its expected answer; never sent to entrants
             'skill_attempts' => 0,   // wrong answers allowed before forfeit (0 = unlimited)
@@ -167,6 +193,31 @@ class Giveaway extends AbstractModel
         $value = rtrim(trim(mb_strtolower($value)), '.');
 
         return (string) preg_replace('/[\s,]+/u', '', $value);
+    }
+
+    /**
+     * The line of the per-winner list that belongs to the winner in this
+     * position, or null when the list is shorter than the number of winners.
+     * Another winner's line is never handed out in its place.
+     */
+    public function claimLineFor(int $position): ?string
+    {
+        $lines = array_values(array_filter(
+            array_map('trim', preg_split('/\R/u', (string) $this->settingsArray()['claim_lines']) ?: []),
+            'strlen'
+        ));
+
+        return $lines[$position - 1] ?? null;
+    }
+
+    /** Whether people can view who has entered: the host, managers, or the permission. */
+    public function participantsVisibleTo(User $actor): bool
+    {
+        return ! $actor->isGuest() && (
+            ($this->user_id && (int) $actor->id === (int) $this->user_id)
+            || $actor->hasPermission('giveaways.viewParticipants')
+            || $actor->hasPermission('giveaways.manage')
+        );
     }
 
     public function isRunning(): bool

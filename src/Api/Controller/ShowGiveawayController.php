@@ -23,8 +23,8 @@ class ShowGiveawayController implements RequestHandlerInterface
         // The slug first: a title of only digits used to get a slug like
         // "2024", which was then looked up as id 2024 and 404ed. The id is the
         // fallback, for the routes and notifications that pass one.
-        $g = Giveaway::query()->with(['user', 'category'])->where('slug', $key)->first()
-            ?? (ctype_digit($key) ? Giveaway::query()->with(['user', 'category'])->find((int) $key) : null);
+        $g = Giveaway::query()->visibleTo($actor)->with(['user', 'category'])->where('slug', $key)->first()
+            ?? (ctype_digit($key) ? Giveaway::query()->visibleTo($actor)->with(['user', 'category'])->find((int) $key) : null);
 
         if (! $g) {
             throw new ModelNotFoundException();

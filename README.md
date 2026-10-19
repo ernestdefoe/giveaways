@@ -25,7 +25,13 @@ Run **provably-fair giveaways** on your [Flarum](https://flarum.org) community. 
 - 🏆 **Multiple winners** — draw any number of weighted winners in a single fair pass.
 - 🧩 **Giveaway cards in posts** — paste a giveaway's link on a line of its own and the post shows the giveaway's card. Every link on a page is looked up in one request, and a link to a giveaway that no longer exists stays a plain link. Works with flarum/markdown and with Scribe.
 - 🖼️ **Cover from your media library** — with [fof/upload](https://github.com/FriendsOfFlarum/upload) enabled, the cover image field gets a **Media library** button: pick an image you uploaded before, or upload a new one, in fof/upload's own media manager.
-- 🔐 **Granular permissions** — separate *enter*, *create own*, and *manage all* permissions.
+- ✍️ **Add a giveaway from the composer** — an **Add giveaway** button in the discussion and reply composers. The giveaway is saved as a draft only you can see, its link goes into your post, and it goes public when the post is posted (or approved, with flarum/approval). Saving the post as a [fof/drafts](https://github.com/FriendsOfFlarum/drafts) draft — or scheduling it — keeps the giveaway a draft until the post goes up.
+- 📝 **Drafts** — save any giveaway as a draft and publish it when ready. The list page has **All / Open / Ended / Drafts** tabs; Drafts only shows for members who have some.
+- 🗓️ **Start and draw times** — the giveaway page shows when it starts (if set) and when it is drawn; before the start it reads "Starts in…" and entry opens on time.
+- 🎫 **One prize per winner** — list one prize per line (gift codes, keys…): winner #1 gets line 1, winner #2 line 2, and so on. Each winner sees only their own line, and only after claiming. The winner count shows next to the prize (`× 10`).
+- 👥 **Participants list** — the host, managers and anyone with *View giveaway participants* can see who entered and when, a page at a time.
+- 🖋️ **Formatted descriptions and rules** — written in the forum's own editor and rendered by Flarum's formatter, exactly like a post: links, lists, bold and italic, safely.
+- 🔐 **Granular permissions** — separate *enter*, *create own*, *view participants* and *manage all* permissions.
 
 ## Screenshots
 
@@ -75,6 +81,7 @@ Because the seed and entrant hash are published on the giveaway page, anyone can
 |---|---|---|
 | `giveaways.enter` | Members | Enter giveaways |
 | `giveaways.create` | Admins | Create and manage **own** giveaways |
+| `giveaways.viewParticipants` | Moderators | See who entered a giveaway, and when (a host always sees their own) |
 | `giveaways.manage` | Admins | Manage **all** giveaways |
 
 ## Settings

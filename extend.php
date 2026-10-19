@@ -10,10 +10,15 @@ use ErnestDefoe\Giveaways\Api\Controller;
 use ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
 use ErnestDefoe\Giveaways\Listener\AwardPostBonus;
+use ErnestDefoe\Giveaways\Listener\PublishFromPost;
 use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
 use Flarum\Extend;
+use Flarum\Api\Context;
+use Flarum\Api\Resource\ForumResource;
+use Flarum\Api\Schema;
 use Flarum\Post\Event\Posted;
+use Flarum\Post\Event\Revised;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
 
 return [
@@ -47,13 +52,27 @@ return [
         ->post('/giveaways/{id}/enter', 'giveaways.enter', Controller\EnterGiveawayController::class)
         ->post('/giveaways/{id}/draw', 'giveaways.draw', Controller\DrawGiveawayController::class)
         ->post('/giveaways/{id}/claim', 'giveaways.claim', Controller\ClaimGiveawayController::class)
+        ->get('/giveaways/{id}/entrants', 'giveaways.entrants', Controller\ListEntrantsController::class)
         ->get('/giveaway-categories', 'giveaways.categories.index', Controller\ListCategoriesController::class)
         ->post('/giveaway-categories', 'giveaways.categories.create', Controller\SaveCategoryController::class)
         ->patch('/giveaway-categories/{id}', 'giveaways.categories.update', Controller\SaveCategoryController::class)
         ->delete('/giveaway-categories/{id}', 'giveaways.categories.delete', Controller\DeleteCategoryController::class),
 
     (new Extend\Event())
-        ->listen(Posted::class, AwardPostBonus::class),
+        ->listen(Posted::class, AwardPostBonus::class)
+        // A draft made in the composer goes public with its post.
+        ->listen(Posted::class, PublishFromPost::class)
+        ->listen(Revised::class, PublishFromPost::class)
+        // Only dispatched when flarum/approval is enabled.
+        ->listen('Flarum\\Approval\\Event\\PostWasApproved', PublishFromPost::class),
+
+    // Shows the composer's "Add giveaway" button. A permission the actor's
+    // groups were already loaded for: no query.
+    (new Extend\ApiResource(ForumResource::class))
+        ->fields(fn () => [
+            Schema\Boolean::make('canCreateGiveaways')
+                ->get(fn ($forum, Context $context) => $context->getActor()->hasPermission('giveaways.create')),
+        ]),
 
     new Extend\ApiResource(Resource\GiveawayResource::class),
 

@@ -35,7 +35,7 @@ class ClaimGiveawayController implements RequestHandlerInterface
         $actor->assertRegistered();
 
         $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
-        $g = Giveaway::query()->with(['user', 'category'])->findOrFail($id);
+        $g = Giveaway::query()->visibleTo($actor)->with(['user', 'category'])->findOrFail($id);
 
         $win = $g->winners()->where('user_id', $actor->id)->first();
         if (! $win) {

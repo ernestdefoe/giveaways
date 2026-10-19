@@ -27,7 +27,7 @@ class EnterGiveawayController implements RequestHandlerInterface
         $actor->assertCan('giveaways.enter');
 
         $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
-        $g = Giveaway::query()->with(['user', 'category'])->findOrFail($id);
+        $g = Giveaway::query()->visibleTo($actor)->with(['user', 'category'])->findOrFail($id);
 
         $reason = $this->entries->ineligibleReason($g, $actor);
         if ($reason) {

@@ -5,6 +5,7 @@ namespace ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Api\Resource\AbstractDatabaseResource;
 use Flarum\Api\Schema;
+use Flarum\Http\RequestUtil;
 use Illuminate\Database\Eloquent\Builder;
 use Tobyz\JsonApiServer\Context as BaseContext;
 
@@ -31,7 +32,9 @@ class GiveawayResource extends AbstractDatabaseResource
 
     public function scope(Builder $query, BaseContext $context): void
     {
-        // Giveaways are public; no per-row gating needed.
+        // Giveaways are public, except a draft, which only its maker sees.
+        /** @var Builder<Giveaway> $query */
+        $query->visibleTo(RequestUtil::getActor($context->request));
     }
 
     public function endpoints(): array

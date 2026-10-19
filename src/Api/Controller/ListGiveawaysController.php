@@ -26,14 +26,14 @@ class ListGiveawaysController implements RequestHandlerInterface
 
         $keys = $this->keys($request);
 
-        $giveaways = Giveaway::query()->with(['user', 'category'])
+        $giveaways = Giveaway::query()->visibleTo($actor)->with(['user', 'category'])
             ->when($keys !== null, function ($q) use ($keys) {
                 // A link carries a slug, or an id from before slugs were safe.
                 $ids = array_values(array_filter($keys, 'ctype_digit'));
                 $q->where(fn ($q) => $q->whereIn('slug', $keys)->when($ids, fn ($q) => $q->orWhereIn('id', $ids)));
             })
             // Portable ordering — FIELD() is MySQL-only (breaks PG/SQLite).
-            ->orderByRaw("CASE status WHEN 'active' THEN 0 WHEN 'drawn' THEN 1 WHEN 'cancelled' THEN 2 ELSE 3 END")
+            ->orderByRaw("CASE status WHEN 'active' THEN 0 WHEN 'draft' THEN 1 WHEN 'drawn' THEN 2 WHEN 'cancelled' THEN 3 ELSE 4 END")
             ->orderBy('ends_at', 'desc')
             ->limit(100)->get();
 

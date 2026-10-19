@@ -4,6 +4,7 @@ import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import LinkButton from 'flarum/common/components/LinkButton';
 import CommentPost from 'flarum/forum/components/CommentPost';
 import scanForGiveaways from './embed/scan';
+import addToComposer from './composer/addToComposer';
 
 import GiveawayWonNotification from './components/GiveawayWonNotification';
 import GiveawayClaimedNotification from './components/GiveawayClaimedNotification';
@@ -32,4 +33,6 @@ app.initializers.add('ernestdefoe-giveaways', () => {
   extend(CommentPost.prototype, ['oncreate', 'onupdate'], function (this: CommentPost) {
     scanForGiveaways(this.element);
   });
+
+  addToComposer();
 });

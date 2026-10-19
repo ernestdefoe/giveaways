@@ -7,14 +7,16 @@ import Link from 'flarum/common/components/Link';
 import Icon from 'flarum/common/components/Icon';
 import humanTime from 'flarum/common/helpers/humanTime';
 
-import { showGiveaway, enterGiveaway, drawGiveaway, deleteGiveaway, claimGiveaway } from '../../common/api';
+import { showGiveaway, enterGiveaway, drawGiveaway, deleteGiveaway, claimGiveaway, saveGiveaway } from '../../common/api';
 import type { Giveaway } from '../../common/api';
-import { countdown } from '../../common/format';
+import { countdown, dateTime, phase } from '../../common/format';
+import { winnerCount } from '../components/GiveawayCard';
 
 export default class GiveawayPage extends Page {
   loading = true;
   entering = false;
   claiming = false;
+  publishing = false;
   answer = '';
   giveaway: Giveaway | null = null;
 
@@ -91,6 +93,24 @@ export default class GiveawayPage extends Page {
       });
   }
 
+  publish() {
+    const g = this.giveaway!;
+    this.publishing = true;
+    saveGiveaway({ publish: true }, g.id)
+      .then((res) => {
+        this.giveaway = res.data;
+        app.alerts.show({ type: 'success' }, app.translator.trans('ernestdefoe-giveaways.forum.published'));
+      })
+      .finally(() => {
+        this.publishing = false;
+        m.redraw();
+      });
+  }
+
+  participants() {
+    app.modal.show(() => import('../components/ParticipantsModal'), { giveaway: this.giveaway });
+  }
+
   edit() {
     app.modal.show(() => import('../components/GiveawayFormModal'), { giveaway: this.giveaway, onsave: () => this.load() });
   }
@@ -117,6 +137,8 @@ export default class GiveawayPage extends Page {
       );
     }
 
+    const p = phase(g);
+
     return (
       <div className="GiveawayPage">
         <div
@@ -128,8 +150,8 @@ export default class GiveawayPage extends Page {
               <Link className="GiveawayPage-back" href={app.route('giveaways.index')}>
                 <Icon name="fas fa-chevron-left" /> {app.translator.trans('ernestdefoe-giveaways.forum.nav')}
               </Link>
-              <span className={`GiveawayCard-status GiveawayCard-status--${g.status}`}>
-                {app.translator.trans(`ernestdefoe-giveaways.forum.status_${g.status}`)}
+              <span className={`GiveawayCard-status GiveawayCard-status--${p}`}>
+                {app.translator.trans(`ernestdefoe-giveaways.forum.status_${p}`)}
               </span>
               {g.category && (
                 <span className="GiveawayPage-category" style={{ backgroundColor: g.category.color }}>
@@ -139,6 +161,7 @@ export default class GiveawayPage extends Page {
               <h1 className="GiveawayPage-title">{g.title}</h1>
               <div className="GiveawayPage-prize">
                 <Icon name="fas fa-trophy" /> {g.prize}
+                {winnerCount(g.winnerCount)}
               </div>
             </div>
           </div>
@@ -146,6 +169,7 @@ export default class GiveawayPage extends Page {
 
         <div className="container GiveawayPage-content">
           <div className="GiveawayPage-main">
+            {this.draftNotice(g)}
             {this.winnerBanner(g)}
             {this.descriptionBlock(g)}
             {this.rulesBlock(g)}
@@ -159,6 +183,22 @@ export default class GiveawayPage extends Page {
           </aside>
         </div>
       </div>
+    );
+  }
+
+  /** Only its maker ever sees a draft, so this speaks to them. */
+  draftNotice(g: Giveaway): Mithril.Children {
+    if (g.status !== 'draft') return null;
+    return (
+      <section className="GiveawayPage-draftNotice">
+        <Icon name="fas fa-eye-slash" />
+        <p>{app.translator.trans('ernestdefoe-giveaways.forum.draft_notice')}</p>
+        {g.canManage && (
+          <Button className="Button Button--primary" icon="fas fa-paper-plane" loading={this.publishing} onclick={() => this.publish()}>
+            {app.translator.trans('ernestdefoe-giveaways.forum.publish')}
+          </Button>
+        )}
+      </section>
     );
   }
 
@@ -223,10 +263,16 @@ export default class GiveawayPage extends Page {
             </Button>,
           ]
         )}
-        {claimed && g.claimInstructions ? (
+        {claimed && (g.myClaimLine || g.claimInstructions) ? (
           <div className="GiveawayPage-claimInstructions">
             <h4>{app.translator.trans('ernestdefoe-giveaways.forum.claim_next_steps')}</h4>
-            {g.claimInstructions.split('\n').map((l) => (l.trim() ? <p>{l}</p> : null))}
+            {g.myClaimLine && (
+              <div className="GiveawayPage-claimLine">
+                <label>{app.translator.trans('ernestdefoe-giveaways.forum.your_prize')}</label>
+                <code>{g.myClaimLine}</code>
+              </div>
+            )}
+            {(g.claimInstructions || '').split('\n').map((l) => (l.trim() ? <p>{l}</p> : null))}
           </div>
         ) : null}
       </section>
@@ -234,11 +280,12 @@ export default class GiveawayPage extends Page {
   }
 
   descriptionBlock(g: Giveaway): Mithril.Children {
-    if (!g.description) return null;
+    if (!g.descriptionHtml) return null;
+    // Safe HTML from the forum's formatter, rendered server-side like a post.
     return (
       <section className="GiveawayPage-section">
         <h2>{app.translator.trans('ernestdefoe-giveaways.forum.description_label')}</h2>
-        <div className="GiveawayPage-description">{g.description.split('\n').map((line) => (line.trim() ? <p>{line}</p> : null))}</div>
+        <div className="GiveawayPage-description GiveawayPage-richText">{m.trust(g.descriptionHtml)}</div>
       </section>
     );
   }
@@ -246,10 +293,10 @@ export default class GiveawayPage extends Page {
   /**
    * Official rules, in their own section rather than folded into the details
    * blurb: where contest law requires them they have to be published in full,
-   * and they can run long. Rendered as plain text with line breaks preserved.
+   * and they can run long. Formatted like a post.
    */
   rulesBlock(g: Giveaway): Mithril.Children {
-    if (!g.rules && !g.skillQuestion) return null;
+    if (!g.rulesHtml && !g.skillQuestion) return null;
     return (
       <section className="GiveawayPage-section GiveawayPage-rules">
         <h2>
@@ -265,7 +312,7 @@ export default class GiveawayPage extends Page {
             )}
           </div>
         )}
-        {g.rules && <div className="GiveawayPage-rulesBody">{g.rules.split('\n').map((line) => (line.trim() ? <p>{line}</p> : null))}</div>}
+        {g.rulesHtml && <div className="GiveawayPage-rulesBody GiveawayPage-richText">{m.trust(g.rulesHtml)}</div>}
       </section>
     );
   }
@@ -366,6 +413,7 @@ export default class GiveawayPage extends Page {
   }
 
   actionBox(g: Giveaway): Mithril.Children {
+    const p = phase(g);
     const active = g.status === 'active';
     const entered = g.myEntries > 0;
 
@@ -376,7 +424,11 @@ export default class GiveawayPage extends Page {
           <span>{app.translator.trans('ernestdefoe-giveaways.forum.entrants', { count: g.entrantCount })}</span>
         </div>
 
-        {active ? (
+        {p === 'upcoming' ? (
+          <div className="GiveawayPage-countdown">
+            <Icon name="fas fa-hourglass-start" /> {app.translator.trans('ernestdefoe-giveaways.forum.starts_in', { time: countdown(g.startsAt) })}
+          </div>
+        ) : active || p === 'draft' ? (
           <div className="GiveawayPage-countdown">
             <Icon name="fas fa-clock" /> {app.translator.trans('ernestdefoe-giveaways.forum.ends_in', { time: countdown(g.endsAt) })}
           </div>
@@ -387,6 +439,20 @@ export default class GiveawayPage extends Page {
           </div>
         )}
 
+        <dl className="GiveawayPage-times">
+          {g.startsAt && [
+            <dt>{app.translator.trans('ernestdefoe-giveaways.forum.starts_label')}</dt>,
+            <dd>
+              <time datetime={g.startsAt}>{dateTime(g.startsAt)}</time>
+            </dd>,
+          ]}
+          <dt>{app.translator.trans('ernestdefoe-giveaways.forum.draw_time_label')}</dt>
+          <dd>
+            {/* Once drawn (a manager can draw early), when it actually happened. */}
+            <time datetime={g.drawnAt || g.endsAt || ''}>{dateTime(g.drawnAt || g.endsAt)}</time>
+          </dd>
+        </dl>
+
         {active &&
           (entered ? (
             <div className="GiveawayPage-entered">
@@ -396,6 +462,10 @@ export default class GiveawayPage extends Page {
             <div className="GiveawayPage-entered GiveawayPage-hosting">
               <Icon name="fas fa-gift" /> {app.translator.trans('ernestdefoe-giveaways.forum.hosting')}
             </div>
+          ) : p === 'upcoming' ? (
+            <Button className="Button Button--block" icon="fas fa-hourglass-start" disabled>
+              {app.translator.trans('ernestdefoe-giveaways.forum.not_started')}
+            </Button>
           ) : !app.session.user ? (
             <Button className="Button Button--primary Button--block" onclick={() => this.enter()}>
               {app.translator.trans('ernestdefoe-giveaways.forum.login_to_enter')}
@@ -407,6 +477,18 @@ export default class GiveawayPage extends Page {
           ))}
 
         {active && entered && g.postBonus > 0 && this.earnMore(g)}
+
+        {g.canViewParticipants && g.entrantCount > 0 && (
+          <Button className="Button Button--block GiveawayPage-participantsButton" icon="fas fa-users" onclick={() => this.participants()}>
+            {app.translator.trans('ernestdefoe-giveaways.forum.participants.button')}
+          </Button>
+        )}
+
+        {g.discussionId && (
+          <Link className="GiveawayPage-discussionLink" href={app.route('discussion', { id: String(g.discussionId) })}>
+            <Icon name="far fa-comments" /> {app.translator.trans('ernestdefoe-giveaways.forum.view_discussion')}
+          </Link>
+        )}
       </div>
     );
   }

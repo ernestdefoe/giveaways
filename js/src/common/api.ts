@@ -30,8 +30,12 @@ export interface Giveaway {
   title: string;
   slug: string;
   prize: string;
-  description: string | null;
-  rules: string | null;
+  /** Editable source — only sent to those who can edit it, on the detail endpoint. */
+  description?: string;
+  rules?: string;
+  /** Rendered by the forum's formatter (safe HTML), detail endpoint only. */
+  descriptionHtml?: string | null;
+  rulesHtml?: string | null;
   /** Public question the drawn winner must answer to claim; null when none is set. */
   skillQuestion: string | null;
   /** Expected answer — only sent to managers, for the edit form. */
@@ -40,7 +44,8 @@ export interface Giveaway {
   skillAttempts: number;
   coverUrl: string | null;
   winnerCount: number;
-  status: 'active' | 'drawn' | 'cancelled';
+  /** A draft is only ever sent to the member who made it. */
+  status: 'draft' | 'active' | 'drawn' | 'cancelled';
   startsAt: string | null;
   endsAt: string | null;
   drawnAt: string | null;
@@ -64,7 +69,15 @@ export interface Giveaway {
   myForfeited: boolean;
   /** Null when unlimited; otherwise what this winner has left. */
   myAttemptsLeft: number | null;
+  /** Shared instructions: a winner gets them once they have claimed. */
   claimInstructions: string | null;
+  /** This winner's own line of the per-winner list, once claimed. */
+  myClaimLine: string | null;
+  /** The whole per-winner list — editors only. */
+  claimLines: string | null;
+  canViewParticipants: boolean;
+  /** The discussion it was posted in, if the viewer can see it (detail endpoint only). */
+  discussionId?: number | null;
   createdBy: GiveawayUser | null;
   category: { id: number; name: string; slug: string; color: string; icon: string | null } | null;
   winners?: GiveawayWinner[];
@@ -104,6 +117,16 @@ export function claimGiveaway(id: number, answer?: string): Promise<{ data: Give
     url: `${base()}/${id}/claim`,
     body: { data: { attributes: { answer: answer ?? '' } } },
   });
+}
+
+export interface Entrant {
+  user: GiveawayUser | null;
+  entries: number;
+  joinedAt: string | null;
+}
+
+export function listEntrants(id: number, offset = 0): Promise<{ data: Entrant[]; meta: { total: number; offset: number; limit: number } }> {
+  return app.request({ method: 'GET', url: `${base()}/${id}/entrants`, params: { page: { offset } } });
 }
 
 export function deleteGiveaway(id: number): Promise<unknown> {

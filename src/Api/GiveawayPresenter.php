@@ -5,6 +5,8 @@ namespace ErnestDefoe\Giveaways\Api;
 use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\GiveawayWinner;
+use ErnestDefoe\Giveaways\RichText;
+use Flarum\Discussion\Discussion;
 use Flarum\User\User;
 use Illuminate\Support\Collection;
 
@@ -85,13 +87,13 @@ class GiveawayPresenter
         $s = $g->settingsArray();
         $canManage = $g->canBeManagedBy($this->actor);
 
+        $myClaimed = $myWin && $myWin->claimed_at && ! $myWin->isForfeited();
+
         $data = [
             'id' => (int) $g->id,
             'title' => $g->title,
             'slug' => $g->slug,
             'prize' => $g->prize,
-            'description' => $g->description,
-            'rules' => $g->rules,
             // The question is public so entrants can answer it; the expected
             // answer only ever goes back to someone who can manage the giveaway
             // (it populates the edit form) — never to an entrant.
@@ -116,6 +118,7 @@ class GiveawayPresenter
             'canManage' => $canManage,
             'canDraw' => $canManage && $g->canBeDrawnBy($this->actor),
             'canDelete' => $canManage && $g->canBeDeletedBy($this->actor),
+            'canViewParticipants' => $g->participantsVisibleTo($this->actor),
             'isHost' => ! $this->actor->isGuest() && $g->user_id && (int) $g->user_id === (int) $this->actor->id,
             'iWon' => (bool) $myWin,
             'myClaimedAt' => $myWin ? optional($myWin->claimed_at)->toIso8601String() : null,
@@ -124,8 +127,13 @@ class GiveawayPresenter
             'myAttemptsLeft' => ($myWin && $g->skillAttemptLimit() > 0)
                 ? max(0, $g->skillAttemptLimit() - (int) $myWin->skill_attempts)
                 : null,
-            // Instructions are only meaningful to winners and managers.
-            'claimInstructions' => ($myWin || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
+            // Instructions go to a winner only once they have claimed (after any
+            // skill question), and to those who manage the giveaway.
+            'claimInstructions' => ($myClaimed || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
+            // A winner's own line of the per-winner list, and only theirs.
+            'myClaimLine' => $myClaimed ? $g->claimLineFor((int) $myWin->position) : null,
+            // The whole list fills the edit form; it never goes to a winner.
+            'claimLines' => $canManage ? (string) ($s['claim_lines'] ?? '') : null,
             'createdBy' => $g->user ? self::user($g->user) : null,
             'category' => $g->category ? [
                 'id' => (int) $g->category->id,
@@ -137,6 +145,15 @@ class GiveawayPresenter
         ];
 
         if ($full) {
+            // Rendered by the forum's formatter, as a post is. The editable
+            // source only goes to whoever can edit it.
+            $rich = resolve(RichText::class);
+            $data['descriptionHtml'] = $rich->html($g->description, $g);
+            $data['rulesHtml'] = $rich->html($g->rules, $g);
+            if ($canManage) {
+                $data['description'] = $rich->source($g->description, $g);
+                $data['rules'] = $rich->source($g->rules, $g);
+            }
             $data['winners'] = $g->winners()->orderBy('position')->orderBy('id')->with('user')->get()
                 ->map(fn ($w) => [
                     'position' => (int) $w->position,
@@ -146,6 +163,11 @@ class GiveawayPresenter
                     // the record of how the prize moved.
                     'forfeited' => $w->isForfeited(),
                 ])->all();
+            // The discussion it was posted in, unless this viewer can't see it
+            // (a private discussion's id is not theirs to learn).
+            $data['discussionId'] = $g->discussion_id
+                && Discussion::query()->whereVisibleTo($this->actor)->whereKey($g->discussion_id)->exists()
+                ? (int) $g->discussion_id : null;
             $data['drawSeed'] = $g->draw_seed;
             $data['entrantHash'] = $g->entrant_hash;
         }

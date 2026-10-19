@@ -37,6 +37,15 @@ export const extend = [
     )
     .permission(
       () => ({
+        icon: 'fas fa-users',
+        label: app.translator.trans('ernestdefoe-giveaways.admin.perm_view_participants'),
+        permission: 'giveaways.viewParticipants',
+      }),
+      'moderate',
+      91
+    )
+    .permission(
+      () => ({
         icon: 'fas fa-cog',
         label: app.translator.trans('ernestdefoe-giveaways.admin.perm_manage'),
         permission: 'giveaways.manage',

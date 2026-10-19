@@ -9,6 +9,8 @@ import { listGiveaways, listCategories } from '../../common/api';
 import type { Giveaway, GiveawayCategory } from '../../common/api';
 import GiveawayCard from '../components/GiveawayCard';
 
+type Tab = 'all' | 'open' | 'ended' | 'drafts';
+
 export default class GiveawaysPage extends Page {
   loading = true;
   giveaways: Giveaway[] = [];
@@ -16,6 +18,7 @@ export default class GiveawaysPage extends Page {
   canCreate = false;
   canManage = false;
   filter: number | null = null;
+  tab: Tab = 'all';
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
@@ -61,8 +64,15 @@ export default class GiveawaysPage extends Page {
 
   view(): Mithril.Children {
     const filtered = this.giveaways.filter((g) => this.matchesFilter(g));
-    const active = filtered.filter((g) => g.status === 'active');
-    const past = filtered.filter((g) => g.status !== 'active');
+    // Only the viewer's own drafts ever come back, so a Drafts tab only shows
+    // for someone who has some.
+    const drafts = this.giveaways.filter((g) => g.status === 'draft');
+    if (this.tab === 'drafts' && !drafts.length) this.tab = 'all';
+
+    const active = this.tab === 'all' || this.tab === 'open' ? filtered.filter((g) => g.status === 'active') : [];
+    const past = this.tab === 'all' || this.tab === 'ended' ? filtered.filter((g) => g.status === 'drawn' || g.status === 'cancelled') : [];
+    const draftsShown = this.tab === 'drafts' ? filtered.filter((g) => g.status === 'draft') : [];
+    const shown = active.length + past.length + draftsShown.length;
 
     return (
       <div className="GiveawaysPage">
@@ -86,6 +96,23 @@ export default class GiveawaysPage extends Page {
         </div>
 
         <div className="container GiveawaysPage-content">
+          <nav className="GiveawaysPage-tabs" role="tablist">
+            {(['all', 'open', 'ended', 'drafts'] as Tab[])
+              .filter((t) => t !== 'drafts' || drafts.length > 0)
+              .map((t) => (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={this.tab === t}
+                  className={'GiveawaysPage-tab' + (this.tab === t ? ' is-active' : '')}
+                  onclick={() => (this.tab = t)}
+                >
+                  {app.translator.trans(`ernestdefoe-giveaways.forum.tabs.${t}`)}
+                  {t === 'drafts' && <span className="GiveawaysPage-tabCount">{drafts.length}</span>}
+                </button>
+              ))}
+          </nav>
+
           {this.categories.length > 0 && (
             <div className="GiveawaysPage-filters">
               <button
@@ -117,7 +144,7 @@ export default class GiveawaysPage extends Page {
 
           {this.loading ? (
             <GwSkeleton />
-          ) : filtered.length === 0 ? (
+          ) : shown === 0 ? (
             <div className="GiveawaysPage-empty">{app.translator.trans('ernestdefoe-giveaways.forum.empty')}</div>
           ) : (
             [
@@ -126,8 +153,8 @@ export default class GiveawaysPage extends Page {
                   /* 🚨 Measured on the element's own lifecycle, not after the
                      fetch: a requestAnimationFrame there races Mithril's
                      redraw and can run before anything has been drawn. */
-                  oncreate={() => rememberSections([active.length, past.length])}
-                  onupdate={() => rememberSections([active.length, past.length])}
+                  oncreate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
+                  onupdate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
                 >
                   <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.active_heading')}</h2>
                   <div className="GiveawaysPage-grid">
@@ -141,12 +168,23 @@ export default class GiveawaysPage extends Page {
                 <section
                   /* Also here: a forum with only finished giveaways renders no
                      active section, and would otherwise remember nothing. */
-                  oncreate={() => rememberSections([active.length, past.length])}
-                  onupdate={() => rememberSections([active.length, past.length])}
+                  oncreate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
+                  onupdate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
                 >
                   <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.past_heading')}</h2>
                   <div className="GiveawaysPage-grid">
                     {past.map((g) => (
+                      <GiveawayCard key={g.id} giveaway={g} />
+                    ))}
+                  </div>
+                </section>
+              ),
+              draftsShown.length > 0 && (
+                <section>
+                  <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.drafts_heading')}</h2>
+                  <p className="helpText">{app.translator.trans('ernestdefoe-giveaways.forum.drafts_help')}</p>
+                  <div className="GiveawaysPage-grid">
+                    {draftsShown.map((g) => (
                       <GiveawayCard key={g.id} giveaway={g} />
                     ))}
                   </div>

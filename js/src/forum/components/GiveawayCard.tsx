@@ -3,7 +3,7 @@ import Component from 'flarum/common/Component';
 import type Mithril from 'mithril';
 import Link from 'flarum/common/components/Link';
 import Icon from 'flarum/common/components/Icon';
-import { countdown } from '../../common/format';
+import { countdown, phase } from '../../common/format';
 import type { Giveaway } from '../../common/api';
 
 export interface GiveawayCardAttrs {
@@ -13,7 +13,7 @@ export interface GiveawayCardAttrs {
 export default class GiveawayCard extends Component<GiveawayCardAttrs> {
   view(): Mithril.Children {
     const g = this.attrs.giveaway;
-    const active = g.status === 'active';
+    const p = phase(g);
 
     return (
       <Link className="GiveawayCard" href={app.route('giveaways.show', { slug: g.slug })}>
@@ -22,9 +22,7 @@ export default class GiveawayCard extends Component<GiveawayCardAttrs> {
           style={g.coverUrl ? { backgroundImage: `url("${g.coverUrl}")` } : undefined}
         >
           {!g.coverUrl && <Icon name="fas fa-gift" />}
-          <span className={`GiveawayCard-status GiveawayCard-status--${g.status}`}>
-            {app.translator.trans(`ernestdefoe-giveaways.forum.status_${g.status}`)}
-          </span>
+          <span className={`GiveawayCard-status GiveawayCard-status--${p}`}>{app.translator.trans(`ernestdefoe-giveaways.forum.status_${p}`)}</span>
         </div>
 
         <div className="GiveawayCard-body">
@@ -36,14 +34,17 @@ export default class GiveawayCard extends Component<GiveawayCardAttrs> {
           <h3 className="GiveawayCard-title">{g.title}</h3>
           <div className="GiveawayCard-prize">
             <Icon name="fas fa-trophy" /> {g.prize}
+            {winnerCount(g.winnerCount)}
           </div>
 
           <div className="GiveawayCard-meta">
             <span>
               <Icon name="fas fa-clock" />{' '}
-              {active
-                ? app.translator.trans('ernestdefoe-giveaways.forum.ends_in', { time: countdown(g.endsAt) })
-                : app.translator.trans('ernestdefoe-giveaways.forum.ended')}
+              {p === 'upcoming'
+                ? app.translator.trans('ernestdefoe-giveaways.forum.starts_in', { time: countdown(g.startsAt) })
+                : p === 'active' || p === 'draft'
+                  ? app.translator.trans('ernestdefoe-giveaways.forum.ends_in', { time: countdown(g.endsAt) })
+                  : app.translator.trans('ernestdefoe-giveaways.forum.ended')}
             </span>
             <span>
               <Icon name="fas fa-users" /> {app.translator.trans('ernestdefoe-giveaways.forum.entrants', { count: g.entrantCount })}
@@ -59,4 +60,11 @@ export default class GiveawayCard extends Component<GiveawayCardAttrs> {
       </Link>
     );
   }
+}
+
+/** "× 10" after the prize, when there is more than one winner. */
+export function winnerCount(count: number): Mithril.Children {
+  return count > 1 ? (
+    <span className="GiveawayWinnerCount">{app.translator.trans('ernestdefoe-giveaways.forum.winner_count', { count })}</span>
+  ) : null;
 }

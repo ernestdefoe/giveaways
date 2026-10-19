@@ -5,6 +5,7 @@ namespace ErnestDefoe\Giveaways\Api\Controller;
 use Carbon\Carbon;
 use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\Giveaway;
+use ErnestDefoe\Giveaways\RichText;
 use Flarum\Foundation\ValidationException;
 use Flarum\Http\RequestUtil;
 use Flarum\Locale\TranslatorInterface;
@@ -22,7 +23,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class SaveGiveawayController implements RequestHandlerInterface
 {
-    public function __construct(protected TranslatorInterface $translator)
+    public function __construct(protected TranslatorInterface $translator, protected RichText $rich)
     {
     }
 
@@ -34,13 +35,16 @@ class SaveGiveawayController implements RequestHandlerInterface
         $attrs = (array) Arr::get((array) $request->getParsedBody(), 'data.attributes', []);
 
         if ($id) {
-            $g = Giveaway::query()->findOrFail((int) $id);
+            // Someone else's draft does not exist as far as this actor knows.
+            $g = Giveaway::query()->visibleTo($actor)->findOrFail((int) $id);
             $this->assertCanManage($actor, $g);
         } else {
             $actor->assertCan('giveaways.create');
             $g = new Giveaway();
             $g->user_id = $actor->id;
-            $g->status = 'active';
+            // A draft is seen only by its maker until it is published — by hand,
+            // or by posting the post it was made in (see PublishFromPost).
+            $g->status = ! empty($attrs['draft']) ? 'draft' : 'active';
         }
 
         $errors = [];
@@ -70,11 +74,13 @@ class SaveGiveawayController implements RequestHandlerInterface
         if (array_key_exists('startsAt', $attrs)) {
             $g->starts_at = $this->date($attrs['startsAt']);
         }
+        // Parsed by the forum's formatter, like a post, so links, lists and
+        // emphasis work and nothing unsafe gets through.
         if (array_key_exists('description', $attrs)) {
-            $g->description = mb_substr((string) $attrs['description'], 0, 20000) ?: null;
+            $g->description = $this->rich->store((string) $attrs['description'], $g, $actor);
         }
         if (array_key_exists('rules', $attrs)) {
-            $g->rules = mb_substr(trim((string) $attrs['rules']), 0, 20000) ?: null;
+            $g->rules = $this->rich->store((string) $attrs['rules'], $g, $actor);
         }
         if (array_key_exists('coverUrl', $attrs)) {
             $g->cover_url = $this->url($attrs['coverUrl']);
@@ -96,6 +102,9 @@ class SaveGiveawayController implements RequestHandlerInterface
         }
         if (array_key_exists('claimInstructions', $attrs)) {
             $s['claim_instructions'] = mb_substr(trim((string) $attrs['claimInstructions']), 0, 2000);
+        }
+        if (array_key_exists('claimLines', $attrs)) {
+            $s['claim_lines'] = mb_substr(trim((string) $attrs['claimLines']), 0, 20000);
         }
         if (array_key_exists('skillQuestion', $attrs)) {
             $s['skill_question'] = mb_substr(trim((string) $attrs['skillQuestion']), 0, 300);
@@ -119,7 +128,7 @@ class SaveGiveawayController implements RequestHandlerInterface
             // Once drawn, the terms the winners were picked and judged under are
             // fixed. Changing the skill answer afterwards could fail the winner's
             // correct answer and move the prize on to someone else.
-            if ($g->status !== 'active' && $this->drawTerms($g) !== $before) {
+            if (! in_array($g->status, ['active', 'draft'], true) && $this->drawTerms($g) !== $before) {
                 $errors['draw'] = $this->translator->trans('ernestdefoe-giveaways.api.locked_after_draw');
             }
 
@@ -131,6 +140,15 @@ class SaveGiveawayController implements RequestHandlerInterface
                 && $g->entries()->exists()) {
                 $errors['endsAt'] = $this->translator->trans('ernestdefoe-giveaways.api.ends_no_earlier');
             }
+        }
+
+        // Publishing a draft by hand. It has to end in the future, or it would
+        // be drawn against nobody a minute later.
+        if ($id && $g->isDraft() && ! empty($attrs['publish'])) {
+            if ($g->ends_at && $g->ends_at->isPast()) {
+                $errors['endsAt'] = $this->translator->trans('ernestdefoe-giveaways.api.ends_future');
+            }
+            $g->status = 'active';
         }
 
         if ($errors) {
