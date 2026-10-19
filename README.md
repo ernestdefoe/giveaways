@@ -23,6 +23,8 @@ Run **provably-fair giveaways** on your [Flarum](https://flarum.org) community. 
 - 📦 **Prize claiming** — winners get a "You won!" banner with a one-click **Claim** button; the host is notified and can see per-winner claim status, plus optional claim instructions (e.g. "DM me your address").
 - 🛡️ **Provably fair** — every draw publishes a random **seed** and a **SHA-256 hash** of the full entrant list, so the result is independently reproducible and tamper-evident.
 - 🏆 **Multiple winners** — draw any number of weighted winners in a single fair pass.
+- 🧩 **Giveaway cards in posts** — paste a giveaway's link on a line of its own and the post shows the giveaway's card. Every link on a page is looked up in one request, and a link to a giveaway that no longer exists stays a plain link. Works with flarum/markdown and with Scribe.
+- 🖼️ **Cover from your media library** — with [fof/upload](https://github.com/FriendsOfFlarum/upload) enabled, the cover image field gets a **Media library** button: pick an image you uploaded before, or upload a new one, in fof/upload's own media manager.
 - 🔐 **Granular permissions** — separate *enter*, *create own*, and *manage all* permissions.
 
 ## Screenshots

@@ -2,6 +2,8 @@ import app from 'flarum/forum/app';
 import { extend } from 'flarum/common/extend';
 import IndexSidebar from 'flarum/forum/components/IndexSidebar';
 import LinkButton from 'flarum/common/components/LinkButton';
+import CommentPost from 'flarum/forum/components/CommentPost';
+import scanForGiveaways from './embed/scan';
 
 import GiveawayWonNotification from './components/GiveawayWonNotification';
 import GiveawayClaimedNotification from './components/GiveawayClaimedNotification';
@@ -23,5 +25,11 @@ app.initializers.add('ernestdefoe-giveaways', () => {
     const label = app.forum.attribute<string>('giveawaysNavLabel') || app.translator.trans('ernestdefoe-giveaways.forum.nav');
 
     items.add('giveaways', LinkButton.component({ href: app.route('giveaways.index'), icon: 'fas fa-gift' }, label), 5);
+  });
+
+  // A giveaway link on its own line in a post shows as the giveaway's card.
+  // onupdate too: an edited post replaces its content, links and all.
+  extend(CommentPost.prototype, ['oncreate', 'onupdate'], function (this: CommentPost) {
+    scanForGiveaways(this.element);
   });
 });

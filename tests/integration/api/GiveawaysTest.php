@@ -95,6 +95,53 @@ class GiveawaysTest extends TestCase
     }
 
     #[Test]
+    public function a_title_of_only_digits_gets_a_page_that_opens()
+    {
+        // Made before the fix: its slug is all digits, and used to be read as an id.
+        $this->database()->table('giveaways')->insert(['id' => 20, 'user_id' => 3, 'title' => '2024', 'slug' => '2024', 'prize' => 'X', 'status' => 'active', 'ends_at' => Carbon::now()->addWeek()]);
+
+        [$status, $body] = $this->call('GET', '/api/giveaways/2024');
+        $this->assertSame(200, $status, 'An existing all-digit slug opens without being re-saved');
+        $this->assertSame(20, $body['data']['id']);
+
+        [$status, $body] = $this->call('POST', '/api/giveaways', 3, ['title' => '2025', 'prize' => 'P', 'endsAt' => Carbon::now()->addWeek()->toIso8601String()]);
+        $this->assertSame(201, $status, json_encode($body));
+        $this->assertSame('giveaway-2025', $body['data']['slug']);
+
+        [$status, $shown] = $this->call('GET', '/api/giveaways/giveaway-2025');
+        $this->assertSame(200, $status);
+        $this->assertSame($body['data']['id'], $shown['data']['id']);
+    }
+
+    #[Test]
+    public function a_title_in_chinese_keeps_its_letters_in_the_slug()
+    {
+        [$status, $body] = $this->call('POST', '/api/giveaways', 3, ['title' => '新年抽奖 2025', 'prize' => 'P', 'endsAt' => Carbon::now()->addWeek()->toIso8601String()]);
+        $this->assertSame(201, $status, json_encode($body));
+        $this->assertSame('新年抽奖-2025', $body['data']['slug']);
+
+        [$status, $shown] = $this->call('GET', '/api/giveaways/'.rawurlencode('新年抽奖-2025'));
+        $this->assertSame(200, $status);
+        $this->assertSame($body['data']['id'], $shown['data']['id']);
+
+        [, $body] = $this->call('POST', '/api/giveaways', 3, ['title' => '🎁', 'prize' => 'P', 'endsAt' => Carbon::now()->addWeek()->toIso8601String()]);
+        $this->assertSame('giveaway', $body['data']['slug']);
+    }
+
+    #[Test]
+    public function links_in_posts_are_looked_up_in_one_request()
+    {
+        $list = function (string $slugs) {
+            $request = $this->request('GET', '/api/giveaways')->withQueryParams(['filter' => ['slug' => $slugs]]);
+
+            return json_decode((string) $this->send($request)->getBody(), true)['data'];
+        };
+
+        $this->assertEqualsCanonicalizing([1, 11, 12], array_column($list('running,giveaway-12,nope,11'), 'id'));
+        $this->assertSame([], $list(''));
+    }
+
+    #[Test]
     public function the_skill_answer_goes_only_to_those_who_manage_the_giveaway()
     {
         [, $body] = $this->call('GET', '/api/giveaways/1', 2);
