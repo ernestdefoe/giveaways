@@ -661,6 +661,8 @@
 .GiveawayPage-richText {
   ul, ol { padding-left: 1.6em; margin-bottom: 10px; }
   p { margin-bottom: 10px; }
+  // Scribe wraps each list item in a <p>: no paragraph gap inside a list.
+  li > p { margin: 0; }
   img { max-width: 100%; height: auto; }
 }
 .GiveawayParticipants {
