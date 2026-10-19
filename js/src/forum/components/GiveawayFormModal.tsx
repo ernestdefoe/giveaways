@@ -6,6 +6,7 @@ import Button from 'flarum/common/components/Button';
 import Stream from 'flarum/common/utils/Stream';
 
 import { saveGiveaway, listCategories } from '../../common/api';
+import { hasMediaLibrary, pickImage } from '../utils/mediaLibrary';
 import type { Giveaway, GiveawayCategory } from '../../common/api';
 
 export interface GiveawayFormAttrs extends IInternalModalAttrs {
@@ -153,12 +154,19 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
           {this.numberField(t('skill_attempts_label'), this.skillAttempts, 0, t('skill_attempts_help'), this.drawn())}
           {this.field(
             t('cover_label'),
-            <input
-              className="FormControl"
-              value={this.coverUrl()}
-              placeholder={t('cover_placeholder') as string}
-              oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)}
-            />
+            <div className="GiveawayFormModal-cover">
+              <input
+                className="FormControl"
+                value={this.coverUrl()}
+                placeholder={t('cover_placeholder') as string}
+                oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)}
+              />
+              {hasMediaLibrary() && (
+                <Button className="Button" icon="fas fa-photo-video" onclick={() => pickImage((url) => this.coverUrl(url))}>
+                  {t('cover_pick')}
+                </Button>
+              )}
+            </div>
           )}
           {this.categories.length > 0 &&
             this.field(
