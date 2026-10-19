@@ -204,9 +204,28 @@ class SaveGiveawayController implements RequestHandlerInterface
         return $ok ? mb_substr($v, 0, 600) : null;
     }
 
+    /**
+     * A slug is never all digits: /giveaways/2024 would read as giveaway #2024.
+     * A title with no Latin letters (Chinese, Japanese, Korean...) keeps its own
+     * letters, as core's UTF-8 discussion slugs do, instead of collapsing to a
+     * bare number or to nothing.
+     */
+    public static function slugFor(string $title): string
+    {
+        $slug = Str::slug($title);
+        if ($slug === '' || ctype_digit(str_replace('-', '', $slug))) {
+            $slug = Str::slug($title, '-', null);
+        }
+        if ($slug === '' || ctype_digit(str_replace('-', '', $slug))) {
+            $slug = trim('giveaway-'.$slug, '-');
+        }
+
+        return mb_substr($slug, 0, 200);
+    }
+
     private function uniqueSlug(string $title, ?int $ignoreId = null): string
     {
-        $base = Str::slug($title) ?: 'giveaway';
+        $base = self::slugFor($title);
         $slug = $base;
         $i = 2;
         while (Giveaway::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {

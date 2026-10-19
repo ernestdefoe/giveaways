@@ -86,7 +86,7 @@ export function listGiveaways(): Promise<ListResult> {
 }
 
 export function showGiveaway(idOrSlug: number | string): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({ method: 'GET', url: `${base()}/${idOrSlug}` });
+  return app.request<{ data: Giveaway }>({ method: 'GET', url: `${base()}/${encodeURIComponent(idOrSlug)}` });
 }
 
 export function enterGiveaway(id: number): Promise<{ data: Giveaway }> {
