@@ -715,3 +715,11 @@
   // The editor's own Post button has nothing to post here.
   .item-submit, .item-preview { display: none; }
 }
+// Composer header items carry -4px margins; space it like Flarum Tags' button.
+.ComposerBody-giveaway {
+  margin-right: 15px;
+  line-height: inherit;
+  @media @tablet-up {
+    &--reply { margin-left: 15px; }
+  }
+}
