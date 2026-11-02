@@ -87,6 +87,12 @@ class DrawService
             return null;
         }
 
+        // The caller locks only the forfeiting winner's row. Two winners of the
+        // same giveaway forfeiting together would each read the board before the
+        // other's replacement landed and promote the same entrant. Locking the
+        // giveaway serialises replacements (no-op outside a transaction).
+        Giveaway::query()->whereKey($giveaway->id)->lockForUpdate()->first();
+
         $entries = $giveaway->entries()->orderBy('user_id')->get(['user_id', 'entries']);
         $pool = $entries->map(fn ($e) => ['user_id' => (int) $e->user_id, 'entries' => max(1, (int) $e->entries)])->values()->all();
 

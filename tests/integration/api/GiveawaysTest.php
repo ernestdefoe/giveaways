@@ -225,6 +225,27 @@ class GiveawaysTest extends TestCase
     }
 
     #[Test]
+    public function a_second_draw_adds_no_winners_and_the_database_refuses_a_duplicate()
+    {
+        $this->call('POST', '/api/giveaways/2/draw', 3);
+        [$status] = $this->call('POST', '/api/giveaways/2/draw', 3);
+        $this->assertSame(1, $this->database()->table('giveaway_winners')->where('giveaway_id', 2)->count(), "status $status");
+
+        $winner = (int) $this->database()->table('giveaway_winners')->where('giveaway_id', 2)->value('user_id');
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->database()->table('giveaway_winners')->insert(['giveaway_id' => 2, 'user_id' => $winner, 'position' => 2]);
+    }
+
+    #[Test]
+    public function deleting_a_category_row_leaves_its_giveaways_uncategorised()
+    {
+        $this->database()->table('giveaway_categories')->where('id', 1)->delete();
+
+        $this->assertSame(0, $this->database()->table('giveaways')->whereNotNull('category_id')->count());
+    }
+
+    #[Test]
     public function the_host_cannot_draw_a_running_giveaway_early()
     {
         [$status] = $this->call('POST', '/api/giveaways/1/draw', 3);
