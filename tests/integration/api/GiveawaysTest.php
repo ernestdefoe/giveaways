@@ -240,6 +240,13 @@ class GiveawaysTest extends TestCase
     #[Test]
     public function deleting_a_category_row_leaves_its_giveaways_uncategorised()
     {
+        // flarum/testing turns SQLite's foreign_keys pragma off before its
+        // per-test transaction, and SQLite cannot turn it back on inside one.
+        // Real SQLite installs run with foreign_key_constraints on.
+        if ($this->database()->getDriverName() === 'sqlite') {
+            $this->markTestSkipped('Foreign keys are off inside flarum/testing\'s SQLite transaction.');
+        }
+
         $this->database()->table('giveaway_categories')->where('id', 1)->delete();
 
         $this->assertSame(0, $this->database()->table('giveaways')->whereNotNull('category_id')->count());
