@@ -277,6 +277,14 @@ class AdventTest extends TestCase
 
         $sent = $this->database()->table('notifications')->where('type', 'giveawayDoorOpen')->pluck('user_id')->map(fn ($u) => (int) $u)->all();
         $this->assertSame([11], $sent);
+
+        // A second calendar's alert too: the alerts list must not pay per calendar.
+        $other = (int) $this->build(['title' => 'Other doors'])['id'];
+        $this->call('POST', "/api/giveaway-calendars/$other/remind", 11, ['on' => true]);
+        $this->app()->getContainer()->call([new SendDoorReminders($other, 3), 'handle']);
+        [$status, $alerts] = $this->call('GET', '/api/notifications', 11);
+        $this->assertSame(200, $status);
+        $this->assertCount(2, array_filter($alerts['data'], fn ($n) => $n['attributes']['contentType'] === 'giveawayDoorOpen'));
         $this->assertSame(3, $this->app()->getContainer()->make(Clock::class)->today(Calendar::query()->findOrFail($id)));
     }
 
@@ -290,5 +298,34 @@ class AdventTest extends TestCase
         $this->assertSame(204, $status);
         $this->assertSame(0, Giveaway::query()->where('calendar_id', $id)->count());
         $this->assertSame(0, $this->database()->table('giveaway_calendar_opens')->count());
+    }
+
+    #[Test]
+    public function the_calendar_list_costs_the_same_for_one_calendar_as_for_ten()
+    {
+        $count = function () {
+            $db = $this->database();
+            $db->flushQueryLog();
+            $db->enableQueryLog();
+            [$status] = $this->call('GET', '/api/giveaway-calendars', 10);
+            $this->assertSame(200, $status);
+            $n = count($db->getQueryLog());
+            $db->disableQueryLog();
+
+            return $n;
+        };
+
+        $first = $this->build()['id'];
+        $this->open(10, $first, 3);
+        $this->call('POST', "/api/giveaway-calendars/$first/remind", 10, ['on' => true]);
+        $one = $count();
+
+        for ($i = 2; $i <= 10; $i++) {
+            $id = $this->build(['title' => "Calendar $i"])['id'];
+            $this->open(10, $id, 3);
+        }
+        $ten = $count();
+
+        $this->assertSame($one, $ten, "listing 10 calendars ran $ten queries, 1 ran $one");
     }
 }

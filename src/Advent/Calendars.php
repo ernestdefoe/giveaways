@@ -231,6 +231,7 @@ class Calendars
         $grand->title = $calendar->title;
         $grand->prize = $in['prize'];
         $grand->winner_count = $in['winners'];
+        $grand->slug ??= Slugs::unique(Giveaway::class, $calendar->slug);
         $this->own($calendar, $grand, 1, $calendar->days, $in['instructions'], $in['lines']);
     }
 
@@ -243,6 +244,15 @@ class Calendars
         Giveaway::query()->whereIn('id', $gone)->delete();
 
         $existing = Door::query()->where('calendar_id', $calendar->id)->with('giveaway')->get()->keyBy('day');
+
+        // A door's draw is named after its calendar and day (winter-doors-3):
+        // unique among the calendar's own, and no door's title in an address.
+        // Any clash with another giveaway is found in one query, not one per door.
+        $wanted = [];
+        for ($day = 1; $day <= $calendar->days; $day++) {
+            $wanted[$day] = mb_substr($calendar->slug, 0, 190).'-'.$day;
+        }
+        $taken = Giveaway::query()->whereIn('slug', $wanted)->where(fn ($q) => $q->whereNull('calendar_id')->orWhere('calendar_id', '!=', $calendar->id))->pluck('slug')->flip();
 
         for ($day = 1; $day <= $calendar->days; $day++) {
             $door = $existing->get($day);
@@ -272,6 +282,7 @@ class Calendars
                     $draw->winner_count = $in['winners'];
                 }
                 $settings = $draw->settingsArray();
+                $draw->slug ??= isset($taken[$wanted[$day]]) ? Slugs::unique(Giveaway::class, $wanted[$day]) : $wanted[$day];
                 $this->own($calendar, $draw, $day, $day, $in['instructions'] ?? $settings['claim_instructions'], $in['lines'] ?? $settings['claim_lines']);
                 $door->giveaway_id = $draw->id;
             } elseif ($draw) {
@@ -305,9 +316,6 @@ class Calendars
         $giveaway->settings = json_encode($settings);
         if ($giveaway->status !== 'drawn') {
             $giveaway->status = $calendar->isPublished() ? 'active' : 'draft';
-        }
-        if (! $giveaway->slug || $giveaway->isDirty('title')) {
-            $giveaway->slug = Slugs::unique(Giveaway::class, $giveaway->title, $giveaway->id);
         }
         $giveaway->created_at ??= Carbon::now();
         $giveaway->updated_at = Carbon::now();

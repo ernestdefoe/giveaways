@@ -128,13 +128,16 @@ class CalendarResource extends AbstractDatabaseResource
         $manage = fn ($calendar, Context $context) => $context->getActor()->hasPermission(self::MANAGE);
         // Accepted from managers and handed to Calendars::save as sent; nothing is set here.
         $input = fn (Schema\Attribute $field) => $field->writable($manage)->set(fn () => null);
+        // Only on the calendar's own endpoints: as an alert's subject a calendar
+        // needs its title and slug, not a grand prize or doors (one query each).
+        $own = fn ($calendar, Context $context) => $context->collection instanceof self;
         $single = fn ($calendar, Context $context) => $manage($calendar, $context) && ! $context->endpoint instanceof Endpoint\Index;
         $extra = fn (Calendar $c, string $key, mixed $default) => $this->extras[$c][$key] ?? $default;
 
         return [
             $input(Schema\Str::make('title')),
             Schema\Str::make('slug'),
-            Schema\Str::make('descriptionHtml')->nullable()->get(fn (Calendar $c) => $this->rich->html($c->description, $c)),
+            Schema\Str::make('descriptionHtml')->nullable()->visible($own)->get(fn (Calendar $c) => $this->rich->html($c->description, $c)),
             $input(Schema\Str::make('startsOn'))->get(fn (Calendar $c) => $c->starts_on->format('Y-m-d')),
             $input(Schema\Integer::make('days')),
             // The zone the doors actually follow, so the page can say so.
@@ -148,16 +151,16 @@ class CalendarResource extends AbstractDatabaseResource
             Schema\Integer::make('tickets')->get(fn (Calendar $c) => $extra($c, 'tickets', 0)),
             Schema\Boolean::make('remind')->get(fn (Calendar $c) => $extra($c, 'remind', false)),
             // Why this member can't open doors right now (not eligible, not signed in...), or null.
-            Schema\Str::make('ineligible')->nullable()->get(fn (Calendar $c, Context $context) => $this->ineligible($c, $context->getActor())),
+            Schema\Str::make('ineligible')->nullable()->visible($own)->get(fn (Calendar $c, Context $context) => $this->ineligible($c, $context->getActor())),
             Schema\Boolean::make('canManage')->get($manage),
-            Schema\Arr::make('grand')->nullable()->get(fn (Calendar $c) => $c->grand ? [
+            Schema\Arr::make('grand')->nullable()->visible($own)->get(fn (Calendar $c) => $c->grand ? [
                 'slug' => $c->grand->slug,
                 'prize' => $c->grand->prize,
                 'winnerCount' => (int) $c->grand->winner_count,
                 'status' => $c->grand->status,
             ] : null),
             // Sent by the builder (handed to Calendars::save); read back as the member's own view.
-            $input(Schema\Arr::make('doors'))->get(fn (Calendar $c) => $this->doorView->forMember(
+            $input(Schema\Arr::make('doors'))->visible($own)->get(fn (Calendar $c) => $this->doorView->forMember(
                 $c,
                 $extra($c, 'opened', []),
                 $extra($c, 'doors', []),
