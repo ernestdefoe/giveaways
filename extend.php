@@ -6,11 +6,14 @@
  * Licensed under the MIT license.
  */
 
+use ErnestDefoe\Giveaways\Advent;
 use ErnestDefoe\Giveaways\Api\Controller;
 use ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
+use ErnestDefoe\Giveaways\Console\RemindCommand;
 use ErnestDefoe\Giveaways\Listener\AwardPostBonus;
 use ErnestDefoe\Giveaways\Listener\PublishFromPost;
+use ErnestDefoe\Giveaways\Notification\DoorOpenBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
 use Flarum\Extend;
@@ -28,7 +31,8 @@ return [
         ->jsDirectory(__DIR__.'/js/dist/forum')
         ->css(__DIR__.'/less/forum.less')
         ->route('/giveaways', 'giveaways.index')
-        ->route('/giveaways/{slug}', 'giveaways.show'),
+        ->route('/giveaways/{slug}', 'giveaways.show')
+        ->route('/advent/{slug}', 'giveaways.advent'),
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
@@ -40,6 +44,8 @@ return [
         // On until switched off. A fourth serializeToForum() argument is
         // ignored on Flarum 2; the default has to be registered.
         ->default('ernestdefoe-giveaways.show_nav', true)
+        // Jokers per member per advent calendar (0–3), for opening a missed door.
+        ->default('ernestdefoe-giveaways.advent_jokers', 1)
         ->serializeToForum('giveawaysNavLabel', 'ernestdefoe-giveaways.nav_label')
         ->serializeToForum('giveawaysShowNav', 'ernestdefoe-giveaways.show_nav', 'boolval'),
 
@@ -75,14 +81,30 @@ return [
         ]),
 
     new Extend\ApiResource(Resource\GiveawayResource::class),
+    new Extend\ApiResource(Advent\CalendarResource::class),
+
+    // Both optional: a calendar follows Festoon's timezone, and a door can
+    // feature a Secret Santa exchange.
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('ernestdefoe-festoon', fn () => [
+            (new Extend\ServiceProvider())->register(Advent\FestoonProvider::class),
+        ])
+        ->whenExtensionEnabled('ernestdefoe-secret-santa', fn () => [
+            (new Extend\ServiceProvider())->register(Advent\SecretSantaProvider::class),
+        ]),
 
     (new Extend\Notification())
         ->type(GiveawayWonBlueprint::class, ['alert'])
-        ->type(GiveawayClaimedBlueprint::class, ['alert']),
+        ->type(GiveawayClaimedBlueprint::class, ['alert'])
+        ->type(DoorOpenBlueprint::class, ['alert']),
 
     (new Extend\Console())
         ->command(DrawDueCommand::class)
         ->schedule(DrawDueCommand::class, function (ScheduledEvent $event) {
             $event->everyMinute()->withoutOverlapping();
+        })
+        ->command(RemindCommand::class)
+        ->schedule(RemindCommand::class, function (ScheduledEvent $event) {
+            $event->everyFiveMinutes()->withoutOverlapping();
         }),
 ];

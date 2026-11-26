@@ -57,6 +57,8 @@ class PublishFromPost
             $drafts = Giveaway::query()
                 ->where('status', 'draft')
                 ->where('user_id', $post->user_id)
+                // A calendar's giveaways go public with the calendar.
+                ->whereNull('calendar_id')
                 ->whereIn('slug', $slugs)
                 ->get();
 

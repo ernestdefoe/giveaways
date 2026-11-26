@@ -26,6 +26,12 @@
         "php": "^8.3",
         "flarum/core": "^2.0"
     },
+    "suggest": {
+        "ernestdefoe/festoon": "Advent calendars open their doors at Festoon's midnight.",
+        "ernestdefoe/secret-santa": "An advent door can feature a Secret Santa exchange.",
+        "fof/upload": "Pick a giveaway's cover image from the media library.",
+        "flarum/approval": "A giveaway added in the composer goes public when its post is approved."
+    },
     "autoload": {
         "psr-4": {
             "ErnestDefoe\\Giveaways\\": "src/"
@@ -44,7 +50,13 @@
                 "name": "fas fa-gift",
                 "backgroundColor": "#69c6b9",
                 "color": "#1A2744"
-            }
+            },
+            "optional-dependencies": [
+                "flarum/approval",
+                "fof/upload",
+                "ernestdefoe/festoon",
+                "ernestdefoe/secret-santa"
+            ]
         }
     },
     "require-dev": {

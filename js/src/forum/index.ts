@@ -9,7 +9,7 @@ import addToComposer from './composer/addToComposer';
 import GiveawayWonNotification from './components/GiveawayWonNotification';
 import GiveawayClaimedNotification from './components/GiveawayClaimedNotification';
 
-export { default as extend } from '../common/extend';
+export { default as extend } from './extend';
 
 app.initializers.add('ernestdefoe-giveaways', () => {
   app.routes['giveaways.index'] = { path: '/giveaways', component: () => import('./pages/GiveawaysPage') };

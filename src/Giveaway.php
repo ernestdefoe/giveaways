@@ -3,6 +3,7 @@
 namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
+use ErnestDefoe\Giveaways\Advent\Calendar;
 use Flarum\Database\AbstractModel;
 use Flarum\User\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,12 +30,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $category_id
  * @property int|null $post_id
  * @property int|null $discussion_id
+ * @property int|null $calendar_id
+ * @property string|null $calendar_role
  * @property \Carbon\Carbon|null $created_at
  * @property \Carbon\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, GiveawayEntry> $entries
  * @property-read \Illuminate\Database\Eloquent\Collection<int, GiveawayWinner> $winners
  * @property-read User|null $user
  * @property-read GiveawayCategory|null $category
+ * @property-read Calendar|null $calendar
  */
 class Giveaway extends AbstractModel
 {
@@ -45,12 +49,17 @@ class Giveaway extends AbstractModel
         'ends_at' => 'datetime',
         'drawn_at' => 'datetime',
         'winner_count' => 'integer',
+        'calendar_id' => 'integer',
     ];
 
     /**
      * A draft is seen by the member who made it and nobody else — not even a
      * manager — until it is published (by hand, or by posting the post it was
      * made in).
+     *
+     * An advent calendar's giveaways don't exist before their door opens
+     * (the grand prize before the first door), except to those who build
+     * calendars: that is what keeps a future door's prize unseen.
      *
      * @param Builder<Giveaway> $query
      */
@@ -62,6 +71,16 @@ class Giveaway extends AbstractModel
                 $q->orWhere(fn (Builder $q) => $q->where('status', 'draft')->where('user_id', $actor->id));
             }
         });
+
+        if (! $actor->hasPermission('giveaways.manage')) {
+            $query->where(fn (Builder $q) => $q->whereNull('calendar_id')->orWhere('starts_at', '<=', Carbon::now()));
+        }
+    }
+
+    /** @return BelongsTo<Calendar, $this> */
+    public function calendar(): BelongsTo
+    {
+        return $this->belongsTo(Calendar::class, 'calendar_id');
     }
 
     public function isDraft(): bool
@@ -95,11 +114,17 @@ class Giveaway extends AbstractModel
 
     /**
      * Can $actor manage this giveaway? True for global managers, or for the
-     * giveaway's own author who still holds the create permission. Centralised
+     * giveaway's own author who still holds the create permission, unless it
+     * belongs to an advent calendar. Centralised
      * here so the presenter and every controller share one rule.
      */
     public function canBeManagedBy(User $actor): bool
     {
+        // A calendar's giveaways are managed through the calendar, never one by one.
+        if ($this->calendar_id) {
+            return false;
+        }
+
         return $actor->hasPermission('giveaways.manage')
             || ($this->user_id && (int) $actor->id === (int) $this->user_id && $actor->hasPermission('giveaways.create'));
     }

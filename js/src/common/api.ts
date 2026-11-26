@@ -79,6 +79,8 @@ export interface Giveaway {
   /** The discussion it was posted in, if the viewer can see it (detail endpoint only). */
   discussionId?: number | null;
   createdBy: GiveawayUser | null;
+  /** The advent calendar it belongs to (its grand prize or a door's draw): entered through the calendar. */
+  calendar: { slug: string; title: string; role: 'grand' | 'door' } | null;
   category: { id: number; name: string; slug: string; color: string; icon: string | null } | null;
   winners?: GiveawayWinner[];
   drawSeed?: string | null;

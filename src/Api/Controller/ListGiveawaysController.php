@@ -26,7 +26,9 @@ class ListGiveawaysController implements RequestHandlerInterface
 
         $keys = $this->keys($request);
 
-        $giveaways = Giveaway::query()->visibleTo($actor)->with(['user', 'category'])
+        $giveaways = Giveaway::query()->visibleTo($actor)->with(['user', 'category', 'calendar'])
+            // A calendar's giveaways are listed on the calendar; a link still finds one.
+            ->when($keys === null, fn ($q) => $q->whereNull('calendar_id'))
             ->when($keys !== null, function ($q) use ($keys) {
                 // A link carries a slug, or an id from before slugs were safe.
                 $ids = array_values(array_filter($keys, 'ctype_digit'));

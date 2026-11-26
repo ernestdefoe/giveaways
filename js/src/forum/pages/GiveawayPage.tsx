@@ -453,7 +453,16 @@ export default class GiveawayPage extends Page {
           </dd>
         </dl>
 
+        {g.calendar ? (
+          // A calendar's draw is entered by opening its door, not from here.
+          <Link className="Button Button--block" href={app.route('giveaways.advent', { slug: g.calendar.slug })}>
+            <Icon name="fas fa-door-open" />{' '}
+            {app.translator.trans(`ernestdefoe-giveaways.forum.advent.part_of_${g.calendar.role}`, { title: g.calendar.title })}
+          </Link>
+        ) : null}
+
         {active &&
+          !g.calendar &&
           (entered ? (
             <div className="GiveawayPage-entered">
               <Icon name="fas fa-check-circle" /> {app.translator.trans('ernestdefoe-giveaways.forum.your_entries', { count: g.myEntries })}

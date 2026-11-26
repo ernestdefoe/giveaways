@@ -21,7 +21,7 @@ class RichText
     }
 
     /** Parse what was typed into the XML that is stored; null when empty. */
-    public function store(string $source, Giveaway $context, User $actor): ?string
+    public function store(string $source, ?object $context, User $actor): ?string
     {
         $source = trim(mb_substr($source, 0, 20000));
 
@@ -29,7 +29,7 @@ class RichText
     }
 
     /** The stored value as safe HTML, or null. */
-    public function html(?string $stored, Giveaway $context): ?string
+    public function html(?string $stored, ?object $context): ?string
     {
         if ($stored === null || trim($stored) === '') {
             return null;
@@ -46,7 +46,7 @@ class RichText
     }
 
     /** What the editor is filled with when the giveaway is edited. */
-    public function source(?string $stored, Giveaway $context): string
+    public function source(?string $stored, ?object $context): string
     {
         if ($stored === null) {
             return '';

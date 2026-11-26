@@ -8,6 +8,9 @@ import Icon from 'flarum/common/components/Icon';
 import { listGiveaways, listCategories } from '../../common/api';
 import type { Giveaway, GiveawayCategory } from '../../common/api';
 import GiveawayCard from '../components/GiveawayCard';
+import CalendarCard from '../advent/CalendarCard';
+import { listCalendars } from '../../common/advent';
+import type { AdventCalendar } from '../../common/advent';
 
 type Tab = 'all' | 'open' | 'ended' | 'drafts';
 
@@ -15,6 +18,7 @@ export default class GiveawaysPage extends Page {
   loading = true;
   giveaways: Giveaway[] = [];
   categories: GiveawayCategory[] = [];
+  calendars: AdventCalendar[] = [];
   canCreate = false;
   canManage = false;
   filter: number | null = null;
@@ -25,6 +29,24 @@ export default class GiveawaysPage extends Page {
     app.setTitle(app.translator.trans('ernestdefoe-giveaways.forum.page_title') as string);
     this.load();
     this.loadCategories();
+    this.loadCalendars();
+  }
+
+  loadCalendars() {
+    listCalendars()
+      .then((calendars) => {
+        this.calendars = calendars;
+        m.redraw();
+      })
+      .catch(() => {
+        /* app.request already showed the alert */
+      });
+  }
+
+  newCalendar() {
+    app.modal.show(() => import('../advent/CalendarBuilderModal'), {
+      onsave: (calendar: AdventCalendar | null) => calendar && m.route.set(app.route('giveaways.advent', { slug: calendar.slug })),
+    });
   }
 
   load() {
@@ -87,6 +109,11 @@ export default class GiveawaysPage extends Page {
                 </Button>
               )}
               {this.canManage && (
+                <Button className="Button" icon="fas fa-door-closed" onclick={() => this.newCalendar()}>
+                  {app.translator.trans('ernestdefoe-giveaways.forum.advent.new')}
+                </Button>
+              )}
+              {this.canManage && (
                 <Button className="Button" icon="fas fa-tags" onclick={() => this.manageCategories()}>
                   {app.translator.trans('ernestdefoe-giveaways.forum.categories.manage')}
                 </Button>
@@ -96,6 +123,16 @@ export default class GiveawaysPage extends Page {
         </div>
 
         <div className="container GiveawaysPage-content">
+          {this.calendars.length > 0 && (
+            <section className="GiveawaysPage-calendars">
+              <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.advent.heading')}</h2>
+              <div className="GiveawaysPage-grid">
+                {this.calendars.map((c) => (
+                  <CalendarCard key={c.id} calendar={c} />
+                ))}
+              </div>
+            </section>
+          )}
           <nav className="GiveawaysPage-tabs" role="tablist">
             {(['all', 'open', 'ended', 'drafts'] as Tab[])
               .filter((t) => t !== 'drafts' || drafts.length > 0)

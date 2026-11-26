@@ -135,6 +135,12 @@ class GiveawayPresenter
             // The whole list fills the edit form; it never goes to a winner.
             'claimLines' => $canManage ? (string) ($s['claim_lines'] ?? '') : null,
             'createdBy' => $g->user ? self::user($g->user) : null,
+            // The advent calendar it belongs to: entered by opening its doors.
+            'calendar' => $g->calendar_id && $g->calendar ? [
+                'slug' => $g->calendar->slug,
+                'title' => $g->calendar->title,
+                'role' => $g->calendar_role,
+            ] : null,
             'category' => $g->category ? [
                 'id' => (int) $g->category->id,
                 'name' => $g->category->name,

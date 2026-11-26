@@ -723,3 +723,312 @@
     &--reply { margin-left: 15px; }
   }
 }
+
+// ── Advent calendars ─────────────────────────────────────────────────────────
+// Doors take the forum's primary colour mixed with berry, pine and gold, so a
+// theme (or Festoon) recolours them. The number sits on a light plaque, which
+// reads on any door colour, light theme or dark.
+.AdventPage {
+  padding: 20px 0 40px;
+}
+.AdventPage-header {
+  margin-bottom: 18px;
+}
+.AdventPage-title {
+  margin: 0 0 6px;
+  color: var(--heading-color, var(--text-color));
+}
+.AdventPage-draft {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--control-bg);
+  color: var(--control-color);
+  font-size: 12px;
+  font-weight: 600;
+}
+.AdventPage-description {
+  max-width: 720px;
+}
+.AdventPage-zone,
+.AdventPage-status {
+  margin: 6px 0;
+  color: var(--muted-color);
+}
+.AdventPage-status {
+  color: var(--text-color);
+  font-weight: 600;
+}
+.AdventPage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.AdventChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: var(--control-bg);
+  color: var(--control-color);
+  font-size: 13px;
+  font-weight: 600;
+}
+.AdventPage-notice {
+  padding: 10px 14px;
+  border-radius: var(--border-radius, 4px);
+  background: var(--control-bg);
+  color: var(--control-color);
+}
+
+.AdventGrid {
+  --gw-door-1: var(--primary-color);
+  --gw-door-2: color-mix(in srgb, var(--primary-color) 45%, #a3243b);
+  --gw-door-3: color-mix(in srgb, var(--primary-color) 45%, #24734a);
+  --gw-door-4: color-mix(in srgb, var(--primary-color) 40%, #b8862a);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 14px;
+  padding: 18px;
+  border-radius: 10px;
+  background: var(--control-bg);
+}
+.AdventDoor {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  perspective: 600px;
+
+  &:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 3px;
+  }
+}
+.AdventDoor-inside {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--body-bg);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: var(--primary-color);
+  font-size: 26px;
+}
+.AdventDoor-leaf {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform-origin: left center;
+  transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
+  backface-visibility: hidden;
+}
+.AdventDoor-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+.AdventDoor-panelBg {
+  fill: var(--gw-door);
+}
+.AdventDoor-inset {
+  fill: rgba(0, 0, 0, 0.14);
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1;
+}
+.AdventDoor-knob {
+  fill: #f1d48a;
+}
+.AdventDoor-snow {
+  fill: #fff;
+}
+.AdventDoor--tint0 { --gw-door: var(--gw-door-1); }
+.AdventDoor--tint1 { --gw-door: var(--gw-door-2); }
+.AdventDoor--tint2 { --gw-door: var(--gw-door-3); }
+.AdventDoor--tint3 { --gw-door: var(--gw-door-4); }
+.AdventDoor-number {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  min-width: 2em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fffdf6;
+  color: #1a2744;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  transform: translate(-50%, -50%);
+}
+.AdventDoor-lock {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+}
+.AdventDoor--locked {
+  cursor: default;
+
+  .AdventDoor-leaf {
+    filter: saturate(0.55) brightness(0.92);
+  }
+}
+.AdventDoor--ready .AdventDoor-art {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+  animation: gwDoorGlow 2.4s ease-in-out infinite;
+}
+.AdventDoor--missed .AdventDoor-leaf {
+  opacity: 0.7;
+}
+.AdventDoor--opened .AdventDoor-leaf {
+  transform: rotateY(-72deg);
+}
+.AdventDoor.is-selected .AdventDoor-inside {
+  box-shadow: inset 0 0 0 3px var(--primary-color);
+}
+@keyframes gwDoorGlow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 8px var(--primary-color)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .AdventDoor-leaf { transition: none; }
+  .AdventDoor--ready .AdventDoor-art { animation: none; }
+}
+
+.AdventDetail {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--control-bg);
+  border-radius: 10px;
+  color: var(--text-color);
+}
+.AdventDetail-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--heading-color, var(--text-color));
+}
+.AdventDetail-joker {
+  margin-left: 8px;
+  color: var(--muted-color);
+  font-size: 13px;
+  font-weight: normal;
+}
+.AdventDetail-draw,
+.AdventDetail-exchange {
+  margin: 8px 0 0;
+}
+.AdventGrand {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: var(--control-bg);
+  color: var(--control-color);
+}
+.AdventGrand-icon {
+  margin-top: 2px;
+  color: var(--primary-color);
+  font-size: 24px;
+}
+.AdventGrand-title {
+  margin: 0 0 2px;
+  font-size: 15px;
+  color: var(--control-color);
+}
+.AdventGrand-prize {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.CalendarCard-cover {
+  background: color-mix(in srgb, var(--primary-color) 45%, #a3243b);
+}
+
+.CalendarBuilder-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(~"min(160px, 100%)", 1fr));
+  gap: 0 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.CalendarBuilder-heading {
+  margin: 18px 0 4px;
+}
+.CalendarBuilder-doors {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.CalendarBuilder-door {
+  border-bottom: 1px solid var(--control-bg);
+}
+.CalendarBuilder-doorHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 4px;
+  border: 0;
+  background: none;
+  color: var(--text-color);
+  text-align: left;
+  cursor: pointer;
+}
+.CalendarBuilder-day {
+  flex: 0 0 2em;
+  padding: 2px 0;
+  border-radius: 999px;
+  background: var(--control-bg);
+  color: var(--control-color);
+  font-weight: 700;
+  text-align: center;
+}
+.CalendarBuilder-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.CalendarBuilder-locked {
+  color: var(--muted-color);
+  font-size: 12px;
+}
+.CalendarBuilder-doorBody {
+  padding: 4px 4px 12px 2.8em;
+}
+.CalendarBuilder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media @phone {
+  .AdventGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+  .AdventDoor-number {
+    font-size: 14px;
+  }
+  .CalendarBuilder-doorBody {
+    padding-left: 4px;
+  }
+}

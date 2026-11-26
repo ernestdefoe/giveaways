@@ -17,6 +17,14 @@ export const extend = [
       help: app.translator.trans('ernestdefoe-giveaways.admin.nav_label_help'),
       placeholder: app.translator.trans('ernestdefoe-giveaways.admin.nav_label_placeholder', {}, true),
     }))
+    .setting(() => ({
+      setting: KEY + 'advent_jokers',
+      type: 'number',
+      min: 0,
+      max: 3,
+      label: app.translator.trans('ernestdefoe-giveaways.admin.advent_jokers_setting'),
+      help: app.translator.trans('ernestdefoe-giveaways.admin.advent_jokers_help'),
+    }))
     .permission(
       () => ({
         icon: 'fas fa-ticket-alt',
