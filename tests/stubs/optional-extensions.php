@@ -7,7 +7,7 @@
  * the real classes exist.
  */
 
-namespace ErnestDefoe\Festoon {
+namespace Ernestdefoe\Festoon {
     if (! class_exists(Config::class, false)) {
         class Config
         {

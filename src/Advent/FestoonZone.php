@@ -2,7 +2,7 @@
 
 namespace ErnestDefoe\Giveaways\Advent;
 
-use ErnestDefoe\Festoon\Config;
+use Ernestdefoe\Festoon\Config;
 
 /** Festoon's timezone (itself falling back to Logo Manager's). Bound only while Festoon is enabled. */
 class FestoonZone extends ForumZone
