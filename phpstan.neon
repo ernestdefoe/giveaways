@@ -11,8 +11,5 @@ parameters:
     paths:
         - extend.php
         - src
-    # Festoon and Secret Santa are optional and not installed here: stubs.
-    scanFiles:
-        - tests/stubs/optional-extensions.php
     databaseMigrationsPath:
         - migrations
