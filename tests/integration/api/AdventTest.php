@@ -140,10 +140,22 @@ class AdventTest extends TestCase
             $this->assertContains($status, [401, 404]);
         }
 
-        // Today's door draw exists for everyone (its day has begun) but its door
-        // content is still not in the calendar until opened.
+        // A door's draw (its title and prize) only exists for members who opened
+        // that door: not today's before opening it, not a missed one without a joker.
+        $missed = Giveaway::query()->where('calendar_id', $id)->where('prize', 'Sticker pack')->firstOrFail();
+        foreach ([$today, $missed] as $draw) {
+            [$status] = $this->call('GET', '/api/giveaways/'.$draw->slug, 10);
+            $this->assertSame(404, $status, "{$draw->prize} before opening");
+            [, $found] = $this->call('GET', '/api/giveaways', 10, null, ['filter' => ['slug' => $draw->slug]]);
+            $this->assertSame([], $found['data']);
+        }
+        $this->open(10, $id, 3);
         [$status] = $this->call('GET', '/api/giveaways/'.$today->slug, 10);
-        $this->assertSame(200, $status);
+        $this->assertSame(200, $status, "today's draw after opening its door");
+        [$status] = $this->call('GET', '/api/giveaways/'.$missed->slug, 10);
+        $this->assertSame(404, $status, 'opening one door shows only that door');
+        [$status] = $this->call('GET', '/api/giveaways/'.$today->slug, 11);
+        $this->assertSame(404, $status, 'nor to another member');
 
         // The reminder names the calendar and the day, nothing behind the door.
         [, $alerts, $raw] = $this->call('GET', '/api/notifications', 10);
@@ -208,6 +220,8 @@ class AdventTest extends TestCase
         $id = $this->build()['id'];
         $grand = Giveaway::query()->where('calendar_id', $id)->where('calendar_role', 'grand')->firstOrFail();
         $today = Giveaway::query()->where('calendar_id', $id)->where('prize', 'A mug')->firstOrFail();
+        // Opened, so member 10 can see today's draw; entering it directly is still refused.
+        $this->open(10, $id, 3);
 
         foreach ([$grand, $today] as $giveaway) {
             [$status] = $this->call('POST', '/api/giveaways/'.$giveaway->id.'/enter', 10);
