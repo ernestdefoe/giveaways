@@ -787,12 +787,14 @@
 
 // A third of each door is the forum's primary colour, so a theme still shows
 // through, and the rest a winter colour, so a forum whose primary is near
-// black still gets festive doors.
+// black still gets festive doors. The fallback keeps them coloured where a
+// theme leaves --primary-color unresolved (Bespoke's dark values under
+// another Wardrobe theme did): otherwise every color-mix() fails to black.
 .AdventGrid {
-  --gw-door-1: color-mix(in srgb, var(--primary-color) 35%, #3b6ea5);
-  --gw-door-2: color-mix(in srgb, var(--primary-color) 35%, #b3263b);
-  --gw-door-3: color-mix(in srgb, var(--primary-color) 35%, #2e7d52);
-  --gw-door-4: color-mix(in srgb, var(--primary-color) 35%, #c8972f);
+  --gw-door-1: color-mix(in srgb, var(--primary-color, #4d698e) 35%, #3b6ea5);
+  --gw-door-2: color-mix(in srgb, var(--primary-color, #4d698e) 35%, #b3263b);
+  --gw-door-3: color-mix(in srgb, var(--primary-color, #4d698e) 35%, #2e7d52);
+  --gw-door-4: color-mix(in srgb, var(--primary-color, #4d698e) 35%, #c8972f);
   --gw-today: #f4c542;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
@@ -813,7 +815,7 @@
   perspective: 600px;
 
   &:focus-visible {
-    outline: 3px solid var(--primary-color);
+    outline: 3px solid var(--primary-color, #4d698e);
     outline-offset: 3px;
   }
 }
@@ -826,7 +828,7 @@
   border-radius: 6px;
   background: var(--body-bg);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.25);
-  color: var(--primary-color);
+  color: var(--primary-color, #4d698e);
   font-size: 26px;
 }
 .AdventDoor-leaf {
@@ -903,7 +905,7 @@
   transform: rotateY(-72deg);
 }
 .AdventDoor.is-selected .AdventDoor-inside {
-  box-shadow: inset 0 0 0 3px var(--primary-color);
+  box-shadow: inset 0 0 0 3px var(--primary-color, #4d698e);
 }
 @keyframes gwDoorGlow {
   0%, 100% { filter: drop-shadow(0 0 0 transparent); }
@@ -948,7 +950,7 @@
 }
 .AdventGrand-icon {
   margin-top: 2px;
-  color: var(--primary-color);
+  color: var(--primary-color, #4d698e);
   font-size: 24px;
 }
 .AdventGrand-title {
@@ -962,7 +964,7 @@
   font-weight: 700;
 }
 .CalendarCard-cover {
-  background: color-mix(in srgb, var(--primary-color) 35%, #b3263b);
+  background: color-mix(in srgb, var(--primary-color, #4d698e) 35%, #b3263b);
 }
 
 .CalendarBuilder-row {
