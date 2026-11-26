@@ -1052,6 +1052,17 @@
   min-width: 0;
   color: var(--text-color);
 }
+// html:not(#x-hi): themes colour and underline links (Bespoke's light rule is
+// 0,3,1), and the door number and the cards are links.
+html:not(#x-hi) .AdventToday-door,
+html:not(#x-hi) .AdventToday-door:hover {
+  color: #fffdf6;
+  text-decoration: none;
+}
+html:not(#x-hi) .GiveawayEmbed .GiveawayCard,
+html:not(#x-hi) .GiveawayEmbed .GiveawayCard * {
+  text-decoration: none;
+}
 .AdventToday-door {
   flex: 0 0 44px;
   display: flex;
@@ -1066,10 +1077,6 @@
   font-weight: 700;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
-  &:hover {
-    color: #fffdf6;
-    text-decoration: none;
-  }
   .AdventToday:not(.is-opened) & {
     outline: 3px solid #f4c542;
     outline-offset: 1px;
