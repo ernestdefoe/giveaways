@@ -41,6 +41,36 @@ class GiveawayWriter
         $before = $id ? $this->drawTerms($g) : null;
         $beforeEnds = $id ? $g->ends_at?->copy() : null;
 
+        $this->basics($g, $attrs, $actor, $errors);
+        $this->settings($g, $attrs, $errors);
+        $this->checks($g, $attrs, $actor, $before, $beforeEnds, $errors);
+
+        if ($errors) {
+            throw new ValidationException($errors);
+        }
+
+        if (! $g->slug || array_key_exists('title', $attrs)) {
+            $g->slug = Slugs::unique(Giveaway::class, $g->title, $g->id);
+        }
+        if (! $id) {
+            $g->created_at = Carbon::now();
+        }
+        $g->updated_at = Carbon::now();
+        $g->save();
+
+        return $g;
+    }
+
+    /**
+     * Title, prize, dates, text, cover, winners and category.
+     *
+     * @param array<string, mixed> $attrs
+     * @param array<string, string> $errors
+     */
+    private function basics(Giveaway $g, array $attrs, User $actor, array &$errors): void
+    {
+        $id = $g->exists ? $g->id : null;
+
         if (array_key_exists('title', $attrs) || ! $id) {
             $title = trim((string) ($attrs['title'] ?? ''));
             $title === '' ? $errors['title'] = $this->translator->trans('ernestdefoe-giveaways.api.title_required') : $g->title = mb_substr($title, 0, 255);
@@ -80,8 +110,16 @@ class GiveawayWriter
             $cid = $attrs['categoryId'] ? (int) $attrs['categoryId'] : null;
             $g->category_id = ($cid && GiveawayCategory::whereKey($cid)->exists()) ? $cid : null;
         }
+    }
 
-        // Entry-method + eligibility settings.
+    /**
+     * Entry-method, eligibility, claim and skill-question settings.
+     *
+     * @param array<string, mixed> $attrs
+     * @param array<string, string> $errors
+     */
+    private function settings(Giveaway $g, array $attrs, array &$errors): void
+    {
         $s = $g->settingsArray();
         foreach (['postBonus' => 'post_bonus', 'minPosts' => 'min_posts', 'minAgeDays' => 'min_age_days'] as $in => $key) {
             if (array_key_exists($in, $attrs)) {
@@ -111,6 +149,18 @@ class GiveawayWriter
             $errors['skillAnswer'] = $this->translator->trans('ernestdefoe-giveaways.api.skill_answer_required');
         }
         $g->settings = json_encode($s);
+    }
+
+    /**
+     * The rules for an edit: draw terms fixed after the draw, no earlier end
+     * by a host once people entered, and publishing a draft by hand.
+     *
+     * @param array<string, mixed> $attrs
+     * @param array<string, string> $errors
+     */
+    private function checks(Giveaway $g, array $attrs, User $actor, ?array $before, ?Carbon $beforeEnds, array &$errors): void
+    {
+        $id = $g->exists ? $g->id : null;
 
         if ($id) {
             // Once drawn, the terms the winners were picked and judged under are
@@ -138,21 +188,6 @@ class GiveawayWriter
             }
             $g->status = 'active';
         }
-
-        if ($errors) {
-            throw new ValidationException($errors);
-        }
-
-        if (! $g->slug || array_key_exists('title', $attrs)) {
-            $g->slug = Slugs::unique(Giveaway::class, $g->title, $g->id);
-        }
-        if (! $id) {
-            $g->created_at = Carbon::now();
-        }
-        $g->updated_at = Carbon::now();
-        $g->save();
-
-        return $g;
     }
 
     /** The settings a draw was made and judged under, normalised for comparison. */

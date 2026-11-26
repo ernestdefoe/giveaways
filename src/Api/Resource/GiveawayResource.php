@@ -10,6 +10,7 @@ use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\GiveawayWinner;
 use ErnestDefoe\Giveaways\GiveawayWriter;
+use ErnestDefoe\Giveaways\RichText;
 use Flarum\Api\Context;
 use Flarum\Api\Endpoint;
 use Flarum\Api\Resource\AbstractDatabaseResource;
@@ -56,6 +57,7 @@ class GiveawayResource extends AbstractDatabaseResource
         private readonly DrawService $draws,
         private readonly ClaimService $claims,
         private readonly TranslatorInterface $translator,
+        private readonly RichText $rich,
     ) {
         $this->views = new \WeakMap();
     }
@@ -303,7 +305,7 @@ class GiveawayResource extends AbstractDatabaseResource
      */
     private function view(Giveaway $g, Context $context): array
     {
-        return $this->views[$g] ??= GiveawayPresenter::forActor($context->getActor())
+        return $this->views[$g] ??= GiveawayPresenter::forActor($context->getActor(), $this->rich)
             ->present($g->loadMissing(['user', 'category', 'calendar']), ! $context->endpoint instanceof Endpoint\Index);
     }
 
@@ -311,7 +313,7 @@ class GiveawayResource extends AbstractDatabaseResource
     private function presentList(iterable $giveaways, User $actor): void
     {
         $list = (new Collection([...$giveaways]))->load(['user', 'category', 'calendar']);
-        $presenter = GiveawayPresenter::forList($actor, $list);
+        $presenter = GiveawayPresenter::forList($actor, $list, $this->rich);
         foreach ($list as $g) {
             $this->views[$g] = $presenter->present($g, false);
         }

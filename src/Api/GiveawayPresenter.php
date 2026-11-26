@@ -11,13 +11,10 @@ use Flarum\User\User;
 use Illuminate\Support\Collection;
 
 /**
- * Builds the plain giveaway JSON the forum frontend consumes via the custom
- * /api/giveaways controllers.
- *
- * This is deliberately NOT a Flarum/JSON:API serializer: those giveaways are
- * served as plain JSON (not JSON:API documents), so there's no AbstractSerializer
- * to extend here — the JSON:API surface lives in Api\Resource\GiveawayResource.
- * Calling it a "presenter" keeps that distinction clear.
+ * What one viewer sees of a giveaway: GiveawayResource's fields read their
+ * values from here, so who may see what is decided in one place (the skill
+ * answer, claim instructions and per-winner lines, the editable source, a
+ * private discussion's id).
  *
  * For a list, build it with {@see forList()} so the per-row aggregates (entrant
  * count, total entries) and the actor's own entry/win are batch-loaded once
@@ -32,6 +29,7 @@ class GiveawayPresenter
      */
     public function __construct(
         protected User $actor,
+        protected RichText $rich,
         protected ?Collection $myEntries = null,
         protected ?Collection $myWins = null,
         protected ?Collection $aggregates = null
@@ -39,13 +37,13 @@ class GiveawayPresenter
     }
 
     /** A presenter for a single giveaway (per-row lookups are fine for one row). */
-    public static function forActor(User $actor): self
+    public static function forActor(User $actor, RichText $rich): self
     {
-        return new self($actor);
+        return new self($actor, $rich);
     }
 
     /** A presenter primed with batch-loaded data for a whole list — no N+1. */
-    public static function forList(User $actor, Collection $giveaways): self
+    public static function forList(User $actor, Collection $giveaways, RichText $rich): self
     {
         $ids = $giveaways->pluck('id')->all();
 
@@ -63,33 +61,31 @@ class GiveawayPresenter
             ->whereIn('giveaway_id', $ids)->where('user_id', $actor->id)
             ->get()->keyBy('giveaway_id');
 
-        return new self($actor, $myEntries, $myWins, $aggregates);
+        return new self($actor, $rich, $myEntries, $myWins, $aggregates);
     }
 
     public function present(Giveaway $g, bool $full = false): array
     {
-        // On a list the aggregates were batch-loaded; a giveaway missing from
-        // them has no entries, so it reads as zero rather than falling back to
-        // two queries of its own (which made every empty giveaway an N+1).
-        if ($this->aggregates !== null) {
-            $agg = $this->aggregates->get($g->id);
-            // Aggregate columns from the grouped query, not model attributes.
-            $entrantCount = $agg ? (int) $agg->getAttribute('entrant_count') : 0;
-            $totalEntries = $agg ? (int) $agg->getAttribute('total_entries') : 0;
-        } else {
-            $entrantCount = (int) $g->entries()->count();
-            $totalEntries = (int) $g->entries()->sum('entries');
-        }
-
-        $myEntry = $this->myEntry($g);
-        $myWin = $this->myWin($g);
-
         $s = $g->settingsArray();
         $canManage = $g->canBeManagedBy($this->actor);
 
-        $myClaimed = $myWin && $myWin->claimed_at && ! $myWin->isForfeited();
+        $data = $this->giveaway($g, $s, $canManage) + $this->mine($g, $s, $canManage);
 
-        $data = [
+        return $full ? $data + $this->detail($g, $canManage) : $data;
+    }
+
+    /**
+     * The giveaway itself, the same for everyone but the parts only its
+     * managers get.
+     *
+     * @param array<string, mixed> $s settings
+     * @return array<string, mixed>
+     */
+    private function giveaway(Giveaway $g, array $s, bool $canManage): array
+    {
+        [$entrantCount, $totalEntries] = $this->counts($g);
+
+        return [
             'id' => (int) $g->id,
             'title' => $g->title,
             'slug' => $g->slug,
@@ -104,35 +100,16 @@ class GiveawayPresenter
             'coverUrl' => $g->cover_url,
             'winnerCount' => (int) $g->winner_count,
             'status' => $g->status,
-            'startsAt' => optional($g->starts_at)->toIso8601String(),
-            'endsAt' => optional($g->ends_at)->toIso8601String(),
-            'drawnAt' => optional($g->drawn_at)->toIso8601String(),
+            'startsAt' => $g->starts_at?->toIso8601String(),
+            'endsAt' => $g->ends_at?->toIso8601String(),
+            'drawnAt' => $g->drawn_at?->toIso8601String(),
             'running' => $g->isRunning(),
             'entrantCount' => $entrantCount,
             'totalEntries' => $totalEntries,
-            'myEntries' => $myEntry ? (int) $myEntry->entries : 0,
-            'mySources' => $myEntry ? $myEntry->sourcesArray() : null,
             'postBonus' => (int) ($s['post_bonus'] ?? 0),
             'minPosts' => (int) ($s['min_posts'] ?? 0),
             'minAgeDays' => (int) ($s['min_age_days'] ?? 0),
-            'canManage' => $canManage,
-            'canDraw' => $canManage && $g->canBeDrawnBy($this->actor),
-            'canDelete' => $canManage && $g->canBeDeletedBy($this->actor),
-            'canViewParticipants' => $g->participantsVisibleTo($this->actor),
-            'isHost' => ! $this->actor->isGuest() && $g->user_id && (int) $g->user_id === (int) $this->actor->id,
-            'iWon' => (bool) $myWin,
-            'myClaimedAt' => $myWin ? optional($myWin->claimed_at)->toIso8601String() : null,
-            'myForfeited' => $myWin ? $myWin->isForfeited() : false,
-            // Null when there is no limit; otherwise what this winner has left.
-            'myAttemptsLeft' => ($myWin && $g->skillAttemptLimit() > 0)
-                ? max(0, $g->skillAttemptLimit() - (int) $myWin->skill_attempts)
-                : null,
-            // Instructions go to a winner only once they have claimed (after any
-            // skill question), and to those who manage the giveaway.
-            'claimInstructions' => ($myClaimed || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
-            // A winner's own line of the per-winner list, and only theirs.
-            'myClaimLine' => $myClaimed ? $g->claimLineFor((int) $myWin->position) : null,
-            // The whole list fills the edit form; it never goes to a winner.
+            // The whole per-winner list fills the edit form; it never goes to a winner.
             'claimLines' => $canManage ? (string) ($s['claim_lines'] ?? '') : null,
             'createdBy' => $g->user ? self::user($g->user) : null,
             // The advent calendar it belongs to: entered by opening its doors.
@@ -149,36 +126,97 @@ class GiveawayPresenter
                 'icon' => $g->category->icon,
             ] : null,
         ];
+    }
 
-        if ($full) {
-            // Rendered by the forum's formatter, as a post is. The editable
-            // source only goes to whoever can edit it.
-            $rich = resolve(RichText::class);
-            $data['descriptionHtml'] = $rich->html($g->description, $g);
-            $data['rulesHtml'] = $rich->html($g->rules, $g);
-            if ($canManage) {
-                $data['description'] = $rich->source($g->description, $g);
-                $data['rules'] = $rich->source($g->rules, $g);
-            }
-            $data['winners'] = $g->winners()->orderBy('position')->orderBy('id')->with('user')->get()
+    /**
+     * The viewer's own side: what they may do, their entries, and their win.
+     *
+     * @param array<string, mixed> $s settings
+     * @return array<string, mixed>
+     */
+    private function mine(Giveaway $g, array $s, bool $canManage): array
+    {
+        $myEntry = $this->myEntry($g);
+        $myWin = $this->myWin($g);
+        $myClaimed = $myWin && $myWin->claimed_at && ! $myWin->isForfeited();
+
+        return [
+            'myEntries' => $myEntry ? (int) $myEntry->entries : 0,
+            'mySources' => $myEntry ? $myEntry->sourcesArray() : null,
+            'canManage' => $canManage,
+            'canDraw' => $canManage && $g->canBeDrawnBy($this->actor),
+            'canDelete' => $canManage && $g->canBeDeletedBy($this->actor),
+            'canViewParticipants' => $g->participantsVisibleTo($this->actor),
+            'isHost' => ! $this->actor->isGuest() && $g->user_id && (int) $g->user_id === (int) $this->actor->id,
+            'iWon' => (bool) $myWin,
+            'myClaimedAt' => $myWin?->claimed_at?->toIso8601String(),
+            'myForfeited' => $myWin ? $myWin->isForfeited() : false,
+            // Null when there is no limit; otherwise what this winner has left.
+            'myAttemptsLeft' => ($myWin && $g->skillAttemptLimit() > 0)
+                ? max(0, $g->skillAttemptLimit() - (int) $myWin->skill_attempts)
+                : null,
+            // Instructions go to a winner only once they have claimed (after any
+            // skill question), and to those who manage the giveaway.
+            'claimInstructions' => ($myClaimed || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
+            // A winner's own line of the per-winner list, and only theirs.
+            'myClaimLine' => $myClaimed ? $g->claimLineFor((int) $myWin->position) : null,
+        ];
+    }
+
+    /**
+     * One giveaway's page: its formatted text, winners, discussion and proof.
+     *
+     * @return array<string, mixed>
+     */
+    private function detail(Giveaway $g, bool $canManage): array
+    {
+        // Rendered by the forum's formatter, as a post is. The editable
+        // source only goes to whoever can edit it.
+        $data = [
+            'descriptionHtml' => $this->rich->html($g->description, $g),
+            'rulesHtml' => $this->rich->html($g->rules, $g),
+        ];
+        if ($canManage) {
+            $data['description'] = $this->rich->source($g->description, $g);
+            $data['rules'] = $this->rich->source($g->rules, $g);
+        }
+
+        return $data + [
+            'winners' => $g->winners()->orderBy('position')->orderBy('id')->with('user')->get()
                 ->map(fn ($w) => [
                     'position' => (int) $w->position,
                     'user' => $w->user ? self::user($w->user) : null,
-                    'claimedAt' => optional($w->claimed_at)->toIso8601String(),
+                    'claimedAt' => $w->claimed_at?->toIso8601String(),
                     // Kept in the list on purpose: a forfeited winner is part of
                     // the record of how the prize moved.
                     'forfeited' => $w->isForfeited(),
-                ])->all();
+                ])->all(),
             // The discussion it was posted in, unless this viewer can't see it
             // (a private discussion's id is not theirs to learn).
-            $data['discussionId'] = $g->discussion_id
+            'discussionId' => $g->discussion_id
                 && Discussion::query()->whereVisibleTo($this->actor)->whereKey($g->discussion_id)->exists()
-                ? (int) $g->discussion_id : null;
-            $data['drawSeed'] = $g->draw_seed;
-            $data['entrantHash'] = $g->entrant_hash;
+                ? (int) $g->discussion_id : null,
+            'drawSeed' => $g->draw_seed,
+            'entrantHash' => $g->entrant_hash,
+        ];
+    }
+
+    /**
+     * Entrants and total entries: batch-loaded on a list (a giveaway missing
+     * from the aggregates has none), counted for a single giveaway.
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function counts(Giveaway $g): array
+    {
+        if ($this->aggregates !== null) {
+            $agg = $this->aggregates->get($g->id);
+
+            // Aggregate columns from the grouped query, not model attributes.
+            return $agg ? [(int) $agg->getAttribute('entrant_count'), (int) $agg->getAttribute('total_entries')] : [0, 0];
         }
 
-        return $data;
+        return [(int) $g->entries()->count(), (int) $g->entries()->sum('entries')];
     }
 
     protected function myEntry(Giveaway $g): ?GiveawayEntry

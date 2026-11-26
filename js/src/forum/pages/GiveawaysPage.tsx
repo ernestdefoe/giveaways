@@ -98,6 +98,22 @@ export default class GiveawaysPage extends Page {
 
     return (
       <div className="GiveawaysPage">
+        {this.hero()}
+
+        <div className="container GiveawaysPage-content">
+          {this.calendarStrip()}
+          {this.tabs(drafts)}
+          {this.filters()}
+          {this.results(active, past, draftsShown, shown)}
+        </div>
+      </div>
+    );
+  }
+
+  /** The heading and the create, new calendar and categories buttons. */
+  hero(): Mithril.Children {
+    return (
+      <>
         <div className="GiveawaysPage-hero">
           <div className="container">
             <h1 className="GiveawaysPage-title">{app.translator.trans('ernestdefoe-giveaways.forum.heading')}</h1>
@@ -121,116 +137,146 @@ export default class GiveawaysPage extends Page {
             </div>
           </div>
         </div>
+      </>
+    );
+  }
 
-        <div className="container GiveawaysPage-content">
-          {this.calendars.length > 0 && (
-            <section className="GiveawaysPage-calendars">
-              <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.advent.heading')}</h2>
-              <div className="GiveawaysPage-grid">
-                {this.calendars.map((c) => (
-                  <CalendarCard key={c.id} calendar={c} />
-                ))}
-              </div>
-            </section>
-          )}
-          <nav className="GiveawaysPage-tabs" role="tablist">
-            {(['all', 'open', 'ended', 'drafts'] as Tab[])
-              .filter((t) => t !== 'drafts' || drafts.length > 0)
-              .map((t) => (
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={this.tab === t}
-                  className={'GiveawaysPage-tab' + (this.tab === t ? ' is-active' : '')}
-                  onclick={() => (this.tab = t)}
-                >
-                  {app.translator.trans(`ernestdefoe-giveaways.forum.tabs.${t}`)}
-                  {t === 'drafts' && <span className="GiveawaysPage-tabCount">{drafts.length}</span>}
-                </button>
-              ))}
-          </nav>
-
-          {this.categories.length > 0 && (
-            <div className="GiveawaysPage-filters">
-              <button
-                className={'GiveawayFilter' + (this.filter === null ? ' is-active' : '')}
-                onclick={() => {
-                  this.filter = null;
-                }}
-              >
-                {app.translator.trans('ernestdefoe-giveaways.forum.categories.all')}
-              </button>
-              {this.categories.map((c) => (
-                <button
-                  key={c.id}
-                  className={'GiveawayFilter' + (this.filter === c.id ? ' is-active' : '')}
-                  style={
-                    this.filter === c.id
-                      ? { backgroundColor: c.color, borderColor: c.color, color: '#fff' }
-                      : { color: c.color, borderColor: c.color }
-                  }
-                  onclick={() => {
-                    this.filter = c.id;
-                  }}
-                >
-                  {c.icon && <Icon name={c.icon} />} {c.name}
-                </button>
+  /** Advent calendars, above the giveaways. */
+  calendarStrip(): Mithril.Children {
+    return (
+      <>
+        {this.calendars.length > 0 && (
+          <section className="GiveawaysPage-calendars">
+            <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.advent.heading')}</h2>
+            <div className="GiveawaysPage-grid">
+              {this.calendars.map((c) => (
+                <CalendarCard key={c.id} calendar={c} />
               ))}
             </div>
-          )}
+          </section>
+        )}
+      </>
+    );
+  }
 
-          {this.loading ? (
-            <GwSkeleton />
-          ) : shown === 0 ? (
-            <div className="GiveawaysPage-empty">{app.translator.trans('ernestdefoe-giveaways.forum.empty')}</div>
-          ) : (
-            [
-              active.length > 0 && (
-                <section
-                  /* 🚨 Measured on the element's own lifecycle, not after the
+  /** All / Open / Ended, and Drafts for someone who has some. */
+  tabs(drafts: Giveaway[]): Mithril.Children {
+    return (
+      <>
+        <nav className="GiveawaysPage-tabs" role="tablist">
+          {(['all', 'open', 'ended', 'drafts'] as Tab[])
+            .filter((t) => t !== 'drafts' || drafts.length > 0)
+            .map((t) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={this.tab === t}
+                className={'GiveawaysPage-tab' + (this.tab === t ? ' is-active' : '')}
+                onclick={() => (this.tab = t)}
+              >
+                {app.translator.trans(`ernestdefoe-giveaways.forum.tabs.${t}`)}
+                {t === 'drafts' && <span className="GiveawaysPage-tabCount">{drafts.length}</span>}
+              </button>
+            ))}
+        </nav>
+      </>
+    );
+  }
+
+  /** The category pills. */
+  filters(): Mithril.Children {
+    return (
+      <>
+        {this.categories.length > 0 && (
+          <div className="GiveawaysPage-filters">
+            <button
+              className={'GiveawayFilter' + (this.filter === null ? ' is-active' : '')}
+              onclick={() => {
+                this.filter = null;
+              }}
+            >
+              {app.translator.trans('ernestdefoe-giveaways.forum.categories.all')}
+            </button>
+            {this.categories.map((c) => (
+              <button
+                key={c.id}
+                className={'GiveawayFilter' + (this.filter === c.id ? ' is-active' : '')}
+                style={
+                  this.filter === c.id ? { backgroundColor: c.color, borderColor: c.color, color: '#fff' } : { color: c.color, borderColor: c.color }
+                }
+                onclick={() => {
+                  this.filter = c.id;
+                }}
+              >
+                {c.icon && <Icon name={c.icon} />} {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  /** The giveaways in the chosen tab: open, past and drafts sections. */
+  results(active: Giveaway[], past: Giveaway[], draftsShown: Giveaway[], shown: number): Mithril.Children {
+    return (
+      <>
+        {this.loading ? (
+          <GwSkeleton />
+        ) : shown === 0 ? (
+          <div className="GiveawaysPage-empty">{app.translator.trans('ernestdefoe-giveaways.forum.empty')}</div>
+        ) : (
+          [
+            active.length > 0 && (
+              <section
+                /* 🚨 Measured on the element's own lifecycle, not after the
                      fetch: a requestAnimationFrame there races Mithril's
                      redraw and can run before anything has been drawn. */
-                  oncreate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
-                  onupdate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
-                >
-                  <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.active_heading')}</h2>
-                  <div className="GiveawaysPage-grid">
-                    {active.map((g) => (
-                      <GiveawayCard key={g.id} giveaway={g} />
-                    ))}
-                  </div>
-                </section>
-              ),
-              past.length > 0 && (
-                <section
-                  /* Also here: a forum with only finished giveaways renders no
+                oncreate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
+                onupdate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
+              >
+                <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.active_heading')}</h2>
+                <div className="GiveawaysPage-grid">
+                  {active.map((g) => (
+                    <GiveawayCard key={g.id} giveaway={g} />
+                  ))}
+                </div>
+              </section>
+            ),
+            past.length > 0 && (
+              <section
+                /* Also here: a forum with only finished giveaways renders no
                      active section, and would otherwise remember nothing. */
-                  oncreate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
-                  onupdate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
-                >
-                  <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.past_heading')}</h2>
-                  <div className="GiveawaysPage-grid">
-                    {past.map((g) => (
-                      <GiveawayCard key={g.id} giveaway={g} />
-                    ))}
-                  </div>
-                </section>
-              ),
-              draftsShown.length > 0 && (
-                <section>
-                  <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.drafts_heading')}</h2>
-                  <p className="helpText">{app.translator.trans('ernestdefoe-giveaways.forum.drafts_help')}</p>
-                  <div className="GiveawaysPage-grid">
-                    {draftsShown.map((g) => (
-                      <GiveawayCard key={g.id} giveaway={g} />
-                    ))}
-                  </div>
-                </section>
-              ),
-            ]
-          )}
+                oncreate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
+                onupdate={() => this.tab === 'all' && rememberSections([active.length, past.length])}
+              >
+                <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.past_heading')}</h2>
+                <div className="GiveawaysPage-grid">
+                  {past.map((g) => (
+                    <GiveawayCard key={g.id} giveaway={g} />
+                  ))}
+                </div>
+              </section>
+            ),
+            draftsShown.length > 0 && this.draftsSection(draftsShown),
+          ]
+        )}
+      </>
+    );
+  }
+
+  /** The viewer's own drafts: only they ever get them. */
+  draftsSection(drafts: Giveaway[]): Mithril.Children {
+    return (
+      <section>
+        <h2 className="GiveawaysPage-sectionTitle">{app.translator.trans('ernestdefoe-giveaways.forum.drafts_heading')}</h2>
+        <p className="helpText">{app.translator.trans('ernestdefoe-giveaways.forum.drafts_help')}</p>
+        <div className="GiveawaysPage-grid">
+          {drafts.map((g) => (
+            <GiveawayCard key={g.id} giveaway={g} />
+          ))}
         </div>
-      </div>
+      </section>
     );
   }
 }

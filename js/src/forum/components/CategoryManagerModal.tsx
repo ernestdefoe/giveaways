@@ -50,93 +50,105 @@ export default class CategoryManagerModal extends Modal<CategoryManagerAttrs> {
         ) : (
           <div className="CategoryManager">
             <ul className="CategoryManager-list">
-              {this.categories.map((c) => (
-                <li className="CategoryManager-row" key={c.id}>
-                  <input
-                    type="color"
-                    className="CategoryManager-color"
-                    value={c.color}
-                    oninput={(e: Event) => {
-                      c.color = (e.target as HTMLInputElement).value;
-                    }}
-                  />
-                  <input
-                    className="FormControl CategoryManager-name"
-                    value={c.name}
-                    oninput={(e: Event) => {
-                      c.name = (e.target as HTMLInputElement).value;
-                    }}
-                  />
-                  <span className="CategoryManager-iconPreview" aria-hidden="true">
-                    <Icon name={c.icon || 'fas fa-tag'} />
-                  </span>
-                  <input
-                    className="FormControl CategoryManager-icon"
-                    placeholder="fas fa-tag"
-                    value={c.icon || ''}
-                    oninput={(e: Event) => {
-                      c.icon = (e.target as HTMLInputElement).value;
-                    }}
-                  />
-                  <span className="CategoryManager-count">{c.count ?? 0}</span>
-                  <Button
-                    className="Button Button--icon Button--flat"
-                    icon="fas fa-save"
-                    title={app.translator.trans('ernestdefoe-giveaways.forum.form.submit')}
-                    onclick={() => this.save(c)}
-                  />
-                  <Button
-                    className="Button Button--icon Button--flat CategoryManager-delete"
-                    icon="fas fa-trash"
-                    title={app.translator.trans('ernestdefoe-giveaways.forum.delete')}
-                    onclick={() => this.remove(c)}
-                  />
-                </li>
-              ))}
+              {this.categories.map((c) => this.row(c))}
               {this.categories.length === 0 && (
                 <li className="CategoryManager-empty">{app.translator.trans('ernestdefoe-giveaways.forum.categories.none')}</li>
               )}
             </ul>
 
-            <div className="CategoryManager-add">
-              <h4>
-                <Icon name="fas fa-plus" /> {app.translator.trans('ernestdefoe-giveaways.forum.categories.add')}
-              </h4>
-              <div className="CategoryManager-row">
-                <input
-                  type="color"
-                  className="CategoryManager-color"
-                  value={this.newColor}
-                  oninput={(e: Event) => {
-                    this.newColor = (e.target as HTMLInputElement).value;
-                  }}
-                />
-                <input
-                  className="FormControl CategoryManager-name"
-                  placeholder={app.translator.trans('ernestdefoe-giveaways.forum.categories.name_placeholder') as string}
-                  value={this.newName}
-                  oninput={(e: Event) => {
-                    this.newName = (e.target as HTMLInputElement).value;
-                  }}
-                />
-                <span className="CategoryManager-iconPreview" aria-hidden="true">
-                  <Icon name={this.newIcon || 'fas fa-tag'} />
-                </span>
-                <input
-                  className="FormControl CategoryManager-icon"
-                  placeholder="fas fa-tag"
-                  value={this.newIcon}
-                  oninput={(e: Event) => {
-                    this.newIcon = (e.target as HTMLInputElement).value;
-                  }}
-                />
-                <Button className="Button Button--primary" icon="fas fa-plus" loading={this.loading} onclick={() => this.add()}>
-                  {app.translator.trans('ernestdefoe-giveaways.forum.categories.add')}
-                </Button>
-              </div>
-            </div>
+            {this.addRow()}
           </div>
         )}
+      </div>
+    );
+  }
+
+  /** One category, edited in place. */
+  row(c: GiveawayCategory): Mithril.Children {
+    return (
+      <li className="CategoryManager-row" key={c.id}>
+        <input
+          type="color"
+          className="CategoryManager-color"
+          value={c.color}
+          oninput={(e: Event) => {
+            c.color = (e.target as HTMLInputElement).value;
+          }}
+        />
+        <input
+          className="FormControl CategoryManager-name"
+          value={c.name}
+          oninput={(e: Event) => {
+            c.name = (e.target as HTMLInputElement).value;
+          }}
+        />
+        <span className="CategoryManager-iconPreview" aria-hidden="true">
+          <Icon name={c.icon || 'fas fa-tag'} />
+        </span>
+        <input
+          className="FormControl CategoryManager-icon"
+          placeholder="fas fa-tag"
+          value={c.icon || ''}
+          oninput={(e: Event) => {
+            c.icon = (e.target as HTMLInputElement).value;
+          }}
+        />
+        <span className="CategoryManager-count">{c.count ?? 0}</span>
+        <Button
+          className="Button Button--icon Button--flat"
+          icon="fas fa-save"
+          title={app.translator.trans('ernestdefoe-giveaways.forum.form.submit')}
+          onclick={() => this.save(c)}
+        />
+        <Button
+          className="Button Button--icon Button--flat CategoryManager-delete"
+          icon="fas fa-trash"
+          title={app.translator.trans('ernestdefoe-giveaways.forum.delete')}
+          onclick={() => this.remove(c)}
+        />
+      </li>
+    );
+  }
+
+  /** The "add a category" row. */
+  addRow(): Mithril.Children {
+    return (
+      <div className="CategoryManager-add">
+        <h4>
+          <Icon name="fas fa-plus" /> {app.translator.trans('ernestdefoe-giveaways.forum.categories.add')}
+        </h4>
+        <div className="CategoryManager-row">
+          <input
+            type="color"
+            className="CategoryManager-color"
+            value={this.newColor}
+            oninput={(e: Event) => {
+              this.newColor = (e.target as HTMLInputElement).value;
+            }}
+          />
+          <input
+            className="FormControl CategoryManager-name"
+            placeholder={app.translator.trans('ernestdefoe-giveaways.forum.categories.name_placeholder') as string}
+            value={this.newName}
+            oninput={(e: Event) => {
+              this.newName = (e.target as HTMLInputElement).value;
+            }}
+          />
+          <span className="CategoryManager-iconPreview" aria-hidden="true">
+            <Icon name={this.newIcon || 'fas fa-tag'} />
+          </span>
+          <input
+            className="FormControl CategoryManager-icon"
+            placeholder="fas fa-tag"
+            value={this.newIcon}
+            oninput={(e: Event) => {
+              this.newIcon = (e.target as HTMLInputElement).value;
+            }}
+          />
+          <Button className="Button Button--primary" icon="fas fa-plus" loading={this.loading} onclick={() => this.add()}>
+            {app.translator.trans('ernestdefoe-giveaways.forum.categories.add')}
+          </Button>
+        </div>
       </div>
     );
   }

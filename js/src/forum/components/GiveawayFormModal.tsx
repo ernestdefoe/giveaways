@@ -102,168 +102,225 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
   }
 
   content(): Mithril.Children {
-    const t = (k: string) => app.translator.trans('ernestdefoe-giveaways.forum.form.' + k);
     return (
       <div className="Modal-body">
         <div className="Form">
+          {this.textFields()}
+          {this.skillFields()}
+          {this.coverAndCategory()}
+          {this.timesAndNumbers()}
+          {this.claimFields()}
+          {this.actions()}
+        </div>
+      </div>
+    );
+  }
+
+  /** Title, prize, description and official rules. */
+  textFields(): Mithril.Children {
+    const t = (k: string) => app.translator.trans('ernestdefoe-giveaways.forum.form.' + k);
+    return (
+      <>
+        {this.field(
+          t('title_label'),
+          <input
+            className="FormControl"
+            value={this.titleInput()}
+            placeholder={t('title_placeholder') as string}
+            oninput={(e: Event) => this.titleInput((e.target as HTMLInputElement).value)}
+          />
+        )}
+        {this.field(
+          t('prize_label'),
+          <input
+            className="FormControl"
+            value={this.prize()}
+            placeholder={t('prize_placeholder') as string}
+            oninput={(e: Event) => this.prize((e.target as HTMLInputElement).value)}
+          />
+        )}
+        {this.field(t('description_label'), this.editor(this.descriptionHost, this.description, t('description_placeholder') as string))}
+        {this.field(t('rules_label'), this.editor(this.rulesHost, this.rules, t('rules_placeholder') as string), t('rules_help'))}
+      </>
+    );
+  }
+
+  /** The skill-testing question, its answer and the attempts allowed. */
+  skillFields(): Mithril.Children {
+    const t = (k: string) => app.translator.trans('ernestdefoe-giveaways.forum.form.' + k);
+    return (
+      <>
+        <div className="GiveawayFormModal-row">
           {this.field(
-            t('title_label'),
+            t('skill_question_label'),
             <input
               className="FormControl"
-              value={this.titleInput()}
-              placeholder={t('title_placeholder') as string}
-              oninput={(e: Event) => this.titleInput((e.target as HTMLInputElement).value)}
+              value={this.skillQuestion()}
+              disabled={this.drawn()}
+              placeholder={t('skill_question_placeholder') as string}
+              oninput={(e: Event) => this.skillQuestion((e.target as HTMLInputElement).value)}
             />
           )}
           {this.field(
-            t('prize_label'),
+            t('skill_answer_label'),
             <input
               className="FormControl"
-              value={this.prize()}
-              placeholder={t('prize_placeholder') as string}
-              oninput={(e: Event) => this.prize((e.target as HTMLInputElement).value)}
+              value={this.skillAnswer()}
+              disabled={this.drawn()}
+              oninput={(e: Event) => this.skillAnswer((e.target as HTMLInputElement).value)}
             />
           )}
-          {this.field(t('description_label'), this.editor(this.descriptionHost, this.description, t('description_placeholder') as string))}
-          {this.field(t('rules_label'), this.editor(this.rulesHost, this.rules, t('rules_placeholder') as string), t('rules_help'))}
-          <div className="GiveawayFormModal-row">
-            {this.field(
-              t('skill_question_label'),
-              <input
-                className="FormControl"
-                value={this.skillQuestion()}
-                disabled={this.drawn()}
-                placeholder={t('skill_question_placeholder') as string}
-                oninput={(e: Event) => this.skillQuestion((e.target as HTMLInputElement).value)}
-              />
-            )}
-            {this.field(
-              t('skill_answer_label'),
-              <input
-                className="FormControl"
-                value={this.skillAnswer()}
-                disabled={this.drawn()}
-                oninput={(e: Event) => this.skillAnswer((e.target as HTMLInputElement).value)}
-              />
-            )}
-          </div>
-          <p className="helpText GiveawayFormModal-skillHelp">{t('skill_answer_help')}</p>
-          {this.numberField(t('skill_attempts_label'), this.skillAttempts, 0, t('skill_attempts_help'), this.drawn())}
-          {this.field(
-            t('cover_label'),
-            <div className="GiveawayFormModal-cover">
-              <input
-                className="FormControl"
-                value={this.coverUrl()}
-                placeholder={t('cover_placeholder') as string}
-                oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)}
-              />
-              {hasMediaLibrary() && (
-                <Button className="Button" icon="fas fa-photo-video" onclick={() => pickImage((url) => this.coverUrl(url))}>
-                  {t('cover_pick')}
-                </Button>
-              )}
-            </div>
-          )}
-          {this.categories.length > 0 &&
-            this.field(
-              t('category_label'),
-              <select
-                className="FormControl"
-                value={this.categoryId()}
-                onchange={(e: Event) => this.categoryId(parseInt((e.target as HTMLSelectElement).value, 10) || 0)}
-              >
-                <option value={0}>{t('category_none')}</option>
-                {this.categories.map((c) => (
-                  <option value={c.id} selected={this.categoryId() === c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            )}
+        </div>
+        <p className="helpText GiveawayFormModal-skillHelp">{t('skill_answer_help')}</p>
+        {this.numberField(t('skill_attempts_label'), this.skillAttempts, 0, t('skill_attempts_help'), this.drawn())}
+      </>
+    );
+  }
 
-          <div className="GiveawayFormModal-row">
-            {this.field(
-              t('starts_label'),
-              <input
-                type="datetime-local"
-                className="FormControl"
-                value={this.startsAt()}
-                oninput={(e: Event) => this.startsAt((e.target as HTMLInputElement).value)}
-              />
-            )}
-            {this.field(
-              t('ends_label'),
-              <input
-                type="datetime-local"
-                className="FormControl"
-                value={this.endsAt()}
-                disabled={this.drawn()}
-                oninput={(e: Event) => this.endsAt((e.target as HTMLInputElement).value)}
-              />
-            )}
-          </div>
-
-          <div className="GiveawayFormModal-row">
-            {this.numberField(t('winner_count_label'), this.winnerCount, 1, undefined, this.drawn())}
-            {this.numberField(t('post_bonus_label'), this.postBonus, 0, t('post_bonus_help'))}
-          </div>
-          <div className="GiveawayFormModal-row">
-            {this.numberField(t('min_posts_label'), this.minPosts, 0)}
-            {this.numberField(t('min_age_label'), this.minAgeDays, 0)}
-          </div>
-          {this.field(
-            t('claim_label'),
-            <textarea
+  /** Cover image (or the media library) and category. */
+  coverAndCategory(): Mithril.Children {
+    const t = (k: string) => app.translator.trans('ernestdefoe-giveaways.forum.form.' + k);
+    return (
+      <>
+        {this.field(
+          t('cover_label'),
+          <div className="GiveawayFormModal-cover">
+            <input
               className="FormControl"
-              rows={3}
-              value={this.claimInstructions()}
-              placeholder={t('claim_placeholder') as string}
-              oninput={(e: Event) => this.claimInstructions((e.target as HTMLTextAreaElement).value)}
-            />,
-            t('claim_help')
-          )}
-          {this.field(
-            t('claim_lines_label'),
-            <textarea
-              className="FormControl GiveawayFormModal-claimLines"
-              rows={4}
-              value={this.claimLines()}
-              placeholder={t('claim_lines_placeholder') as string}
-              oninput={(e: Event) => this.claimLines((e.target as HTMLTextAreaElement).value)}
-            />,
-            t('claim_lines_help')
-          )}
-
-          <div className="Form-group GiveawayFormModal-actions">
-            <Button
-              type="submit"
-              className="Button Button--primary"
-              loading={this.loading && !this.asDraft}
-              onclick={() => {
-                // A handler returning false would cancel the submit (Mithril).
-                this.asDraft = false;
-              }}
-            >
-              {this.attrs.fromComposer && !this.attrs.giveaway ? t('add_to_post') : t('submit')}
-            </Button>
-            {!this.attrs.giveaway && !this.attrs.fromComposer && (
-              <Button
-                type="submit"
-                className="Button"
-                icon="far fa-file"
-                loading={this.loading && this.asDraft}
-                onclick={() => {
-                  this.asDraft = true;
-                }}
-              >
-                {t('save_draft')}
+              value={this.coverUrl()}
+              placeholder={t('cover_placeholder') as string}
+              oninput={(e: Event) => this.coverUrl((e.target as HTMLInputElement).value)}
+            />
+            {hasMediaLibrary() && (
+              <Button className="Button" icon="fas fa-photo-video" onclick={() => pickImage((url) => this.coverUrl(url))}>
+                {t('cover_pick')}
               </Button>
             )}
           </div>
-          {this.attrs.fromComposer && <p className="helpText">{t('composer_help')}</p>}
+        )}
+        {this.categories.length > 0 &&
+          this.field(
+            t('category_label'),
+            <select
+              className="FormControl"
+              value={this.categoryId()}
+              onchange={(e: Event) => this.categoryId(parseInt((e.target as HTMLSelectElement).value, 10) || 0)}
+            >
+              <option value={0}>{t('category_none')}</option>
+              {this.categories.map((c) => (
+                <option value={c.id} selected={this.categoryId() === c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
+      </>
+    );
+  }
+
+  /** Start and end, winners, the posting bonus and eligibility. */
+  timesAndNumbers(): Mithril.Children {
+    const t = (k: string) => app.translator.trans('ernestdefoe-giveaways.forum.form.' + k);
+    return (
+      <>
+        <div className="GiveawayFormModal-row">
+          {this.field(
+            t('starts_label'),
+            <input
+              type="datetime-local"
+              className="FormControl"
+              value={this.startsAt()}
+              oninput={(e: Event) => this.startsAt((e.target as HTMLInputElement).value)}
+            />
+          )}
+          {this.field(
+            t('ends_label'),
+            <input
+              type="datetime-local"
+              className="FormControl"
+              value={this.endsAt()}
+              disabled={this.drawn()}
+              oninput={(e: Event) => this.endsAt((e.target as HTMLInputElement).value)}
+            />
+          )}
         </div>
-      </div>
+
+        <div className="GiveawayFormModal-row">
+          {this.numberField(t('winner_count_label'), this.winnerCount, 1, undefined, this.drawn())}
+          {this.numberField(t('post_bonus_label'), this.postBonus, 0, t('post_bonus_help'))}
+        </div>
+        <div className="GiveawayFormModal-row">
+          {this.numberField(t('min_posts_label'), this.minPosts, 0)}
+          {this.numberField(t('min_age_label'), this.minAgeDays, 0)}
+        </div>
+      </>
+    );
+  }
+
+  /** Claim instructions and the one-prize-per-winner list. */
+  claimFields(): Mithril.Children {
+    const t = (k: string) => app.translator.trans('ernestdefoe-giveaways.forum.form.' + k);
+    return (
+      <>
+        {this.field(
+          t('claim_label'),
+          <textarea
+            className="FormControl"
+            rows={3}
+            value={this.claimInstructions()}
+            placeholder={t('claim_placeholder') as string}
+            oninput={(e: Event) => this.claimInstructions((e.target as HTMLTextAreaElement).value)}
+          />,
+          t('claim_help')
+        )}
+        {this.field(
+          t('claim_lines_label'),
+          <textarea
+            className="FormControl GiveawayFormModal-claimLines"
+            rows={4}
+            value={this.claimLines()}
+            placeholder={t('claim_lines_placeholder') as string}
+            oninput={(e: Event) => this.claimLines((e.target as HTMLTextAreaElement).value)}
+          />,
+          t('claim_lines_help')
+        )}
+      </>
+    );
+  }
+
+  /** Save (or add to post), and save as a draft. */
+  actions(): Mithril.Children {
+    const t = (k: string) => app.translator.trans('ernestdefoe-giveaways.forum.form.' + k);
+    return (
+      <>
+        <div className="Form-group GiveawayFormModal-actions">
+          <Button
+            type="submit"
+            className="Button Button--primary"
+            loading={this.loading && !this.asDraft}
+            onclick={() => {
+              // A handler returning false would cancel the submit (Mithril).
+              this.asDraft = false;
+            }}
+          >
+            {this.attrs.fromComposer && !this.attrs.giveaway ? t('add_to_post') : t('submit')}
+          </Button>
+          {!this.attrs.giveaway && !this.attrs.fromComposer && (
+            <Button
+              type="submit"
+              className="Button"
+              icon="far fa-file"
+              loading={this.loading && this.asDraft}
+              onclick={() => {
+                this.asDraft = true;
+              }}
+            >
+              {t('save_draft')}
+            </Button>
+          )}
+        </div>
+        {this.attrs.fromComposer && <p className="helpText">{t('composer_help')}</p>}
+      </>
     );
   }
 
