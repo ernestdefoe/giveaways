@@ -785,11 +785,15 @@
   color: var(--control-color);
 }
 
+// A third of each door is the forum's primary colour, so a theme still shows
+// through, and the rest a winter colour, so a forum whose primary is near
+// black still gets festive doors.
 .AdventGrid {
-  --gw-door-1: var(--primary-color);
-  --gw-door-2: color-mix(in srgb, var(--primary-color) 45%, #a3243b);
-  --gw-door-3: color-mix(in srgb, var(--primary-color) 45%, #24734a);
-  --gw-door-4: color-mix(in srgb, var(--primary-color) 40%, #b8862a);
+  --gw-door-1: color-mix(in srgb, var(--primary-color) 35%, #3b6ea5);
+  --gw-door-2: color-mix(in srgb, var(--primary-color) 35%, #b3263b);
+  --gw-door-3: color-mix(in srgb, var(--primary-color) 35%, #2e7d52);
+  --gw-door-4: color-mix(in srgb, var(--primary-color) 35%, #c8972f);
+  --gw-today: #f4c542;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
   gap: 14px;
@@ -886,8 +890,9 @@
     filter: saturate(0.55) brightness(0.92);
   }
 }
+// Today's door: a gold ring that reads on any background.
 .AdventDoor--ready .AdventDoor-art {
-  outline: 3px solid var(--primary-color);
+  outline: 3px solid var(--gw-today);
   outline-offset: 2px;
   animation: gwDoorGlow 2.4s ease-in-out infinite;
 }
@@ -902,7 +907,7 @@
 }
 @keyframes gwDoorGlow {
   0%, 100% { filter: drop-shadow(0 0 0 transparent); }
-  50% { filter: drop-shadow(0 0 8px var(--primary-color)); }
+  50% { filter: drop-shadow(0 0 10px var(--gw-today)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .AdventDoor-leaf { transition: none; }
@@ -957,7 +962,7 @@
   font-weight: 700;
 }
 .CalendarCard-cover {
-  background: color-mix(in srgb, var(--primary-color) 45%, #a3243b);
+  background: color-mix(in srgb, var(--primary-color) 35%, #b3263b);
 }
 
 .CalendarBuilder-row {
@@ -1013,6 +1018,10 @@
 }
 .CalendarBuilder-doorBody {
   padding: 4px 4px 12px 2.8em;
+
+  .Form-group {
+    margin-bottom: 14px;
+  }
 }
 .CalendarBuilder-actions {
   display: flex;

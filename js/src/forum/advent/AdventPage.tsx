@@ -236,6 +236,7 @@ export default class AdventPage extends Page {
 
   pick(door: Door) {
     this.selected = door.day;
+    this.reveal();
     if (door.state === 'ready' && this.calendar && app.session.user && !this.calendar.ineligible && this.calendar.status === 'published') {
       this.open(door.day, false);
     }
@@ -248,6 +249,7 @@ export default class AdventPage extends Page {
       .then((calendar) => {
         this.calendar = calendar;
         this.selected = day;
+        this.reveal();
       })
       .catch(() => {
         /* app.request already showed the alert */
@@ -256,6 +258,17 @@ export default class AdventPage extends Page {
         this.busy = false;
         m.redraw();
       });
+  }
+
+  /** On a phone the door's details sit below all the doors: bring them into view. */
+  reveal() {
+    requestAnimationFrame(() => {
+      const detail = document.querySelector('.AdventDetail');
+      const box = detail?.getBoundingClientRect();
+      if (detail && box && (box.top < 0 || box.bottom > window.innerHeight)) {
+        detail.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      }
+    });
   }
 
   toggleReminder() {

@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import FormModal from 'flarum/common/components/FormModal';
 import type { IInternalModalAttrs } from 'flarum/common/components/Modal';
 import Button from 'flarum/common/components/Button';
+import TextEditor from 'flarum/common/components/TextEditor';
 import extractText from 'flarum/common/utils/extractText';
 import type Mithril from 'mithril';
 import { deleteCalendar, saveCalendar } from '../../common/advent';
@@ -92,13 +93,11 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
           {this.text(t('title'), 'title')}
           <div className="Form-group">
             <label>{t('description')}</label>
-            <textarea
-              className="FormControl"
-              rows={3}
-              value={f.description}
-              oninput={(e: Event) => (f.description = (e.target as HTMLTextAreaElement).value)}
-            />
-            <p className="helpText">{t('formatted_help')}</p>
+            {this.editor(
+              'description',
+              () => f.description,
+              (v) => (f.description = v)
+            )}
           </div>
 
           <fieldset className="CalendarBuilder-row">
@@ -219,12 +218,14 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
               <label>{t('door_title')}</label>
               <input className="FormControl" value={d.title ?? ''} oninput={(e: Event) => (d.title = (e.target as HTMLInputElement).value)} />
             </div>
-            {this.area(
-              t('door_body'),
-              () => d.body,
-              (v) => (d.body = v),
-              t('formatted_help')
-            )}
+            <div className="Form-group">
+              <label>{t('door_body')}</label>
+              {this.editor(
+                `door-${d.day}`,
+                () => d.body,
+                (v) => (d.body = v)
+              )}
+            </div>
             {d.kind === 'prize' && [
               <fieldset className="CalendarBuilder-row">
                 <div className="Form-group">
@@ -314,6 +315,23 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
       </div>
     );
   }
+
+  /**
+   * The forum's own editor (Markdown, BBCode, Scribe...), as posts are written
+   * in: the server formats these with the post formatter. Core's TextEditor
+   * writes `composer.editor` when it builds, so each one gets a host object.
+   */
+  editor(key: string, get: () => string, set: (v: string) => void): Mithril.Children {
+    this.hosts[key] ??= {};
+
+    return (
+      <div className="GiveawayFormModal-editor" key={key}>
+        <TextEditor composer={this.hosts[key]} value={get()} disabled={this.loading} onchange={(v: string) => set(v)} onsubmit={() => {}} />
+      </div>
+    );
+  }
+
+  hosts: Record<string, { editor?: unknown }> = {};
 
   area(label: Mithril.Children, get: () => string, set: (v: string) => void, help?: Mithril.Children): Mithril.Children {
     return (

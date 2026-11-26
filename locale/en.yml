@@ -92,7 +92,6 @@ ernestdefoe-giveaways:
         edit_title: Edit advent calendar
         title: Title
         description: Description
-        formatted_help: Formatted like a post.
         starts_on: First door
         days: Doors
         timezone: Timezone
