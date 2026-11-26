@@ -22,6 +22,7 @@ ernestdefoe-giveaways:
     draw_not_ended: This giveaway can be drawn once it ends.
     locked_after_draw: This can't be changed after the draw.
     ends_no_earlier: Once people have entered, the end can be moved later but not earlier.
+    busy: Another request for this giveaway is running. Try again in a moment.
     advent:
       closed: This calendar isn't open.
       not_yet: This door isn't open yet.

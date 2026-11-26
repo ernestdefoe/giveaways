@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\Test;
 class DraftsParticipantsTest extends TestCase
 {
     use RetrievesAuthorizedUsers;
+    use FlattensJsonApi;
 
     protected function setUp(): void
     {
@@ -56,7 +57,7 @@ class DraftsParticipantsTest extends TestCase
     {
         $options = $actor ? ['authenticatedAs' => $actor] : [];
         if ($attributes) {
-            $options['json'] = ['data' => ['attributes' => $attributes]];
+            $options['json'] = $this->document($method, $path, $attributes);
         }
 
         $request = $this->request($method, $path, $options);
@@ -69,7 +70,7 @@ class DraftsParticipantsTest extends TestCase
 
         $response = $this->send($request);
 
-        return [$response->getStatusCode(), json_decode((string) $response->getBody(), true)];
+        return [$response->getStatusCode(), $this->flat(json_decode((string) $response->getBody(), true))];
     }
 
     #[Test]

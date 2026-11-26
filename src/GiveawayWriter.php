@@ -1,42 +1,30 @@
 <?php
 
-namespace ErnestDefoe\Giveaways\Api\Controller;
+namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
-use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
-use ErnestDefoe\Giveaways\Giveaway;
-use ErnestDefoe\Giveaways\RichText;
-use ErnestDefoe\Giveaways\Slugs;
 use Flarum\Foundation\ValidationException;
-use Flarum\Http\RequestUtil;
 use Flarum\Locale\TranslatorInterface;
 use Flarum\User\User;
-use Illuminate\Support\Arr;
-use Laminas\Diactoros\Response\JsonResponse;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * POST  /api/giveaways         create  (requires giveaways.create)
- * PATCH /api/giveaways/{id}    update  (manager or author).
+ * Creating (needs giveaways.create) and editing (a manager, or the author)
+ * a giveaway, from the form's attributes, for GiveawayResource. Everything
+ * the form sends is checked here.
  */
-class SaveGiveawayController implements RequestHandlerInterface
+class GiveawayWriter
 {
     public function __construct(protected TranslatorInterface $translator, protected RichText $rich)
     {
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    /** @param array<string, mixed> $attrs */
+    public function save(?Giveaway $g, array $attrs, User $actor): Giveaway
     {
-        $actor = RequestUtil::getActor($request);
         $actor->assertRegistered();
-        $id = Arr::get($request->getAttributes(), 'routeParameters.id');
-        $attrs = (array) Arr::get((array) $request->getParsedBody(), 'data.attributes', []);
+        $id = $g?->id;
 
-        if ($id) {
-            // Someone else's draft does not exist as far as this actor knows.
-            $g = Giveaway::query()->visibleTo($actor)->findOrFail((int) $id);
+        if ($g) {
             $this->assertCanManage($actor, $g);
         } else {
             $actor->assertCan('giveaways.create');
@@ -90,7 +78,7 @@ class SaveGiveawayController implements RequestHandlerInterface
         }
         if (array_key_exists('categoryId', $attrs)) {
             $cid = $attrs['categoryId'] ? (int) $attrs['categoryId'] : null;
-            $g->category_id = ($cid && \ErnestDefoe\Giveaways\GiveawayCategory::whereKey($cid)->exists()) ? $cid : null;
+            $g->category_id = ($cid && GiveawayCategory::whereKey($cid)->exists()) ? $cid : null;
         }
 
         // Entry-method + eligibility settings.
@@ -163,9 +151,8 @@ class SaveGiveawayController implements RequestHandlerInterface
         }
         $g->updated_at = Carbon::now();
         $g->save();
-        $g->load(['user', 'category']);
 
-        return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)], $id ? 200 : 201);
+        return $g;
     }
 
     /** The settings a draw was made and judged under, normalised for comparison. */

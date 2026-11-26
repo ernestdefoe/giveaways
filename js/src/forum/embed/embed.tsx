@@ -1,6 +1,6 @@
-import app from 'flarum/forum/app';
 import GiveawayCard from '../components/GiveawayCard';
 import CalendarCard from '../advent/CalendarCard';
+import { giveawaysBySlug } from '../../common/api';
 import type { Giveaway } from '../../common/api';
 import { calendarSummaries } from '../../common/advent';
 import type { AdventCalendar } from '../../common/advent';
@@ -16,13 +16,9 @@ let timer = 0;
 const fetchers: Record<Kind, (keys: string[]) => Promise<Array<{ key: string; found: Found }>>> = {
   // The same list endpoint, query and visibility as the giveaways page.
   giveaways: (keys) =>
-    app
-      .request<{ data: Giveaway[] }>({
-        method: 'GET',
-        url: app.forum.attribute('apiUrl') + '/giveaways',
-        params: { filter: { slug: keys.join(',') } },
-      })
-      .then(({ data }) => keys.map((key) => ({ key, found: data.find((g) => g.slug === key) || data.find((g) => String(g.id) === key) || null }))),
+    giveawaysBySlug(keys).then((data) =>
+      keys.map((key) => ({ key, found: data.find((g) => g.slug === key) || data.find((g) => String(g.id) === key) || null }))
+    ),
   // Only the calendar's summary: a card never carries what is behind a door.
   advent: (keys) => calendarSummaries(keys).then((data) => keys.map((key) => ({ key, found: data.find((c) => c.slug === key) || null }))),
 };

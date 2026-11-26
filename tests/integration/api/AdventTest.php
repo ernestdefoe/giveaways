@@ -23,6 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
 class AdventTest extends TestCase
 {
     use RetrievesAuthorizedUsers;
+    use FlattensJsonApi;
 
     /** Text that must never reach a member before its door opens for them. */
     private const SECRETS = ['FUTURE-REVEAL-4', 'FUTURE-PRIZE-5', 'Door five title', 'TODAY-REVEAL-BODY', 'Mug of today'];
@@ -147,6 +148,7 @@ class AdventTest extends TestCase
             [$status] = $this->call('GET', '/api/giveaways/'.$draw->slug, 10);
             $this->assertSame(404, $status, "{$draw->prize} before opening");
             [, $found] = $this->call('GET', '/api/giveaways', 10, null, ['filter' => ['slug' => $draw->slug]]);
+            $this->assertArrayHasKey('data', $found);
             $this->assertSame([], $found['data']);
         }
         $this->open(10, $id, 3);
@@ -227,7 +229,7 @@ class AdventTest extends TestCase
             [$status] = $this->call('POST', '/api/giveaways/'.$giveaway->id.'/enter', 10);
             $this->assertSame(422, $status);
             // Nor edited, drawn early or deleted one by one, even by the admin.
-            [$status] = $this->call('PATCH', '/api/giveaways/'.$giveaway->id, 1, ['data' => ['attributes' => ['prize' => 'Swapped']]]);
+            [$status] = $this->call('PATCH', '/api/giveaways/'.$giveaway->id, 1, ['data' => ['type' => 'giveaways', 'id' => (string) $giveaway->id, 'attributes' => ['prize' => 'Swapped']]]);
             $this->assertSame(403, $status);
             [$status] = $this->call('POST', '/api/giveaways/'.$giveaway->id.'/draw', 1);
             $this->assertSame(403, $status);
@@ -237,7 +239,7 @@ class AdventTest extends TestCase
 
         // Unlisted on the giveaways page.
         [, $list] = $this->call('GET', '/api/giveaways', 10);
-        $this->assertNotContains((int) $grand->id, array_column($list['data'], 'id'));
+        $this->assertNotContains((int) $grand->id, array_column($this->flat($list)['data'], 'id'));
     }
 
     #[Test]

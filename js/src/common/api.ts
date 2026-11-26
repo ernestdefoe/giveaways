@@ -92,33 +92,54 @@ export interface ListResult {
   meta: { canCreate: boolean; canManage: boolean };
 }
 
+/** A JSON:API resource as the server sends it. */
+interface Resource<T> {
+  type: string;
+  id: string;
+  attributes: Omit<T, 'id'>;
+}
+
+/** Giveaways and categories are JSON:API resources; the pages use them flat, with a numeric id. */
+function flat<T extends { id: number }>(r: Resource<T>): T {
+  return { id: Number(r.id), ...r.attributes } as T;
+}
+
+function one<T extends { id: number }>(res: { data: Resource<T> }): { data: T } {
+  return { data: flat(res.data) };
+}
+
 function base(): string {
   return app.forum.attribute('apiUrl') + '/giveaways';
 }
 
 export function listGiveaways(): Promise<ListResult> {
-  return app.request<ListResult>({ method: 'GET', url: base() });
+  return app
+    .request<{ data: Resource<Giveaway>[]; meta: ListResult['meta'] }>({ method: 'GET', url: base() })
+    .then((res) => ({ data: res.data.map((r) => flat(r)), meta: res.meta }));
+}
+
+/** Giveaways by slug (or old id), for the cards links in posts become; at most 20 a request. */
+export function giveawaysBySlug(keys: string[]): Promise<Giveaway[]> {
+  return app
+    .request<{ data: Resource<Giveaway>[] }>({ method: 'GET', url: base(), params: { filter: { slug: keys.join(',') } } })
+    .then((res) => res.data.map((r) => flat(r)));
 }
 
 export function showGiveaway(idOrSlug: number | string): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({ method: 'GET', url: `${base()}/${encodeURIComponent(idOrSlug)}` });
+  return app.request<{ data: Resource<Giveaway> }>({ method: 'GET', url: `${base()}/${encodeURIComponent(idOrSlug)}` }).then(one);
 }
 
 export function enterGiveaway(id: number): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/enter` });
+  return app.request<{ data: Resource<Giveaway> }>({ method: 'POST', url: `${base()}/${id}/enter` }).then(one);
 }
 
 export function drawGiveaway(id: number): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({ method: 'POST', url: `${base()}/${id}/draw` });
+  return app.request<{ data: Resource<Giveaway> }>({ method: 'POST', url: `${base()}/${id}/draw` }).then(one);
 }
 
 /** `answer` is the skill-testing answer, required only when the giveaway sets one. */
 export function claimGiveaway(id: number, answer?: string): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({
-    method: 'POST',
-    url: `${base()}/${id}/claim`,
-    body: { data: { attributes: { answer: answer ?? '' } } },
-  });
+  return app.request<{ data: Resource<Giveaway> }>({ method: 'POST', url: `${base()}/${id}/claim`, body: { answer: answer ?? '' } }).then(one);
 }
 
 export interface Entrant {
@@ -136,11 +157,13 @@ export function deleteGiveaway(id: number): Promise<unknown> {
 }
 
 export function saveGiveaway(attributes: Record<string, unknown>, id?: number): Promise<{ data: Giveaway }> {
-  return app.request<{ data: Giveaway }>({
-    method: id ? 'PATCH' : 'POST',
-    url: id ? `${base()}/${id}` : base(),
-    body: { data: { attributes } },
-  });
+  return app
+    .request<{ data: Resource<Giveaway> }>({
+      method: id ? 'PATCH' : 'POST',
+      url: id ? `${base()}/${id}` : base(),
+      body: { data: { type: 'giveaways', ...(id ? { id: String(id) } : {}), attributes } },
+    })
+    .then(one);
 }
 
 function catBase(): string {
@@ -148,15 +171,19 @@ function catBase(): string {
 }
 
 export function listCategories(): Promise<{ data: GiveawayCategory[] }> {
-  return app.request<{ data: GiveawayCategory[] }>({ method: 'GET', url: catBase() });
+  return app
+    .request<{ data: Resource<GiveawayCategory>[] }>({ method: 'GET', url: catBase() })
+    .then((res) => ({ data: res.data.map((r) => flat(r)) }));
 }
 
 export function saveCategory(attributes: Record<string, unknown>, id?: number): Promise<{ data: GiveawayCategory }> {
-  return app.request<{ data: GiveawayCategory }>({
-    method: id ? 'PATCH' : 'POST',
-    url: id ? `${catBase()}/${id}` : catBase(),
-    body: { data: { attributes } },
-  });
+  return app
+    .request<{ data: Resource<GiveawayCategory> }>({
+      method: id ? 'PATCH' : 'POST',
+      url: id ? `${catBase()}/${id}` : catBase(),
+      body: { data: { type: 'giveaway-categories', ...(id ? { id: String(id) } : {}), attributes } },
+    })
+    .then(one);
 }
 
 export function deleteCategory(id: number): Promise<unknown> {

@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 class GiveawaysTest extends TestCase
 {
     use RetrievesAuthorizedUsers;
+    use FlattensJsonApi;
 
     protected function setUp(): void
     {
@@ -57,7 +58,7 @@ class GiveawaysTest extends TestCase
         $options = $actor ? ['authenticatedAs' => $actor] : [];
 
         if ($attributes) {
-            $options['json'] = ['data' => ['attributes' => $attributes]];
+            $options['json'] = $this->document($method, $path, $attributes);
         }
 
         $request = $this->request($method, $path, $options);
@@ -70,7 +71,7 @@ class GiveawaysTest extends TestCase
 
         $response = $this->send($request);
 
-        return [$response->getStatusCode(), json_decode((string) $response->getBody(), true)];
+        return [$response->getStatusCode(), $this->flat(json_decode((string) $response->getBody(), true))];
     }
 
     #[Test]
@@ -134,7 +135,7 @@ class GiveawaysTest extends TestCase
         $list = function (string $slugs) {
             $request = $this->request('GET', '/api/giveaways')->withQueryParams(['filter' => ['slug' => $slugs]]);
 
-            return json_decode((string) $this->send($request)->getBody(), true)['data'];
+            return $this->flat(json_decode((string) $this->send($request)->getBody(), true))['data'];
         };
 
         $this->assertEqualsCanonicalizing([1, 11, 12], array_column($list('running,giveaway-12,nope,11'), 'id'));

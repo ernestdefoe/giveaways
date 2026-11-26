@@ -1,6 +1,5 @@
 import Component from 'flarum/common/Component';
 
-
 /**
  * The giveaway list's shape while it loads.
  *

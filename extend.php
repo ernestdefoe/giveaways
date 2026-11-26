@@ -7,7 +7,6 @@
  */
 
 use ErnestDefoe\Giveaways\Advent;
-use ErnestDefoe\Giveaways\Api\Controller;
 use ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
 use ErnestDefoe\Giveaways\Console\RemindCommand;
@@ -49,21 +48,6 @@ return [
         ->serializeToForum('giveawaysNavLabel', 'ernestdefoe-giveaways.nav_label')
         ->serializeToForum('giveawaysShowNav', 'ernestdefoe-giveaways.show_nav', 'boolval'),
 
-    (new Extend\Routes('api'))
-        ->get('/giveaways', 'giveaways.index', Controller\ListGiveawaysController::class)
-        ->get('/giveaways/{id}', 'giveaways.show', Controller\ShowGiveawayController::class)
-        ->post('/giveaways', 'giveaways.create', Controller\SaveGiveawayController::class)
-        ->patch('/giveaways/{id}', 'giveaways.update', Controller\SaveGiveawayController::class)
-        ->delete('/giveaways/{id}', 'giveaways.delete', Controller\DeleteGiveawayController::class)
-        ->post('/giveaways/{id}/enter', 'giveaways.enter', Controller\EnterGiveawayController::class)
-        ->post('/giveaways/{id}/draw', 'giveaways.draw', Controller\DrawGiveawayController::class)
-        ->post('/giveaways/{id}/claim', 'giveaways.claim', Controller\ClaimGiveawayController::class)
-        ->get('/giveaways/{id}/entrants', 'giveaways.entrants', Controller\ListEntrantsController::class)
-        ->get('/giveaway-categories', 'giveaways.categories.index', Controller\ListCategoriesController::class)
-        ->post('/giveaway-categories', 'giveaways.categories.create', Controller\SaveCategoryController::class)
-        ->patch('/giveaway-categories/{id}', 'giveaways.categories.update', Controller\SaveCategoryController::class)
-        ->delete('/giveaway-categories/{id}', 'giveaways.categories.delete', Controller\DeleteCategoryController::class),
-
     (new Extend\Event())
         ->listen(Posted::class, AwardPostBonus::class)
         // A draft made in the composer goes public with its post.
@@ -81,6 +65,7 @@ return [
         ]),
 
     new Extend\ApiResource(Resource\GiveawayResource::class),
+    new Extend\ApiResource(Resource\CategoryResource::class),
     new Extend\ApiResource(Advent\CalendarResource::class),
     (new Extend\ModelVisibility(Advent\Calendar::class))
         ->scope(Advent\ScopeCalendarVisibility::class),

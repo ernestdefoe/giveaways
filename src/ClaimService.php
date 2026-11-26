@@ -1,50 +1,56 @@
 <?php
 
-namespace ErnestDefoe\Giveaways\Api\Controller;
+namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
-use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
-use ErnestDefoe\Giveaways\DrawService;
-use ErnestDefoe\Giveaways\Giveaway;
-use ErnestDefoe\Giveaways\GiveawayWinner;
 use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use Flarum\Foundation\ValidationException;
-use Flarum\Http\RequestUtil;
 use Flarum\Locale\TranslatorInterface;
 use Flarum\Notification\NotificationSyncer;
 use Flarum\User\User;
-use Illuminate\Support\Arr;
-use Laminas\Diactoros\Response\JsonResponse;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+use Illuminate\Contracts\Cache\Repository as Cache;
+use Psr\Log\LoggerInterface;
 
-/** POST /api/giveaways/{id}/claim — a winner marks their prize as claimed. */
-class ClaimGiveawayController implements RequestHandlerInterface
+/** A winner claims their prize, answering the skill-testing question if there is one. */
+class ClaimService
 {
     public function __construct(
         protected NotificationSyncer $notifications,
         protected TranslatorInterface $translator,
-        protected DrawService $draws
+        protected DrawService $draws,
+        protected Cache $cache,
+        protected LoggerInterface $log,
     ) {
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function claim(Giveaway $g, User $actor, string $answer): void
     {
-        $actor = RequestUtil::getActor($request);
         $actor->assertRegistered();
-
-        $id = (int) Arr::get($request->getAttributes(), 'routeParameters.id');
-        $g = Giveaway::query()->visibleTo($actor)->with(['user', 'category'])->findOrFail($id);
 
         $win = $g->winners()->where('user_id', $actor->id)->first();
         if (! $win) {
             throw new ValidationException(['claim' => $this->translator->trans('ernestdefoe-giveaways.api.claim_not_winner')]);
         }
 
-        $answer = Arr::get((array) $request->getParsedBody(), 'data.attributes.answer');
-        $answer = is_string($answer) ? trim($answer) : '';
+        $answer = trim($answer);
 
+        // The row lock below serialises claims on MySQL and PostgreSQL; SQLite
+        // ignores it, so a cache lock per giveaway guards it too. Never waited
+        // on: a second claim at the same moment is told to try again.
+        $lock = $this->cache->lock('ernestdefoe-giveaways.claim.'.$g->id, 10);
+        if (! $lock->get()) {
+            throw new ValidationException(['answer' => $this->translator->trans('ernestdefoe-giveaways.api.busy')]);
+        }
+
+        try {
+            $this->decide($g, $win, $actor, $answer);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function decide(Giveaway $g, GiveawayWinner $win, User $actor, string $answer): void
+    {
         // The winner row is locked for the whole decision. Without it, a winner
         // firing many claims at once read the same attempt count in each and got
         // far more guesses than the limit, and several "last" wrong answers each
@@ -113,11 +119,10 @@ class ClaimGiveawayController implements RequestHandlerInterface
                         $this->notifications->sync(new GiveawayClaimedBlueprint($g, $actor), [$host]);
                     }
                 } catch (\Throwable $e) {
-                    // never let a notification failure undo the claim
+                    // Never let a notification failure undo the claim.
+                    $this->log->warning('[giveaways] claim notification for giveaway '.$g->id.' failed: '.$e->getMessage());
                 }
             }
         }
-
-        return new JsonResponse(['data' => GiveawayPresenter::forActor($actor)->present($g, true)]);
     }
 }
