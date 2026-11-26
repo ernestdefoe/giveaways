@@ -84,8 +84,6 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
   content(): Mithril.Children {
     const t = (key: string, params = {}) => app.translator.trans(`ernestdefoe-giveaways.forum.advent.builder.${key}`, params);
     const f = this.form;
-    const started = this.started();
-    const zones: string[] = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.('timeZone') ?? [];
 
     return (
       <div className="Modal-body">
@@ -100,81 +98,115 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
             )}
           </div>
 
-          <fieldset className="CalendarBuilder-row">
-            <div className="Form-group">
-              <label>{t('starts_on')}</label>
-              <input
-                type="date"
-                className="FormControl"
-                value={f.startsOn}
-                disabled={started}
-                oninput={(e: Event) => (f.startsOn = (e.target as HTMLInputElement).value)}
-              />
-            </div>
-            {this.number(t('days'), 'days', 1, 31, started)}
-            <div className="Form-group">
-              <label>{t('timezone')}</label>
-              <input
-                className="FormControl"
-                list="CalendarBuilder-zones"
-                value={f.timezone}
-                disabled={started}
-                placeholder={extractText(t('timezone_placeholder'))}
-                oninput={(e: Event) => (f.timezone = (e.target as HTMLInputElement).value.trim())}
-              />
-              <datalist id="CalendarBuilder-zones">
-                {zones.map((z) => (
-                  <option value={z} />
-                ))}
-              </datalist>
-            </div>
-          </fieldset>
-          {started && <p className="helpText">{t('dates_locked')}</p>}
+          {this.dates()}
 
           <fieldset className="CalendarBuilder-row">
             {this.number(t('min_posts'), 'minPosts', 0, 100000)}
             {this.number(t('min_age_days'), 'minAgeDays', 0, 100000)}
           </fieldset>
 
-          <h4 className="CalendarBuilder-heading">{t('grand_heading')}</h4>
-          <p className="helpText">{t('grand_help')}</p>
-          <fieldset className="CalendarBuilder-row">
-            {this.text(t('grand_prize'), 'grandPrize')}
-            {this.number(t('winners'), 'grandWinners', 1, 100)}
-          </fieldset>
-          {this.area(
-            t('claim_instructions'),
-            () => f.grandClaimInstructions,
-            (v) => (f.grandClaimInstructions = v),
-            t('claim_instructions_help')
-          )}
-          {this.area(
-            t('claim_lines'),
-            () => f.grandClaimLines,
-            (v) => (f.grandClaimLines = v),
-            t('claim_lines_help')
-          )}
+          {this.grandSection()}
 
           <h4 className="CalendarBuilder-heading">{t('doors_heading')}</h4>
           <p className="helpText">{t('doors_help')}</p>
           <ol className="CalendarBuilder-doors">{this.doors.slice(0, Math.max(1, Math.min(31, f.days))).map((d) => this.door(d))}</ol>
 
-          <div className="Form-group CalendarBuilder-actions">
-            <Button type="submit" className="Button Button--primary" loading={this.loading} onclick={() => this.submitAs(true)}>
-              {t(this.attrs.calendar?.status === 'published' ? 'save' : 'publish')}
-            </Button>
-            {!started && (
-              <Button type="submit" className="Button" loading={this.loading} onclick={() => this.submitAs(false)}>
-                {t('save_draft')}
-              </Button>
-            )}
-            {this.attrs.calendar && (
-              <Button className="Button Button--danger" onclick={() => this.remove()}>
-                {t('delete')}
-              </Button>
-            )}
-          </div>
+          {this.actions()}
         </div>
+      </div>
+    );
+  }
+
+  /** The first door's date, how many doors, the timezone: fixed once the first door opens. */
+  dates(): Mithril.Children {
+    const t = (key: string, params = {}) => app.translator.trans(`ernestdefoe-giveaways.forum.advent.builder.${key}`, params);
+    const f = this.form;
+    const started = this.started();
+    const zones: string[] = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf?.('timeZone') ?? [];
+
+    return (
+      <>
+        <fieldset className="CalendarBuilder-row">
+          <div className="Form-group">
+            <label>{t('starts_on')}</label>
+            <input
+              type="date"
+              className="FormControl"
+              value={f.startsOn}
+              disabled={started}
+              oninput={(e: Event) => (f.startsOn = (e.target as HTMLInputElement).value)}
+            />
+          </div>
+          {this.number(t('days'), 'days', 1, 31, started)}
+          <div className="Form-group">
+            <label>{t('timezone')}</label>
+            <input
+              className="FormControl"
+              list="CalendarBuilder-zones"
+              value={f.timezone}
+              disabled={started}
+              placeholder={extractText(t('timezone_placeholder'))}
+              oninput={(e: Event) => (f.timezone = (e.target as HTMLInputElement).value.trim())}
+            />
+            <datalist id="CalendarBuilder-zones">
+              {zones.map((z) => (
+                <option value={z} />
+              ))}
+            </datalist>
+          </div>
+        </fieldset>
+        {started && <p className="helpText">{t('dates_locked')}</p>}
+      </>
+    );
+  }
+
+  grandSection(): Mithril.Children {
+    const t = (key: string, params = {}) => app.translator.trans(`ernestdefoe-giveaways.forum.advent.builder.${key}`, params);
+    const f = this.form;
+
+    return (
+      <>
+        <h4 className="CalendarBuilder-heading">{t('grand_heading')}</h4>
+        <p className="helpText">{t('grand_help')}</p>
+        <fieldset className="CalendarBuilder-row">
+          {this.text(t('grand_prize'), 'grandPrize')}
+          {this.number(t('winners'), 'grandWinners', 1, 100)}
+        </fieldset>
+        {this.area(
+          t('claim_instructions'),
+          () => f.grandClaimInstructions,
+          (v) => (f.grandClaimInstructions = v),
+          t('claim_instructions_help')
+        )}
+        {this.area(
+          t('claim_lines'),
+          () => f.grandClaimLines,
+          (v) => (f.grandClaimLines = v),
+          t('claim_lines_help')
+        )}
+      </>
+    );
+  }
+
+  actions(): Mithril.Children {
+    const t = (key: string, params = {}) => app.translator.trans(`ernestdefoe-giveaways.forum.advent.builder.${key}`, params);
+    const started = this.started();
+
+    return (
+      <div className="Form-group CalendarBuilder-actions">
+        <Button type="submit" className="Button Button--primary" loading={this.loading} onclick={() => this.submitAs(true)}>
+          {t(this.attrs.calendar?.status === 'published' ? 'save' : 'publish')}
+        </Button>
+        {!started && (
+          <Button type="submit" className="Button" loading={this.loading} onclick={() => this.submitAs(false)}>
+            {t('save_draft')}
+          </Button>
+        )}
+        {this.attrs.calendar && (
+          <Button className="Button Button--danger" onclick={() => this.remove()}>
+            {t('delete')}
+          </Button>
+        )}
       </div>
     );
   }
@@ -185,7 +217,6 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
     // An opened door keeps what it hands out.
     const locked = this.started() && !!c && d.day <= c.today;
     const expanded = this.open === d.day;
-    const choices = c?.exchangeChoices ?? [];
 
     return (
       <li className={'CalendarBuilder-door' + (expanded ? ' is-open' : '')}>
@@ -198,90 +229,103 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
           </span>
           {locked && <span className="CalendarBuilder-locked">{t('door_opened')}</span>}
         </button>
-        {expanded && (
-          <div className="CalendarBuilder-doorBody">
-            <div className="Form-group">
-              <label>{t('kind')}</label>
-              <select
-                className="FormControl"
-                value={d.kind}
-                disabled={locked}
-                onchange={(e: Event) => (d.kind = (e.target as HTMLSelectElement).value as EditorDoor['kind'])}
-              >
-                {KINDS.filter((k) => k !== 'exchange' || choices.length || d.kind === 'exchange').map((k) => (
-                  <option value={k}>{t(`kind_${k}`)}</option>
-                ))}
-              </select>
-              <p className="helpText">{t(`kind_${d.kind}_help`)}</p>
-            </div>
-            <div className="Form-group">
-              <label>{t('door_title')}</label>
-              <input className="FormControl" value={d.title ?? ''} oninput={(e: Event) => (d.title = (e.target as HTMLInputElement).value)} />
-            </div>
-            <div className="Form-group">
-              <label>{t('door_body')}</label>
-              {this.editor(
-                `door-${d.day}`,
-                () => d.body,
-                (v) => (d.body = v)
-              )}
-            </div>
-            {d.kind === 'prize' && [
-              <fieldset className="CalendarBuilder-row">
-                <div className="Form-group">
-                  <label>{t('door_prize')}</label>
-                  <input
-                    className="FormControl"
-                    value={d.prize ?? ''}
-                    disabled={locked}
-                    oninput={(e: Event) => (d.prize = (e.target as HTMLInputElement).value)}
-                  />
-                </div>
-                <div className="Form-group">
-                  <label>{t('winners')}</label>
-                  <input
-                    type="number"
-                    className="FormControl"
-                    min={1}
-                    max={100}
-                    value={d.winners}
-                    disabled={locked}
-                    oninput={(e: Event) => (d.winners = parseInt((e.target as HTMLInputElement).value, 10) || 1)}
-                  />
-                </div>
-              </fieldset>,
-              this.area(
-                t('claim_instructions'),
-                () => d.claimInstructions,
-                (v) => (d.claimInstructions = v),
-                t('claim_instructions_help')
-              ),
-              this.area(
-                t('claim_lines'),
-                () => d.claimLines,
-                (v) => (d.claimLines = v),
-                t('claim_lines_help')
-              ),
-            ]}
-            {d.kind === 'exchange' && (
-              <div className="Form-group">
-                <label>{t('exchange')}</label>
-                <select
-                  className="FormControl"
-                  value={String(d.exchangeId ?? '')}
-                  onchange={(e: Event) => (d.exchangeId = parseInt((e.target as HTMLSelectElement).value, 10) || null)}
-                >
-                  <option value="">{t('exchange_pick')}</option>
-                  {choices.map((x) => (
-                    <option value={String(x.id)}>{x.title}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        )}
+        {expanded && <div className="CalendarBuilder-doorBody">{this.doorFields(d, locked)}</div>}
       </li>
     );
+  }
+
+  doorFields(d: EditorDoor, locked: boolean): Mithril.Children {
+    const t = (key: string, params = {}) => app.translator.trans(`ernestdefoe-giveaways.forum.advent.builder.${key}`, params);
+    const choices = this.attrs.calendar?.exchangeChoices ?? [];
+
+    return (
+      <>
+        <div className="Form-group">
+          <label>{t('kind')}</label>
+          <select
+            className="FormControl"
+            value={d.kind}
+            disabled={locked}
+            onchange={(e: Event) => (d.kind = (e.target as HTMLSelectElement).value as EditorDoor['kind'])}
+          >
+            {KINDS.filter((k) => k !== 'exchange' || choices.length || d.kind === 'exchange').map((k) => (
+              <option value={k}>{t(`kind_${k}`)}</option>
+            ))}
+          </select>
+          <p className="helpText">{t(`kind_${d.kind}_help`)}</p>
+        </div>
+        <div className="Form-group">
+          <label>{t('door_title')}</label>
+          <input className="FormControl" value={d.title ?? ''} oninput={(e: Event) => (d.title = (e.target as HTMLInputElement).value)} />
+        </div>
+        <div className="Form-group">
+          <label>{t('door_body')}</label>
+          {this.editor(
+            `door-${d.day}`,
+            () => d.body,
+            (v) => (d.body = v)
+          )}
+        </div>
+        {d.kind === 'prize' && this.prizeFields(d, locked)}
+        {d.kind === 'exchange' && (
+          <div className="Form-group">
+            <label>{t('exchange')}</label>
+            <select
+              className="FormControl"
+              value={String(d.exchangeId ?? '')}
+              onchange={(e: Event) => (d.exchangeId = parseInt((e.target as HTMLSelectElement).value, 10) || null)}
+            >
+              <option value="">{t('exchange_pick')}</option>
+              {choices.map((x) => (
+                <option value={String(x.id)}>{x.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  prizeFields(d: EditorDoor, locked: boolean): Mithril.Children {
+    const t = (key: string, params = {}) => app.translator.trans(`ernestdefoe-giveaways.forum.advent.builder.${key}`, params);
+
+    return [
+      <fieldset className="CalendarBuilder-row">
+        <div className="Form-group">
+          <label>{t('door_prize')}</label>
+          <input
+            className="FormControl"
+            value={d.prize ?? ''}
+            disabled={locked}
+            oninput={(e: Event) => (d.prize = (e.target as HTMLInputElement).value)}
+          />
+        </div>
+        <div className="Form-group">
+          <label>{t('winners')}</label>
+          <input
+            type="number"
+            className="FormControl"
+            min={1}
+            max={100}
+            value={d.winners}
+            disabled={locked}
+            oninput={(e: Event) => (d.winners = parseInt((e.target as HTMLInputElement).value, 10) || 1)}
+          />
+        </div>
+      </fieldset>,
+      this.area(
+        t('claim_instructions'),
+        () => d.claimInstructions,
+        (v) => (d.claimInstructions = v),
+        t('claim_instructions_help')
+      ),
+      this.area(
+        t('claim_lines'),
+        () => d.claimLines,
+        (v) => (d.claimLines = v),
+        t('claim_lines_help')
+      ),
+    ];
   }
 
   text(label: Mithril.Children, key: 'title' | 'grandPrize'): Mithril.Children {

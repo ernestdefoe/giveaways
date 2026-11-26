@@ -51,20 +51,7 @@ class Calendars
         $errors = [];
         $this->schedule($calendar, $in, $new, $started, $errors);
 
-        if ($new || array_key_exists('title', $in)) {
-            $title = trim((string) ($in['title'] ?? ''));
-            $title === '' ? $errors['title'] = $this->trans('title_required') : $calendar->title = mb_substr($title, 0, 255);
-        }
-        if (array_key_exists('description', $in)) {
-            $calendar->description = $this->rich->store((string) $in['description'], $calendar, $actor);
-        }
-        $settings = $calendar->settingsArray();
-        foreach (['minPosts' => 'min_posts', 'minAgeDays' => 'min_age_days'] as $from => $key) {
-            if (array_key_exists($from, $in)) {
-                $settings[$key] = max(0, min(100000, (int) $in[$from]));
-            }
-        }
-        $calendar->settings = json_encode($settings);
+        $this->details($calendar, $in, $new, $actor, $errors);
 
         if (array_key_exists('publish', $in)) {
             if (! $in['publish'] && $started) {
@@ -95,6 +82,29 @@ class Calendars
         });
 
         return $calendar->refresh();
+    }
+
+    /**
+     * Title, description and the eligibility rules.
+     *
+     * @param array<string, string> $errors
+     */
+    private function details(Calendar $calendar, array $in, bool $new, User $actor, array &$errors): void
+    {
+        if ($new || array_key_exists('title', $in)) {
+            $title = trim((string) ($in['title'] ?? ''));
+            $title === '' ? $errors['title'] = $this->trans('title_required') : $calendar->title = mb_substr($title, 0, 255);
+        }
+        if (array_key_exists('description', $in)) {
+            $calendar->description = $this->rich->store((string) $in['description'], $calendar, $actor);
+        }
+        $settings = $calendar->settingsArray();
+        foreach (['minPosts' => 'min_posts', 'minAgeDays' => 'min_age_days'] as $from => $key) {
+            if (array_key_exists($from, $in)) {
+                $settings[$key] = max(0, min(100000, (int) $in[$from]));
+            }
+        }
+        $calendar->settings = json_encode($settings);
     }
 
     /** Removes the calendar with everything it owns (the database cascades too, where foreign keys are on). */
@@ -255,44 +265,52 @@ class Calendars
         $taken = Giveaway::query()->whereIn('slug', $wanted)->where(fn ($q) => $q->whereNull('calendar_id')->orWhere('calendar_id', '!=', $calendar->id))->pluck('slug')->flip();
 
         for ($day = 1; $day <= $calendar->days; $day++) {
-            $door = $existing->get($day);
-            $in = $doors[$day] ?? null;
-            if (! $door && ! $in) {
-                continue;
+            if ($existing->has($day) || isset($doors[$day])) {
+                $this->saveDoor($calendar, $day, $existing->get($day), $doors[$day] ?? null, $taken->has($wanted[$day]) ? null : $wanted[$day], $actor);
             }
-            if (! $door) {
-                $door = new Door();
-                $door->calendar_id = $calendar->id;
-                $door->day = $day;
-            }
+        }
+    }
+
+    /**
+     * One door, and its draw when it's a prize door. $slug is the draw's name
+     * if it is still free (see saveDoors), or null to find another.
+     *
+     * @param array<string, mixed>|null $in what the form sent for this day, if anything
+     */
+    private function saveDoor(Calendar $calendar, int $day, ?Door $door, ?array $in, ?string $slug, User $actor): void
+    {
+        if (! $door) {
+            $door = new Door();
+            $door->calendar_id = $calendar->id;
+            $door->day = $day;
+        }
+        if ($in) {
+            $door->kind = $in['kind'];
+            $door->title = $in['title'];
+            $door->body = $this->rich->store($in['body'], $calendar, $actor);
+            $door->exchange_id = $in['kind'] === Door::EXCHANGE ? $in['exchangeId'] : null;
+        }
+
+        $draw = $door->giveaway;
+        if ($door->kind === Door::PRIZE) {
+            $draw ??= new Giveaway();
+            $draw->calendar_role = 'door';
+            $draw->title = $door->title ?: $this->trans('door_title', ['calendar' => $calendar->title, 'day' => $day]);
             if ($in) {
-                $door->kind = $in['kind'];
-                $door->title = $in['title'];
-                $door->body = $this->rich->store($in['body'], $calendar, $actor);
-                $door->exchange_id = $in['kind'] === Door::EXCHANGE ? $in['exchangeId'] : null;
+                $draw->prize = $in['prize'];
+                $draw->winner_count = $in['winners'];
             }
+            $settings = $draw->settingsArray();
+            $draw->slug ??= $slug ?? Slugs::unique(Giveaway::class, $calendar->slug.'-'.$day);
+            $this->own($calendar, $draw, $day, $day, $in['instructions'] ?? $settings['claim_instructions'], $in['lines'] ?? $settings['claim_lines']);
+            $door->giveaway_id = $draw->id;
+        } elseif ($draw) {
+            $door->giveaway_id = null;
+        }
+        $door->save();
 
-            $draw = $door->giveaway;
-            if ($door->kind === Door::PRIZE) {
-                $draw ??= new Giveaway();
-                $draw->calendar_role = 'door';
-                $draw->title = $door->title ?: $this->trans('door_title', ['calendar' => $calendar->title, 'day' => $day]);
-                if ($in) {
-                    $draw->prize = $in['prize'];
-                    $draw->winner_count = $in['winners'];
-                }
-                $settings = $draw->settingsArray();
-                $draw->slug ??= isset($taken[$wanted[$day]]) ? Slugs::unique(Giveaway::class, $wanted[$day]) : $wanted[$day];
-                $this->own($calendar, $draw, $day, $day, $in['instructions'] ?? $settings['claim_instructions'], $in['lines'] ?? $settings['claim_lines']);
-                $door->giveaway_id = $draw->id;
-            } elseif ($draw) {
-                $door->giveaway_id = null;
-            }
-            $door->save();
-
-            if ($draw && $door->kind !== Door::PRIZE) {
-                $draw->delete();
-            }
+        if ($draw && $door->kind !== Door::PRIZE) {
+            $draw->delete();
         }
     }
 

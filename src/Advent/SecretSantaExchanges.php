@@ -15,11 +15,6 @@ class SecretSantaExchanges extends Exchanges
     private const VIEW = 'secret-santa.view';
     private const MODERATE = 'secret-santa.moderate';
 
-    public function available(): bool
-    {
-        return true;
-    }
-
     public function visibleTo(array $ids, User $actor): array
     {
         if (! $ids || ! $actor->can(self::VIEW)) {

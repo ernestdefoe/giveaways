@@ -86,7 +86,8 @@ export function showCalendar(slug: string): Promise<AdventCalendar> {
 }
 
 export function listCalendars(): Promise<AdventCalendar[]> {
-  return app.request<{ data: Resource[] }>({ method: 'GET', url: base() }).then((r) => r.data.map(flat));
+  // A forum runs a calendar or two a year: one page of the newest 20 covers them.
+  return app.request<{ data: Resource[] }>({ method: 'GET', url: base(), params: { page: { limit: 20 } } }).then((r) => r.data.map(flat));
 }
 
 export function openDoor(id: string, day: number, joker = false): Promise<AdventCalendar> {

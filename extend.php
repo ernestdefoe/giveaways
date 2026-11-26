@@ -82,6 +82,8 @@ return [
 
     new Extend\ApiResource(Resource\GiveawayResource::class),
     new Extend\ApiResource(Advent\CalendarResource::class),
+    (new Extend\ModelVisibility(Advent\Calendar::class))
+        ->scope(Advent\ScopeCalendarVisibility::class),
 
     // Both optional: a calendar follows Festoon's timezone, and a door can
     // feature a Secret Santa exchange.

@@ -10,11 +10,6 @@ use Flarum\User\User;
  */
 class Exchanges
 {
-    public function available(): bool
-    {
-        return false;
-    }
-
     /**
      * The exchanges among $ids that $actor may see, keyed by id.
      *

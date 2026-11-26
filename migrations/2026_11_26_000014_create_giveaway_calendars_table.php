@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 
 /**
  * An advent calendar: one door a day from starts_on for `days` days, each day
- * starting at midnight in `timezone` (empty = the forum's, see Advent::zone).
+ * starting at midnight in `timezone` (empty = the forum's, see Clock::zone).
  * `settings` holds the eligibility rules copied onto its giveaways, and
  * `reminded_day` the last door the opt-in reminder went out for.
  */

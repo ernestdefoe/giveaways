@@ -37,11 +37,6 @@ class Opener
         return max(0, min(3, (int) $this->settings->get(self::JOKERS)));
     }
 
-    public function jokersUsed(Calendar $calendar, User $user): int
-    {
-        return Opening::query()->where('calendar_id', $calendar->id)->where('user_id', $user->id)->where('via_joker', true)->count();
-    }
-
     public function open(Calendar $calendar, User $actor, int $day, bool $joker): void
     {
         $actor->assertRegistered();

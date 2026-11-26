@@ -65,7 +65,7 @@ class CalendarResource extends AbstractDatabaseResource
     public function scope(Builder $query, BaseContext $context): void
     {
         /** @var Builder<Calendar> $query */
-        $query->visibleTo($context->getActor());
+        $query->whereVisibleTo($context->getActor());
 
         if ($context->endpoint instanceof Endpoint\Index && $context->collection instanceof self) {
             $query->orderByDesc('starts_on')->orderByDesc('id');
@@ -131,7 +131,7 @@ class CalendarResource extends AbstractDatabaseResource
         // Only on the calendar's own endpoints: as an alert's subject a calendar
         // needs its title and slug, not a grand prize or doors (one query each).
         $own = fn ($calendar, Context $context) => $context->collection instanceof self;
-        $single = fn ($calendar, Context $context) => $manage($calendar, $context) && ! $context->endpoint instanceof Endpoint\Index;
+        $single = fn ($calendar, Context $context) => $own($calendar, $context) && $manage($calendar, $context) && ! $context->endpoint instanceof Endpoint\Index;
         $extra = fn (Calendar $c, string $key, mixed $default) => $this->extras[$c][$key] ?? $default;
 
         return [
@@ -168,16 +168,28 @@ class CalendarResource extends AbstractDatabaseResource
                 $extra($c, 'entered', []),
             )),
 
-            // The builder's own fields, managers only.
-            $input(Schema\Str::make('description')->nullable())->visible($manage)->get(fn (Calendar $c) => $this->rich->source($c->description, $c)),
-            $input(Schema\Str::make('timezone'))->visible($manage),
-            $input(Schema\Integer::make('minPosts'))->visible($manage)->get(fn (Calendar $c) => (int) $c->settingsArray()['min_posts']),
-            $input(Schema\Integer::make('minAgeDays'))->visible($manage)->get(fn (Calendar $c) => (int) $c->settingsArray()['min_age_days']),
-            $input(Schema\Str::make('grandPrize'))->visible($manage)->get(fn (Calendar $c) => (string) $c->grand?->prize),
-            $input(Schema\Integer::make('grandWinners'))->visible($manage)->get(fn (Calendar $c) => (int) ($c->grand->winner_count ?? 1)),
-            $input(Schema\Str::make('grandClaimInstructions'))->visible($manage)->get(fn (Calendar $c) => (string) ($c->grand?->settingsArray()['claim_instructions'] ?? '')),
-            $input(Schema\Str::make('grandClaimLines'))->visible($manage)->get(fn (Calendar $c) => (string) ($c->grand?->settingsArray()['claim_lines'] ?? '')),
-            // Not on a list: one calendar at a time is edited.
+            ...$this->builderFields($input, $single),
+        ];
+    }
+
+    /**
+     * The builder's own fields: managers only, and only for one calendar at a
+     * time (the builder is filled from Show), never on a list or as an alert's
+     * subject, where they would cost a query per calendar.
+     *
+     * @return list<Schema\Attribute>
+     */
+    private function builderFields(\Closure $input, \Closure $single): array
+    {
+        return [
+            $input(Schema\Str::make('description')->nullable())->visible($single)->get(fn (Calendar $c) => $this->rich->source($c->description, $c)),
+            $input(Schema\Str::make('timezone'))->visible($single),
+            $input(Schema\Integer::make('minPosts'))->visible($single)->get(fn (Calendar $c) => (int) $c->settingsArray()['min_posts']),
+            $input(Schema\Integer::make('minAgeDays'))->visible($single)->get(fn (Calendar $c) => (int) $c->settingsArray()['min_age_days']),
+            $input(Schema\Str::make('grandPrize'))->visible($single)->get(fn (Calendar $c) => (string) $c->grand?->prize),
+            $input(Schema\Integer::make('grandWinners'))->visible($single)->get(fn (Calendar $c) => (int) ($c->grand->winner_count ?? 1)),
+            $input(Schema\Str::make('grandClaimInstructions'))->visible($single)->get(fn (Calendar $c) => (string) ($c->grand?->settingsArray()['claim_instructions'] ?? '')),
+            $input(Schema\Str::make('grandClaimLines'))->visible($single)->get(fn (Calendar $c) => (string) ($c->grand?->settingsArray()['claim_lines'] ?? '')),
             Schema\Arr::make('editor')->visible($single)->get(fn (Calendar $c) => $this->doorView->forEditor($c, $c->doors()->with('giveaway')->get())),
             Schema\Arr::make('exchangeChoices')->visible($single)->get(fn () => $this->exchanges->choices()),
             $input(Schema\Boolean::make('publish'))->visible(false),

@@ -4,8 +4,8 @@ namespace ErnestDefoe\Giveaways\Advent;
 
 use ErnestDefoe\Giveaways\Giveaway;
 use Flarum\Database\AbstractModel;
+use Flarum\Database\ScopeVisibilityTrait;
 use Flarum\User\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -33,6 +33,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Calendar extends AbstractModel
 {
+    // Who sees which calendar: ScopeCalendarVisibility, registered in extend.php.
+    use ScopeVisibilityTrait;
+
     public const DRAFT = 'draft';
     public const PUBLISHED = 'published';
 
@@ -47,18 +50,6 @@ class Calendar extends AbstractModel
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
-    /**
-     * Published calendars, and drafts for those who build calendars.
-     *
-     * @param Builder<Calendar> $query
-     */
-    public function scopeVisibleTo(Builder $query, User $actor): void
-    {
-        if (! $actor->hasPermission('giveaways.manage')) {
-            $query->where('status', self::PUBLISHED);
-        }
-    }
 
     public function isPublished(): bool
     {
