@@ -7,18 +7,9 @@ import scanForGiveaways from './embed/scan';
 import addToComposer from './composer/addToComposer';
 import { registerTodayWidget } from './advent/todayWidget';
 
-import GiveawayWonNotification from './components/GiveawayWonNotification';
-import GiveawayClaimedNotification from './components/GiveawayClaimedNotification';
-
 export { default as extend } from './extend';
 
 app.initializers.add('ernestdefoe-giveaways', () => {
-  app.routes['giveaways.index'] = { path: '/giveaways', component: () => import('./pages/GiveawaysPage') };
-  app.routes['giveaways.show'] = { path: '/giveaways/:slug', component: () => import('./pages/GiveawayPage') };
-
-  app.notificationComponents.giveawayWon = GiveawayWonNotification;
-  app.notificationComponents.giveawayClaimed = GiveawayClaimedNotification;
-
   // Nav link sits with "All Discussions" in the sidebar navigation. Flarum 2
   // exposes these via IndexSidebar.navItems (IndexPage no longer owns the nav).
   extend(IndexSidebar.prototype, 'navItems', function (items: any) {

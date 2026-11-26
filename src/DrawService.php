@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
 use Flarum\Notification\NotificationSyncer;
 use Flarum\User\User;
+use Illuminate\Contracts\Cache\Repository as Cache;
+use Psr\Log\LoggerInterface;
 
 /**
  * Provably-fair winner selection. At draw time we publish:
@@ -16,11 +18,37 @@ use Flarum\User\User;
  */
 class DrawService
 {
-    public function __construct(protected NotificationSyncer $notifications)
-    {
+    public function __construct(
+        protected NotificationSyncer $notifications,
+        protected Cache $cache,
+        protected LoggerInterface $log,
+    ) {
     }
 
-    public function draw(Giveaway $giveaway): void
+    /**
+     * Draw it, once. Returns false when another draw of the same giveaway is
+     * running right now (the scheduler and a manager's "Draw now" together):
+     * that one will finish it.
+     */
+    public function draw(Giveaway $giveaway): bool
+    {
+        // lockForUpdate() below serialises the draw on MySQL and PostgreSQL;
+        // SQLite ignores it, so a cache lock guards it there too. Never waited on.
+        $lock = $this->cache->lock('ernestdefoe-giveaways.draw.'.$giveaway->id, 30);
+        if (! $lock->get()) {
+            return false;
+        }
+
+        try {
+            $this->drawLocked($giveaway);
+        } finally {
+            $lock->release();
+        }
+
+        return true;
+    }
+
+    private function drawLocked(Giveaway $giveaway): void
     {
         // Claim the draw atomically. The scheduled run and a manager's "Draw now"
         // (or a double click) can arrive together; each used to see "active" on
@@ -142,6 +170,7 @@ class DrawService
                 }
             } catch (\Throwable $e) {
                 // Best-effort: a notification failure must not undo a completed draw.
+                $this->log->warning('[giveaways] winner notification for giveaway '.$giveaway->id.' failed: '.$e->getMessage());
             }
         }
     }
