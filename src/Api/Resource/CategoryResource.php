@@ -43,7 +43,11 @@ class CategoryResource extends AbstractDatabaseResource
     public function scope(Builder $query, BaseContext $context): void
     {
         if ($context->endpoint instanceof Endpoint\Index && $context->collection instanceof self) {
-            $query->withCount('giveaways')->orderBy('position')->orderBy('name');
+            // Counted as the viewer would list them: no one else's drafts, and
+            // none of an advent calendar's giveaways.
+            $actor = $context->getActor();
+            $query->withCount(['giveaways' => fn (Builder $q) => $q->whereVisibleTo($actor)->whereNull('calendar_id')])
+                ->orderBy('position')->orderBy('name');
         }
     }
 

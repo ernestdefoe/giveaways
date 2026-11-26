@@ -223,4 +223,19 @@ class DraftsParticipantsTest extends TestCase
         $this->assertStringNotContainsString('<img', $html);
         $this->assertStringStartsWith('See https://example.com', $body['data']['description'], 'The editor gets back what was typed');
     }
+
+    #[Test]
+    public function a_category_counts_only_the_giveaways_the_viewer_can_see()
+    {
+        $db = $this->database();
+        $db->table('giveaway_categories')->insert(['id' => 9, 'name' => 'Swag', 'slug' => 'swag', 'color' => '#69c6b9', 'position' => 0]);
+        // Giveaway 5 is public, giveaway 6 is host 3's draft.
+        $db->table('giveaways')->whereIn('id', [5, 6])->update(['category_id' => 9]);
+
+        foreach ([[null, 1], [10, 1], [3, 2]] as [$actor, $count]) {
+            [$status, $body] = $this->call('GET', '/api/giveaway-categories', $actor);
+            $this->assertSame(200, $status);
+            $this->assertSame($count, $body['data'][0]['count'], 'Counted for actor '.($actor ?? 'guest'));
+        }
+    }
 }

@@ -90,7 +90,11 @@ class GiveawayWriter
             }
         }
         if (array_key_exists('startsAt', $attrs)) {
-            $g->starts_at = $this->date($attrs['startsAt']);
+            // Empty means "open now"; anything else must be a readable date,
+            // or the giveaway would silently open straight away.
+            $starts = $this->date($attrs['startsAt']);
+            $blank = $attrs['startsAt'] === null || $attrs['startsAt'] === '';
+            $starts || $blank ? $g->starts_at = $starts : $errors['startsAt'] = $this->translator->trans('ernestdefoe-giveaways.api.starts_invalid');
         }
         // Parsed by the forum's formatter, like a post, so links, lists and
         // emphasis work and nothing unsafe gets through.
