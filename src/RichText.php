@@ -4,6 +4,7 @@ namespace ErnestDefoe\Giveaways;
 
 use Flarum\Formatter\Formatter;
 use Flarum\User\User;
+use Psr\Log\LoggerInterface;
 
 /**
  * A giveaway's description and rules go through the forum's own formatter, the
@@ -16,7 +17,7 @@ use Flarum\User\User;
  */
 class RichText
 {
-    public function __construct(protected Formatter $formatter)
+    public function __construct(protected Formatter $formatter, protected LoggerInterface $log)
     {
     }
 
@@ -41,6 +42,8 @@ class RichText
             return $this->formatter->render($xml, $context);
         } catch (\Throwable $e) {
             // Never let a formatter hiccup take the page down: show the text.
+            $this->log->warning('[giveaways] rendering formatted text failed: '.$e->getMessage());
+
             return '<p>'.nl2br(e(self::isXml($stored) ? strip_tags($stored) : $stored)).'</p>';
         }
     }

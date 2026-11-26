@@ -3,6 +3,7 @@
 namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use Flarum\Foundation\ValidationException;
 use Flarum\Locale\TranslatorInterface;
 use Flarum\User\User;
@@ -226,7 +227,8 @@ class GiveawayWriter
 
         try {
             return Carbon::parse((string) $value);
-        } catch (\Throwable $e) {
+        } catch (InvalidFormatException $e) {
+            // Unreadable: the caller turns this into a validation error.
             return null;
         }
     }
