@@ -368,11 +368,13 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
   editor(key: string, get: () => string, set: (v: string) => void): Mithril.Children {
     this.hosts[key] ??= {};
 
-    return (
+    // Keyed, so another door gets a fresh editor rather than this one's text;
+    // alone in its own list, as Mithril won't mix keyed and unkeyed siblings.
+    return [
       <div className="GiveawayFormModal-editor" key={key}>
         <TextEditor composer={this.hosts[key]} value={get()} disabled={this.loading} onchange={(v: string) => set(v)} onsubmit={() => {}} />
-      </div>
-    );
+      </div>,
+    ];
   }
 
   hosts: Record<string, { editor?: unknown }> = {};
