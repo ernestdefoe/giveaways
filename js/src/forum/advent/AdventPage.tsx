@@ -7,6 +7,7 @@ import extractText from 'flarum/common/utils/extractText';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import type Mithril from 'mithril';
 import AdventDoor from './AdventDoor';
+import { forgetToday } from './todayWidget';
 import { countdown } from '../../common/format';
 import { openDoor, setReminder, showCalendar, shuffled } from '../../common/advent';
 import type { AdventCalendar, AdventDoor as Door } from '../../common/advent';
@@ -250,6 +251,7 @@ export default class AdventPage extends Page {
         this.calendar = calendar;
         this.selected = day;
         this.reveal();
+        forgetToday();
       })
       .catch(() => {
         /* app.request already showed the alert */

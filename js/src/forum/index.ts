@@ -5,6 +5,7 @@ import LinkButton from 'flarum/common/components/LinkButton';
 import CommentPost from 'flarum/forum/components/CommentPost';
 import scanForGiveaways from './embed/scan';
 import addToComposer from './composer/addToComposer';
+import { registerTodayWidget } from './advent/todayWidget';
 
 import GiveawayWonNotification from './components/GiveawayWonNotification';
 import GiveawayClaimedNotification from './components/GiveawayClaimedNotification';
@@ -35,4 +36,7 @@ app.initializers.add('ernestdefoe-giveaways', () => {
   });
 
   addToComposer();
+
+  // After the hosts' own initializers have run.
+  setTimeout(() => registerTodayWidget(), 0);
 });

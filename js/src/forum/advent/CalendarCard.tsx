@@ -14,7 +14,7 @@ export default class CalendarCard extends Component<{ calendar: AdventCalendar }
       c.status === 'draft'
         ? t('draft')
         : c.today < 1
-          ? t('card_starts', { date: dayjs(c.doors[0].opensAt).format('LL') })
+          ? t('card_starts', { date: dayjs(c.nextOpensAt ?? c.doors?.[0]?.opensAt).format('LL') })
           : c.today > c.days
             ? t('over')
             : t('today', { day: c.today });

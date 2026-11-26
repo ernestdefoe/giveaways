@@ -1,20 +1,23 @@
 import app from 'flarum/forum/app';
 
-let prefix: string | null = null;
+/** What a card is for: a giveaway, or an advent calendar. */
+export type Kind = 'giveaways' | 'advent';
 
-/** "https://forum.example/giveaways/" — where this forum's giveaway links point. */
-function giveawaysPrefix(): string {
-  if (prefix === null) {
+let root: string | null = null;
+
+/** "https://forum.example/giveaways/" or ".../advent/": where this forum's links point. */
+function prefix(kind: Kind): string {
+  if (root === null) {
     const base = new URL(app.forum.attribute<string>('baseUrl'), location.href);
-    prefix = base.origin + base.pathname.replace(/\/$/, '') + '/giveaways/';
+    root = base.origin + base.pathname.replace(/\/$/, '');
   }
-  return prefix;
+  return `${root}/${kind}/`;
 }
 
-/** The slug (or old id) a link to one of this forum's giveaways names, else null. */
-function keyOf(a: HTMLAnchorElement): string | null {
+/** The slug (or old id) a link to one of this forum's giveaways or calendars names, else null. */
+function keyOf(a: HTMLAnchorElement, kind: Kind): string | null {
   const href = a.href.split(/[?#]/)[0].replace(/\/$/, '');
-  const p = giveawaysPrefix();
+  const p = prefix(kind);
   if (!href.startsWith(p)) return null;
 
   const rest = href.slice(p.length);
@@ -34,23 +37,26 @@ function edge(node: Node | null, step: 'previousSibling' | 'nextSibling'): boole
 }
 
 /**
- * A giveaway link on a line of its own becomes the giveaway's card. Only the
- * link is replaced, inside its paragraph: the post's top-level nodes belong to
- * Mithril's m.trust and must stay as they are.
+ * A giveaway or advent calendar link on a line of its own becomes its card.
+ * Only the link is replaced, inside its paragraph: the post's top-level nodes
+ * belong to Mithril's m.trust and must stay as they are.
  */
-export default function scan(root: Element): void {
-  const found: Array<[HTMLAnchorElement, string]> = [];
+export default function scan(post: Element): void {
+  const found: Array<[HTMLAnchorElement, string, Kind]> = [];
 
-  root.querySelectorAll<HTMLAnchorElement>('.Post-body a[href*="/giveaways/"]:not([data-gw])').forEach((a) => {
-    a.setAttribute('data-gw', '');
+  post
+    .querySelectorAll<HTMLAnchorElement>('.Post-body a[href*="/giveaways/"]:not([data-gw]), .Post-body a[href*="/advent/"]:not([data-gw])')
+    .forEach((a) => {
+      a.setAttribute('data-gw', '');
 
-    const key = keyOf(a);
-    const parent = a.parentElement;
-    if (!key || !parent || parent.classList.contains('Post-body')) return;
-    if (!edge(a.previousSibling, 'previousSibling') || !edge(a.nextSibling, 'nextSibling')) return;
+      const kind: Kind = a.href.includes('/advent/') ? 'advent' : 'giveaways';
+      const key = keyOf(a, kind);
+      const parent = a.parentElement;
+      if (!key || !parent || parent.classList.contains('Post-body')) return;
+      if (!edge(a.previousSibling, 'previousSibling') || !edge(a.nextSibling, 'nextSibling')) return;
 
-    found.push([a, key]);
-  });
+      found.push([a, key, kind]);
+    });
 
   // The card, its styles' data and the request are only loaded by a page that has one.
   if (found.length) import('./embed').then(({ default: embed }) => embed(found));

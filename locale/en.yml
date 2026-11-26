@@ -87,6 +87,12 @@ ernestdefoe-giveaways:
       card_starts: "Starts {date}"
       card_doors: "{count} doors"
       notification: "Door {day} is open"
+      widget:
+        title: Today's door
+        starts_in: "The first door opens in {time}."
+        waiting: "Door {day} is waiting for you."
+        opened: "You've opened door {day}."
+        next_in: "Next door in {time}"
       builder:
         new_title: New advent calendar
         edit_title: Edit advent calendar
@@ -300,6 +306,7 @@ ernestdefoe-giveaways:
       cancel: Cancel
 
   admin:
+    widget_today_door: Advent calendar, today's door
     advent_jokers_setting: Jokers per advent calendar
     advent_jokers_help: How many missed doors each member can still open late, with a joker (0 to 3). A door opened with a joker counts as a ticket for the grand prize, but its own draw has already run.
     settings_title: Giveaways

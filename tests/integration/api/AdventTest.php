@@ -342,4 +342,39 @@ class AdventTest extends TestCase
 
         $this->assertSame($one, $ten, "listing 10 calendars ran $ten queries, 1 ran $one");
     }
+
+    /** The "Today's door" widget and post cards ask for a few fields: never a door's content. */
+    #[Test]
+    public function the_widget_and_cards_get_todays_state_and_nothing_behind_a_door()
+    {
+        $calendar = $this->build();
+        $slug = $calendar['attributes']['slug'];
+        $fields = ['giveaway-calendars' => 'title,slug,status,today,days,todayOpened,nextOpensAt,grand,tickets'];
+
+        $read = function (?int $actor, array $filter = []) use ($fields) {
+            [$status, $body, $raw] = $this->call('GET', '/api/giveaway-calendars', $actor, null, ['fields' => $fields] + ($filter ? ['filter' => $filter] : []));
+            $this->assertSame(200, $status);
+            foreach (array_merge(self::SECRETS, ['"doors"', 'Code: ONE', 'Sticker pack']) as $secret) {
+                $this->assertStringNotContainsString($secret, $raw, "leaked $secret");
+            }
+
+            return $body['data'];
+        };
+
+        $before = $read(10)[0]['attributes'];
+        $this->assertSame(3, $before['today']);
+        $this->assertFalse($before['todayOpened']);
+        $this->assertSame(Carbon::now('UTC')->addDay()->startOfDay()->toIso8601String(), $before['nextOpensAt']);
+
+        $this->open(10, $calendar['id'], 3);
+        $after = $read(10)[0]['attributes'];
+        $this->assertTrue($after['todayOpened']);
+        $this->assertSame(1, $after['tickets']);
+        $this->assertFalse($read(null)[0]['attributes']['todayOpened']);
+
+        // Cards look calendars up by slug; a draft isn't found by members.
+        $draft = $this->build(['title' => 'Unpublished', 'publish' => false])['attributes']['slug'];
+        $this->assertSame([$slug], array_column(array_column($read(11, ['slug' => "$slug,$draft"]), 'attributes'), 'slug'));
+        $this->assertCount(2, $this->call('GET', '/api/giveaway-calendars', 1, null, ['filter' => ['slug' => "$slug,$draft"]])[1]['data']);
+    }
 }

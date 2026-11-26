@@ -52,6 +52,10 @@ export interface AdventCalendar {
   canManage: boolean;
   grand: { slug: string; prize: string; winnerCount: number; status: string } | null;
   doors: AdventDoor[];
+  /** Whether the viewer has opened today's door (widget and cards). */
+  todayOpened?: boolean;
+  /** When the next door opens: the first before it starts, null after the last. */
+  nextOpensAt?: string | null;
 
   // Managers only.
   description?: string;
@@ -77,6 +81,12 @@ function base(): string {
   return `${app.forum.attribute('apiUrl')}/${TYPE}`;
 }
 
+/**
+ * Just what the "Today's door" widget, post cards and the giveaways page show. Asking for these
+ * fields only means the server never even builds the doors for them.
+ */
+const SUMMARY = { 'giveaway-calendars': 'title,slug,status,today,days,todayOpened,nextOpensAt,grand,tickets' };
+
 function flat(resource: Resource): AdventCalendar {
   return { id: resource.id, ...resource.attributes };
 }
@@ -87,7 +97,24 @@ export function showCalendar(slug: string): Promise<AdventCalendar> {
 
 export function listCalendars(): Promise<AdventCalendar[]> {
   // A forum runs a calendar or two a year: one page of the newest 20 covers them.
-  return app.request<{ data: Resource[] }>({ method: 'GET', url: base(), params: { page: { limit: 20 } } }).then((r) => r.data.map(flat));
+  return app
+    .request<{ data: Resource[] }>({ method: 'GET', url: base(), params: { fields: SUMMARY, page: { limit: 20 } } })
+    .then((r) => r.data.map(flat));
+}
+
+/** Calendars by slug, for the cards links in posts become (at most 20 a request). */
+export function calendarSummaries(slugs: string[]): Promise<AdventCalendar[]> {
+  return app
+    .request<{ data: Resource[] }>({ method: 'GET', url: base(), params: { fields: SUMMARY, filter: { slug: slugs.join(',') } } })
+    .then((r) => r.data.map(flat));
+}
+
+/** The calendar the widget shows: the newest one running, else the next to start. */
+export function currentCalendar(): Promise<AdventCalendar | null> {
+  return app.request<{ data: Resource[] }>({ method: 'GET', url: base(), params: { fields: SUMMARY, page: { limit: 20 } } }).then((r) => {
+    const live = r.data.map(flat).filter((c) => c.status === 'published' && c.today <= c.days);
+    return live.find((c) => c.today >= 1) ?? live.reverse().find((c) => c.today < 1) ?? null;
+  });
 }
 
 export function openDoor(id: string, day: number, joker = false): Promise<AdventCalendar> {

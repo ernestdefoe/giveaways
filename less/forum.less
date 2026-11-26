@@ -1043,3 +1043,53 @@
     padding-left: 4px;
   }
 }
+
+// "Today's door" widget (Bespoke and fof/forum-widgets-core).
+.AdventToday {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: var(--text-color);
+}
+.AdventToday-door {
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  border-radius: 5px;
+  border-top: 4px solid #fff;
+  background: color-mix(in srgb, var(--primary-color, #4d698e) 35%, #b3263b);
+  color: #fffdf6;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    color: #fffdf6;
+    text-decoration: none;
+  }
+  .AdventToday:not(.is-opened) & {
+    outline: 3px solid #f4c542;
+    outline-offset: 1px;
+  }
+}
+.AdventToday-body {
+  min-width: 0;
+}
+.AdventToday-title {
+  display: block;
+  overflow: hidden;
+  color: var(--heading-color, var(--text-color));
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.AdventToday-state {
+  font-size: 13px;
+}
+.AdventToday-next {
+  color: var(--muted-color);
+  font-size: 12px;
+}

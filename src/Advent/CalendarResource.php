@@ -69,6 +69,12 @@ class CalendarResource extends AbstractDatabaseResource
 
         if ($context->endpoint instanceof Endpoint\Index && $context->collection instanceof self) {
             $query->orderByDesc('starts_on')->orderByDesc('id');
+
+            // filter[slug]=a,b: the calendars that links in posts name (cards), at most 20.
+            $slugs = ($context->queryParam('filter') ?? [])['slug'] ?? null;
+            if (is_string($slugs)) {
+                $query->whereIn('slug', array_slice(array_filter(array_map('trim', explode(',', $slugs)), 'strlen'), 0, 20));
+            }
         }
     }
 
@@ -144,6 +150,10 @@ class CalendarResource extends AbstractDatabaseResource
             Schema\Str::make('zone')->get(fn (Calendar $c) => $this->clock->zone($c)),
             Schema\Str::make('status'),
             Schema\Integer::make('today')->get(fn (Calendar $c) => $this->clock->today($c)),
+            // For the widget and cards, which ask for these fields and never for `doors`:
+            // whether the viewer has opened today's door, and when the next one opens.
+            Schema\Boolean::make('todayOpened')->get(fn (Calendar $c) => isset($extra($c, 'opened', [])[$this->clock->today($c)])),
+            Schema\Str::make('nextOpensAt')->nullable()->get(fn (Calendar $c) => $this->nextOpensAt($c)),
             Schema\Str::make('endsAt')->get(fn (Calendar $c) => $this->clock->opensAt($c, $c->days + 1)->toIso8601String()),
             Schema\Integer::make('jokers')->get(fn () => $this->opener->jokers()),
             Schema\Integer::make('jokersUsed')->get(fn (Calendar $c) => count(array_filter($extra($c, 'opened', []))))
@@ -226,6 +236,14 @@ class CalendarResource extends AbstractDatabaseResource
         } elseif (! $mine->exists()) {
             Reminder::query()->insertOrIgnore(['calendar_id' => $calendar->id, 'user_id' => $actor->id]);
         }
+    }
+
+    /** When the next door opens: the first before the calendar starts, null after the last. */
+    private function nextOpensAt(Calendar $calendar): ?string
+    {
+        $next = max(1, $this->clock->today($calendar) + 1);
+
+        return $next <= $calendar->days ? $this->clock->opensAt($calendar, $next)->toIso8601String() : null;
     }
 
     private function ineligible(Calendar $calendar, User $actor): ?string
