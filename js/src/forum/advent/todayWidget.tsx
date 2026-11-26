@@ -62,60 +62,65 @@ export class TodayDoor extends Component {
 export function registerTodayWidget(): void {
   const g = globalThis as any;
 
-  if (g.flarum?.extensions && 'ernestdefoe-bespoke' in g.flarum.extensions) {
-    g.BespokeWidgetQueue = g.BespokeWidgetQueue || [];
-    g.BespokeWidgetQueue.push({
-      type: 'giveaways-today-door',
-      // 🚨 A translation KEY: Bespoke resolves it.
-      label: 'ernestdefoe-giveaways.forum.advent.widget.title',
-      icon: 'fas fa-door-open',
-      zones: ['sidebar', 'above-list', 'below-list', 'footer'],
-      schema: [],
-      component: { view: () => m(TodayDoor) },
-    });
-  }
+  if (g.flarum?.extensions && 'ernestdefoe-bespoke' in g.flarum.extensions) registerWithBespoke(g);
+  if (hasFofWidgets() && (app as any).widgets) registerWithFof();
+}
 
-  if (hasFofWidgets() && (app as any).widgets) {
-    const Widgets = fof('common/extend/Widgets');
-    const WidgetBase = fof('common/components/Widget') as { new (...args: any[]): any } | undefined;
-    if (!Widgets || !WidgetBase) return;
+/** Bespoke's widget queue. */
+function registerWithBespoke(g: any): void {
+  g.BespokeWidgetQueue = g.BespokeWidgetQueue || [];
+  g.BespokeWidgetQueue.push({
+    type: 'giveaways-today-door',
+    // 🚨 A translation KEY: Bespoke resolves it.
+    label: 'ernestdefoe-giveaways.forum.advent.widget.title',
+    icon: 'fas fa-door-open',
+    zones: ['sidebar', 'above-list', 'below-list', 'footer'],
+    schema: [],
+    component: { view: () => m(TodayDoor) },
+  });
+}
 
-    class TodayDoorFofWidget extends WidgetBase {
-      oncreate(vnode: Mithril.VnodeDOM) {
-        super.oncreate(vnode);
-        start();
-      }
-      // No frame without a calendar to show: FoF would draw an empty box.
-      view() {
-        return store.calendar ? super.view() : null;
-      }
-      className() {
-        return 'AdventTodayFofWidget';
-      }
-      icon() {
-        return 'fas fa-door-open';
-      }
-      title() {
-        return app.translator.trans('ernestdefoe-giveaways.forum.advent.widget.title');
-      }
-      content() {
-        return m(TodayDoor);
-      }
+/** fof/forum-widgets-core: opt-in, only where its layout editor placed it. */
+function registerWithFof(): void {
+  const Widgets = fof('common/extend/Widgets');
+  const WidgetBase = fof('common/components/Widget') as { new (...args: any[]): any } | undefined;
+  if (!Widgets || !WidgetBase) return;
+
+  class TodayDoorFofWidget extends WidgetBase {
+    oncreate(vnode: Mithril.VnodeDOM) {
+      super.oncreate(vnode);
+      start();
     }
-
-    new Widgets()
-      .add({
-        key: KEY,
-        component: TodayDoorFofWidget,
-        // 🚨 Opt-in: only where the admin placed it in FoF's layout editor.
-        isDisabled: () => !placed(app, EXT, KEY) || (store.state === 'done' && !store.calendar),
-        isUnique: true,
-        placement: 'end',
-        position: 0,
-      })
-      .extend(app, EXT);
-
-    // Registered after FoF drew its sections; a placed widget appears now.
-    m.redraw();
+    // No frame without a calendar to show: FoF would draw an empty box.
+    view() {
+      return store.calendar ? super.view() : null;
+    }
+    className() {
+      return 'AdventTodayFofWidget';
+    }
+    icon() {
+      return 'fas fa-door-open';
+    }
+    title() {
+      return app.translator.trans('ernestdefoe-giveaways.forum.advent.widget.title');
+    }
+    content() {
+      return m(TodayDoor);
+    }
   }
+
+  new Widgets()
+    .add({
+      key: KEY,
+      component: TodayDoorFofWidget,
+      // 🚨 Opt-in: only where the admin placed it in FoF's layout editor.
+      isDisabled: () => !placed(app, EXT, KEY) || (store.state === 'done' && !store.calendar),
+      isUnique: true,
+      placement: 'end',
+      position: 0,
+    })
+    .extend(app, EXT);
+
+  // Registered after FoF drew its sections; a placed widget appears now.
+  m.redraw();
 }

@@ -75,7 +75,7 @@ class GiveawayResource extends AbstractDatabaseResource
     public function scope(Builder $query, BaseContext $context): void
     {
         /** @var Builder<Giveaway> $query */
-        $query->visibleTo($context->getActor());
+        $query->whereVisibleTo($context->getActor());
 
         if (! $context->endpoint instanceof Endpoint\Index || ! $context->collection instanceof self) {
             return;

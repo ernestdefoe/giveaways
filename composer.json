@@ -30,7 +30,9 @@
         "ernestdefoe/festoon": "Advent calendars open their doors at Festoon's midnight.",
         "ernestdefoe/secret-santa": "An advent door can feature a Secret Santa exchange.",
         "fof/upload": "Pick a giveaway's cover image from the media library.",
-        "flarum/approval": "A giveaway added in the composer goes public when its post is approved."
+        "flarum/approval": "A giveaway added in the composer goes public when its post is approved.",
+        "ernestdefoe/bespoke": "A widget host for the \"Today's door\" advent calendar widget.",
+        "fof/forum-widgets-core": "A widget host for the \"Today's door\" advent calendar widget."
     },
     "autoload": {
         "psr-4": {
@@ -55,7 +57,9 @@
                 "flarum/approval",
                 "fof/upload",
                 "ernestdefoe/festoon",
-                "ernestdefoe/secret-santa"
+                "ernestdefoe/secret-santa",
+                "ernestdefoe/bespoke",
+                "fof/forum-widgets-core"
             ]
         }
     },

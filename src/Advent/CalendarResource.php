@@ -163,6 +163,20 @@ class CalendarResource extends AbstractDatabaseResource
             // Why this member can't open doors right now (not eligible, not signed in...), or null.
             Schema\Str::make('ineligible')->nullable()->visible($own)->get(fn (Calendar $c, Context $context) => $this->ineligible($c, $context->getActor())),
             Schema\Boolean::make('canManage')->get($manage),
+            ...$this->prizeAndDoorFields($own, $input, $extra),
+
+            ...$this->builderFields($input, $single),
+        ];
+    }
+
+    /**
+     * The grand prize, and the doors as this member sees them (DoorView).
+     *
+     * @return list<Schema\Attribute>
+     */
+    private function prizeAndDoorFields(\Closure $own, \Closure $input, \Closure $extra): array
+    {
+        return [
             Schema\Arr::make('grand')->nullable()->visible($own)->get(fn (Calendar $c) => $c->grand ? [
                 'slug' => $c->grand->slug,
                 'prize' => $c->grand->prize,
@@ -177,8 +191,6 @@ class CalendarResource extends AbstractDatabaseResource
                 $extra($c, 'exchanges', []),
                 $extra($c, 'entered', []),
             )),
-
-            ...$this->builderFields($input, $single),
         ];
     }
 

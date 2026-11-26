@@ -7,18 +7,19 @@
  */
 
 use ErnestDefoe\Giveaways\Advent;
+use ErnestDefoe\Giveaways\Api;
 use ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
 use ErnestDefoe\Giveaways\Console\RemindCommand;
+use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\Listener\AwardPostBonus;
 use ErnestDefoe\Giveaways\Listener\PublishFromPost;
 use ErnestDefoe\Giveaways\Notification\DoorOpenBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
+use ErnestDefoe\Giveaways\ScopeGiveawayVisibility;
 use Flarum\Extend;
-use Flarum\Api\Context;
 use Flarum\Api\Resource\ForumResource;
-use Flarum\Api\Schema;
 use Flarum\Post\Event\Posted;
 use Flarum\Post\Event\Revised;
 use Illuminate\Console\Scheduling\Event as ScheduledEvent;
@@ -52,20 +53,16 @@ return [
         ->listen(Posted::class, AwardPostBonus::class)
         // A draft made in the composer goes public with its post.
         ->listen(Posted::class, PublishFromPost::class)
-        ->listen(Revised::class, PublishFromPost::class)
-        // Only dispatched when flarum/approval is enabled.
-        ->listen('Flarum\\Approval\\Event\\PostWasApproved', PublishFromPost::class),
+        ->listen(Revised::class, PublishFromPost::class),
 
-    // Shows the composer's "Add giveaway" button. A permission the actor's
-    // groups were already loaded for: no query.
+    // Shows the composer's "Add giveaway" button.
     (new Extend\ApiResource(ForumResource::class))
-        ->fields(fn () => [
-            Schema\Boolean::make('canCreateGiveaways')
-                ->get(fn ($forum, Context $context) => $context->getActor()->hasPermission('giveaways.create')),
-        ]),
+        ->fields(Api\ForumFields::class),
 
     new Extend\ApiResource(Resource\GiveawayResource::class),
     new Extend\ApiResource(Resource\CategoryResource::class),
+    (new Extend\ModelVisibility(Giveaway::class))
+        ->scope(ScopeGiveawayVisibility::class),
     new Extend\ApiResource(Advent\CalendarResource::class),
     (new Extend\ModelVisibility(Advent\Calendar::class))
         ->scope(Advent\ScopeCalendarVisibility::class),
@@ -73,6 +70,10 @@ return [
     // Both optional: a calendar follows Festoon's timezone, and a door can
     // feature a Secret Santa exchange.
     (new Extend\Conditional())
+        // A giveaway added in the composer goes public when its post is approved.
+        ->whenExtensionEnabled('flarum-approval', fn () => [
+            (new Extend\Event())->listen('Flarum\\Approval\\Event\\PostWasApproved', PublishFromPost::class),
+        ])
         ->whenExtensionEnabled('ernestdefoe-festoon', fn () => [
             (new Extend\ServiceProvider())->register(Advent\FestoonProvider::class),
         ])

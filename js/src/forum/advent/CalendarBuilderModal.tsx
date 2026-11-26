@@ -267,21 +267,7 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
           )}
         </div>
         {d.kind === 'prize' && this.prizeFields(d, locked)}
-        {d.kind === 'exchange' && (
-          <div className="Form-group">
-            <label>{t('exchange')}</label>
-            <select
-              className="FormControl"
-              value={String(d.exchangeId ?? '')}
-              onchange={(e: Event) => (d.exchangeId = parseInt((e.target as HTMLSelectElement).value, 10) || null)}
-            >
-              <option value="">{t('exchange_pick')}</option>
-              {choices.map((x) => (
-                <option value={String(x.id)}>{x.title}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        {d.kind === 'exchange' && this.exchangeField(d, choices)}
       </>
     );
   }
@@ -434,5 +420,26 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
       .catch(() => {
         /* app.request already showed the alert */
       });
+  }
+
+  /** Which Secret Santa exchange the door features. */
+  exchangeField(d: EditorDoor, choices: { id: number; title: string }[]): Mithril.Children {
+    const t = (key: string) => app.translator.trans(`ernestdefoe-giveaways.forum.advent.builder.${key}`);
+
+    return (
+      <div className="Form-group">
+        <label>{t('exchange')}</label>
+        <select
+          className="FormControl"
+          value={String(d.exchangeId ?? '')}
+          onchange={(e: Event) => (d.exchangeId = parseInt((e.target as HTMLSelectElement).value, 10) || null)}
+        >
+          <option value="">{t('exchange_pick')}</option>
+          {choices.map((x) => (
+            <option value={String(x.id)}>{x.title}</option>
+          ))}
+        </select>
+      </div>
+    );
   }
 }
