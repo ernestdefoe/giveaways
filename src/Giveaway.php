@@ -51,6 +51,8 @@ class Giveaway extends AbstractModel
     protected $table = 'giveaways';
 
     protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'drawn_at' => 'datetime',

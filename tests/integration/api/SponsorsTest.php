@@ -235,6 +235,12 @@ class SponsorsTest extends TestCase
         // 3 entrants, 1 new member, 1 opt-in: all under 5.
         $this->assertSame(3, substr_count($html, '<span class="few">'), 'shown as "fewer than 5"');
 
+        // A giveaway with no start date counts from when it was made.
+        $this->giveaway((int) $sponsor['id'], ['title' => 'No start date']);
+        $response = $this->send($this->request('GET', "/giveaways/sponsors/report/$token"));
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString('No start date', (string) $response->getBody());
+
         $this->assertSame(404, $this->send($this->request('GET', '/giveaways/sponsors/report/'.str_repeat('a', 64)))->getStatusCode());
         $this->call('DELETE', "/api/giveaway-sponsors/{$sponsor['id']}/report-link", 1);
         $this->assertSame(404, $this->send($this->request('GET', "/giveaways/sponsors/report/$token"))->getStatusCode());
