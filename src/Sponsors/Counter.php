@@ -4,7 +4,6 @@ namespace ErnestDefoe\Giveaways\Sponsors;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\Repository as Cache;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -30,23 +29,10 @@ class Counter
             return;
         }
 
+        // Today's row, made once (a date string, stored the same on every driver), then counted
+        // in one atomic UPDATE: two visits at once can't lose a count or trip the unique key.
         $day = Carbon::now()->toDateString();
-        $row = Stat::query()->where('sponsor_id', $sponsorId)->where('campaign', $campaign)->where('campaign_id', $campaignId)->where('day', $day)->first();
-        if (! $row) {
-            $row = new Stat();
-            $row->sponsor_id = $sponsorId;
-            $row->campaign = $campaign;
-            $row->campaign_id = $campaignId;
-            $row->day = Carbon::parse($day);
-            $row->views = 0;
-            $row->clicks = 0;
-            try {
-                $row->save();
-            } catch (UniqueConstraintViolationException $e) {
-                // Another visit made today's row first: count on that one.
-                $row = Stat::query()->where('sponsor_id', $sponsorId)->where('campaign', $campaign)->where('campaign_id', $campaignId)->where('day', $day)->firstOrFail();
-            }
-        }
-        $row->increment($kind);
+        Stat::query()->insertOrIgnore(['sponsor_id' => $sponsorId, 'campaign' => $campaign, 'campaign_id' => $campaignId, 'day' => $day, 'views' => 0, 'clicks' => 0]);
+        Stat::query()->where('sponsor_id', $sponsorId)->where('campaign', $campaign)->where('campaign_id', $campaignId)->where('day', $day)->increment($kind);
     }
 }
