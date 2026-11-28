@@ -151,11 +151,15 @@ class SponsorsTest extends TestCase
 
         [$status, $body] = $this->call('POST', '/api/giveaway-calendars', 1, ['data' => ['type' => 'giveaway-calendars', 'attributes' => [
             'title' => 'Winter Doors', 'startsOn' => Carbon::now('UTC')->format('Y-m-d'), 'days' => 2, 'timezone' => 'UTC',
-            'grandPrize' => 'A console', 'grandWinners' => 1, 'publish' => true, 'sponsorId' => $sponsorId,
+            'grandPrize' => 'A console', 'grandWinners' => 1, 'publish' => true,
             'doors' => [['day' => 1, 'kind' => 'reveal', 'title' => 'One', 'body' => 'x'], ['day' => 2, 'kind' => 'reveal', 'title' => 'Two', 'body' => 'y']],
         ]]]);
         $this->assertSame(201, $status, json_encode($body));
         $calendar = (int) $body['data']['id'];
+        // A sponsor added later, on its own (as the showcase seed does): nothing else changes.
+        [$status] = $this->call('PATCH', "/api/giveaway-calendars/$calendar", 1, ['data' => ['type' => 'giveaway-calendars', 'id' => (string) $calendar, 'attributes' => ['sponsorId' => $sponsorId]]]);
+        $this->assertSame(200, $status);
+        $this->assertSame(2, (int) $this->database()->table('giveaway_calendars')->where('id', $calendar)->value('days'));
 
         [, $page] = $this->call('GET', "/api/giveaway-calendars/$calendar", 10);
         $this->assertSame('North Pole Games', $page['data']['sponsor']['name']);
