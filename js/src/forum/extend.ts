@@ -10,7 +10,8 @@ export default [
   new Extend.Routes()
     .add('giveaways.index', '/giveaways', () => import('./pages/GiveawaysPage'))
     .add('giveaways.show', '/giveaways/:slug', () => import('./pages/GiveawayPage'))
-    .add('giveaways.advent', '/advent/:slug', () => import('./advent/AdventPage')),
+    .add('giveaways.advent', '/advent/:slug', () => import('./advent/AdventPage'))
+    .add('giveaways.sponsor', '/giveaways/sponsors/:slug', () => import('./sponsors/SponsorPage')),
   new Extend.Notification()
     .add('giveawayWon', GiveawayWonNotification)
     .add('giveawayClaimed', GiveawayClaimedNotification)

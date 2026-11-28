@@ -6,6 +6,7 @@ import CommentPost from 'flarum/forum/components/CommentPost';
 import scanForGiveaways from './embed/scan';
 import addToComposer from './composer/addToComposer';
 import { registerTodayWidget } from './advent/todayWidget';
+import addToSettings from './sponsors/addToSettings';
 
 export { default as extend } from './extend';
 
@@ -27,6 +28,7 @@ app.initializers.add('ernestdefoe-giveaways', () => {
   });
 
   addToComposer();
+  addToSettings();
 
   // After the hosts' own initializers have run.
   setTimeout(() => registerTodayWidget(), 0);

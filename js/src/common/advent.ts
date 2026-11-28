@@ -1,4 +1,5 @@
 import app from 'flarum/common/app';
+import type { SponsorSummary } from './sponsors';
 
 /**
  * Advent calendars, from the `giveaway-calendars` JSON:API type. A door's
@@ -52,6 +53,11 @@ export interface AdventCalendar {
   canManage: boolean;
   grand: { slug: string; prize: string; winnerCount: number; status: string } | null;
   doors: AdventDoor[];
+  sponsor?: SponsorSummary | null;
+  myConsent?: boolean;
+  sponsorConsentText?: string | null;
+  /** Managers: the builder's sponsor. */
+  sponsorId?: number | null;
   /** Whether the viewer has opened today's door (widget and cards). */
   todayOpened?: boolean;
   /** When the next door opens: the first before it starts, null after the last. */
@@ -85,7 +91,7 @@ function base(): string {
  * Just what the "Today's door" widget, post cards and the giveaways page show. Asking for these
  * fields only means the server never even builds the doors for them.
  */
-const SUMMARY = { 'giveaway-calendars': 'title,slug,status,today,days,todayOpened,nextOpensAt,grand,tickets' };
+const SUMMARY = { 'giveaway-calendars': 'title,slug,status,today,days,todayOpened,nextOpensAt,grand,tickets,sponsor' };
 
 function flat(resource: Resource): AdventCalendar {
   return { id: resource.id, ...resource.attributes };

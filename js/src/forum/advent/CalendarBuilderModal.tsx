@@ -5,6 +5,7 @@ import Button from 'flarum/common/components/Button';
 import TextEditor from 'flarum/common/components/TextEditor';
 import extractText from 'flarum/common/utils/extractText';
 import type Mithril from 'mithril';
+import SponsorSelect from '../sponsors/SponsorSelect';
 import { deleteCalendar, saveCalendar } from '../../common/advent';
 import type { AdventCalendar, EditorDoor } from '../../common/advent';
 
@@ -26,6 +27,7 @@ type Form = {
   grandWinners: number;
   grandClaimInstructions: string;
   grandClaimLines: string;
+  sponsorId: number | null;
 };
 
 const KINDS: EditorDoor['kind'][] = ['reveal', 'prize', 'exchange'];
@@ -62,6 +64,7 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
       grandWinners: c?.grandWinners ?? 1,
       grandClaimInstructions: c?.grandClaimInstructions ?? '',
       grandClaimLines: c?.grandClaimLines ?? '',
+      sponsorId: c?.sponsorId ?? null,
     };
     const saved = new Map((c?.editor ?? []).map((d) => [d.day, { ...d, title: d.title ?? '', prize: d.prize ?? '' }]));
     this.doors = Array.from({ length: 31 }, (_, i) => saved.get(i + 1) ?? blankDoor(i + 1));
@@ -104,6 +107,8 @@ export default class CalendarBuilderModal extends FormModal<CalendarBuilderAttrs
             {this.number(t('min_posts'), 'minPosts', 0, 100000)}
             {this.number(t('min_age_days'), 'minAgeDays', 0, 100000)}
           </fieldset>
+
+          <SponsorSelect value={f.sponsorId} onchange={(id: number | null) => (f.sponsorId = id)} />
 
           {this.grandSection()}
 

@@ -8,6 +8,7 @@ import TextEditor from 'flarum/common/components/TextEditor';
 
 import { saveGiveaway, listCategories, showGiveaway } from '../../common/api';
 import { hasMediaLibrary, pickImage } from '../utils/mediaLibrary';
+import SponsorSelect from '../sponsors/SponsorSelect';
 import type { Giveaway, GiveawayCategory } from '../../common/api';
 
 export interface GiveawayFormAttrs extends IInternalModalAttrs {
@@ -15,6 +16,8 @@ export interface GiveawayFormAttrs extends IInternalModalAttrs {
   categories?: GiveawayCategory[];
   /** Opened from the composer: saved as a draft that goes public with the post. */
   fromComposer?: boolean;
+  /** Managers can name a sponsor. */
+  canManage?: boolean;
   onsave?: (giveaway: Giveaway) => void;
 }
 
@@ -47,6 +50,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
   minPosts!: Stream<number>;
   minAgeDays!: Stream<number>;
   categoryId!: Stream<number>;
+  sponsorId!: Stream<number | null>;
   claimInstructions!: Stream<string>;
   claimLines!: Stream<string>;
   categories: GiveawayCategory[] = [];
@@ -71,6 +75,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
       });
     }
     this.categoryId = Stream(g?.category?.id || 0);
+    this.sponsorId = Stream(g?.sponsor ? Number(g.sponsor.id) : null);
     this.claimInstructions = Stream(g?.claimInstructions || '');
     this.claimLines = Stream(g?.claimLines || '');
     this.titleInput = Stream(g?.title || '');
@@ -87,6 +92,10 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
     this.postBonus = Stream(g?.postBonus || 0);
     this.minPosts = Stream(g?.minPosts || 0);
     this.minAgeDays = Stream(g?.minAgeDays || 0);
+  }
+
+  manages(): boolean {
+    return !!(this.attrs.giveaway ? this.attrs.giveaway.canManage : this.attrs.canManage);
   }
 
   className() {
@@ -108,6 +117,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
           {this.textFields()}
           {this.skillFields()}
           {this.coverAndCategory()}
+          {this.manages() && <SponsorSelect value={this.sponsorId()} onchange={(id: number | null) => this.sponsorId(id)} />}
           {this.timesAndNumbers()}
           {this.claimFields()}
           {this.actions()}
@@ -392,6 +402,7 @@ export default class GiveawayFormModal extends FormModal<GiveawayFormAttrs> {
       minPosts: this.minPosts(),
       minAgeDays: this.minAgeDays(),
       categoryId: this.categoryId() || null,
+      ...(this.manages() ? { sponsorId: this.sponsorId() } : {}),
       claimInstructions: this.claimInstructions(),
       claimLines: this.claimLines(),
       // New from the composer, or "Save as draft": only its maker sees it.

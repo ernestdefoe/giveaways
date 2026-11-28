@@ -1100,3 +1100,165 @@ html:not(#x-hi) .GiveawayEmbed .GiveawayCard * {
   color: var(--muted-color);
   font-size: 12px;
 }
+
+// ---- Sponsors ----------------------------------------------------------
+
+.SponsorBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 4px 12px 4px 10px;
+  border-radius: 16px;
+  background: var(--control-bg);
+  color: var(--control-color);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.SponsorBanner-label { color: var(--muted-color); white-space: nowrap; }
+.SponsorBanner-logo {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: contain;
+  background: var(--body-bg);
+}
+.SponsorBanner-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.SponsorBanner--compact {
+  margin: 0 0 8px;
+  padding: 2px 10px 2px 8px;
+  font-size: 0.8rem;
+  .SponsorBanner-logo { width: 18px; height: 18px; }
+}
+// Themes colour and underline links (Bespoke light is 0,3,1).
+html:not(#x-hi) .SponsorBanner,
+html:not(#x-hi) .SponsorBanner:hover {
+  color: var(--control-color);
+  text-decoration: none;
+}
+html:not(#x-hi) a.SponsorBanner:hover { background: var(--control-bg); filter: brightness(0.97); }
+
+.ConsentBox {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--control-bg);
+  border-radius: var(--border-radius, 4px);
+  background: var(--body-bg);
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+.ConsentBox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: normal;
+  input { flex: none; margin-top: 3px; width: 16px; height: 16px; }
+  span { min-width: 0; overflow-wrap: anywhere; }
+}
+html:not(#x-hi) .ConsentBox-privacy {
+  display: inline-block;
+  margin: 6px 0 0 26px;
+  color: var(--primary-color, #4d698e);
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+
+.SponsorPage {
+  padding-top: 20px;
+  padding-bottom: 40px;
+  color: var(--text-color);
+}
+.SponsorPage-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+  > div { min-width: 0; }
+}
+.SponsorPage-logo {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: var(--control-bg);
+}
+html:not(#x-hi) .SponsorPage-name {
+  margin: 0 0 8px;
+  color: var(--text-color);
+  overflow-wrap: anywhere;
+}
+html:not(#x-hi) .SponsorPage-heading {
+  margin: 24px 0 10px;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+.SponsorPage-campaigns {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.SponsorPage-campaign {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--control-bg);
+  > * { min-width: 0; }
+}
+html:not(#x-hi) .SponsorPage-campaign > a {
+  color: var(--text-color);
+  font-weight: 600;
+}
+.SponsorPage-meta { color: var(--muted-color); font-size: 0.85rem; }
+
+.SponsorsModal-list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+}
+.SponsorsModal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--control-bg);
+}
+.SponsorsModal-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-color);
+}
+.SponsorsModal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.SponsorsModal-privacy {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--control-bg);
+  h4 { margin: 14px 0 4px; color: var(--text-color); }
+}
+.SponsorsModal-reportUrl { margin: 8px 0; font-family: monospace; }
+
+.ConsentList-items { list-style: none; margin: 0; padding: 0; }
+.ConsentList-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--control-bg);
+  color: var(--text-color);
+}
+.ConsentList-text { margin: 0 0 4px; overflow-wrap: anywhere; }

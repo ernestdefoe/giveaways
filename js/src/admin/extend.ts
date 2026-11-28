@@ -25,6 +25,14 @@ export default [
       label: app.translator.trans('ernestdefoe-giveaways.admin.advent_jokers_setting'),
       help: app.translator.trans('ernestdefoe-giveaways.admin.advent_jokers_help'),
     }))
+    .setting(() => ({
+      setting: KEY + 'sponsor_retention_days',
+      type: 'number',
+      min: 0,
+      max: 365,
+      label: app.translator.trans('ernestdefoe-giveaways.admin.sponsor_retention_setting'),
+      help: app.translator.trans('ernestdefoe-giveaways.admin.sponsor_retention_help'),
+    }))
     .permission(
       () => ({
         icon: 'fas fa-ticket-alt',

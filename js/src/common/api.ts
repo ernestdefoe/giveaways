@@ -1,4 +1,5 @@
 import app from 'flarum/common/app';
+import type { SponsorSummary } from './sponsors';
 
 export interface GiveawayUser {
   id: number;
@@ -81,6 +82,12 @@ export interface Giveaway {
   createdBy: GiveawayUser | null;
   /** The advent calendar it belongs to (its grand prize or a door's draw): entered through the calendar. */
   calendar: { slug: string; title: string; role: 'grand' | 'door' } | null;
+  /** Who presents it (the banner, and the opt-in box). */
+  sponsor: SponsorSummary | null;
+  /** The viewer shares their email with the sponsor for this giveaway. */
+  myConsent: boolean;
+  /** The opt-in box's sentence, as the server stores it (one giveaway only). */
+  sponsorConsentText?: string | null;
   category: { id: number; name: string; slug: string; color: string; icon: string | null } | null;
   winners?: GiveawayWinner[];
   drawSeed?: string | null;

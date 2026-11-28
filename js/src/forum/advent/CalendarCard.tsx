@@ -4,6 +4,7 @@ import Icon from 'flarum/common/components/Icon';
 import Link from 'flarum/common/components/Link';
 import type Mithril from 'mithril';
 import type { AdventCalendar } from '../../common/advent';
+import SponsorBanner from '../sponsors/SponsorBanner';
 
 /** A calendar on the giveaways page: where it stands today, and the grand prize. */
 export default class CalendarCard extends Component<{ calendar: AdventCalendar }> {
@@ -33,6 +34,7 @@ export default class CalendarCard extends Component<{ calendar: AdventCalendar }
               {c.grand.winnerCount > 1 && ` × ${c.grand.winnerCount}`}
             </div>
           )}
+          {c.sponsor && <SponsorBanner sponsor={c.sponsor} compact />}
           <div className="GiveawayCard-meta">
             {t('card_doors', { count: c.days })}
             {app.session.user && c.tickets > 0 && [' · ', t('tickets', { count: c.tickets })]}

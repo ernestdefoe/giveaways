@@ -206,6 +206,7 @@ class SponsorResource extends AbstractDatabaseResource
     {
         $list = $this->campaigns->forSponsor($sponsor, $context->getActor());
         $giveawayIds = array_map(fn ($c) => $c->id, array_filter($list, fn ($c) => $c instanceof Giveaway));
+        // One grouped count for all of them (no user input in the raw part).
         $entrants = $giveawayIds ? GiveawayEntry::query()->whereIn('giveaway_id', $giveawayIds)
             ->selectRaw('giveaway_id, COUNT(*) as n')->groupBy('giveaway_id')->pluck('n', 'giveaway_id')->all() : [];
 

@@ -5,6 +5,7 @@ import Link from 'flarum/common/components/Link';
 import Icon from 'flarum/common/components/Icon';
 import { countdown, phase } from '../../common/format';
 import type { Giveaway } from '../../common/api';
+import SponsorBanner from '../sponsors/SponsorBanner';
 
 export interface GiveawayCardAttrs {
   giveaway: Giveaway;
@@ -36,6 +37,7 @@ export default class GiveawayCard extends Component<GiveawayCardAttrs> {
             <Icon name="fas fa-trophy" /> {g.prize}
             {winnerCount(g.winnerCount)}
           </div>
+          {g.sponsor && <SponsorBanner sponsor={g.sponsor} compact />}
 
           <div className="GiveawayCard-meta">
             <span>

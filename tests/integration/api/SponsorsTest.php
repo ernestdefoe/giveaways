@@ -135,6 +135,39 @@ class SponsorsTest extends TestCase
     }
 
     #[Test]
+    public function the_box_shows_word_for_word_what_is_stored_on_giveaways_and_calendars()
+    {
+        $sponsorId = (int) $this->sponsor()['id'];
+        $id = $this->giveaway($sponsorId);
+
+        [, $page] = $this->call('GET', "/api/giveaways/$id", 10);
+        $shown = $page['data']['sponsorConsentText'];
+        $this->assertNotEmpty($shown);
+        $this->consent(10, $id, true);
+        $this->assertSame($shown, OptIn::query()->where('campaign', OptIn::GIVEAWAY)->value('consent_text'));
+        // Not in lists, and not for guests (they can't tick it).
+        $this->assertArrayNotHasKey('sponsorConsentText', $this->call('GET', '/api/giveaways', 10)[1]['data'][0]);
+        $this->assertArrayNotHasKey('sponsorConsentText', $this->call('GET', "/api/giveaways/$id", null)[1]['data']);
+
+        [$status, $body] = $this->call('POST', '/api/giveaway-calendars', 1, ['data' => ['type' => 'giveaway-calendars', 'attributes' => [
+            'title' => 'Winter Doors', 'startsOn' => Carbon::now('UTC')->format('Y-m-d'), 'days' => 2, 'timezone' => 'UTC',
+            'grandPrize' => 'A console', 'grandWinners' => 1, 'publish' => true, 'sponsorId' => $sponsorId,
+            'doors' => [['day' => 1, 'kind' => 'reveal', 'title' => 'One', 'body' => 'x'], ['day' => 2, 'kind' => 'reveal', 'title' => 'Two', 'body' => 'y']],
+        ]]]);
+        $this->assertSame(201, $status, json_encode($body));
+        $calendar = (int) $body['data']['id'];
+
+        [, $page] = $this->call('GET', "/api/giveaway-calendars/$calendar", 10);
+        $this->assertSame('North Pole Games', $page['data']['sponsor']['name']);
+        $this->assertFalse($page['data']['myConsent']);
+        $shown = $page['data']['sponsorConsentText'];
+        $this->assertSame(200, $this->call('POST', '/api/giveaway-sponsors/consent', 10, ['campaign' => 'calendar', 'campaignId' => $calendar, 'on' => true])[0]);
+        $this->assertSame($shown, OptIn::query()->where('campaign', OptIn::CALENDAR)->value('consent_text'));
+        $this->assertTrue($this->call('GET', "/api/giveaway-calendars/$calendar", 10)[1]['data']['myConsent']);
+        $this->assertArrayNotHasKey('sponsorConsentText', $this->call('GET', "/api/giveaway-calendars/$calendar", null)[1]['data']);
+    }
+
+    #[Test]
     public function the_export_holds_only_members_who_opted_in_and_still_do()
     {
         $sponsor = $this->sponsor();

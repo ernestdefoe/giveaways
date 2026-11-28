@@ -147,6 +147,7 @@ class CalendarResource extends AbstractDatabaseResource
         // Only on the calendar's own endpoints: as an alert's subject a calendar
         // needs its title and slug, not a grand prize or doors (one query each).
         $own = fn ($calendar, Context $context) => $context->collection instanceof self;
+        $sponsoredPage = fn (Calendar $c, Context $context) => $own($c, $context) && $c->sponsor_id && ! $context->endpoint instanceof Endpoint\Index;
         $single = fn ($calendar, Context $context) => $own($calendar, $context) && $manage($calendar, $context) && ! $context->endpoint instanceof Endpoint\Index;
         $extra = fn (Calendar $c, string $key, mixed $default) => $this->extras[$c][$key] ?? $default;
 
@@ -175,6 +176,9 @@ class CalendarResource extends AbstractDatabaseResource
             Schema\Boolean::make('canManage')->get($manage),
             Schema\Arr::make('sponsor')->nullable()->visible($own)->get(fn (Calendar $c) => $c->sponsor_id && $c->sponsor ? GiveawayPresenter::sponsor($c->sponsor) : null),
             Schema\Boolean::make('myConsent')->visible($own)->get(fn (Calendar $c) => $extra($c, 'consent', false)),
+            // The opt-in box's sentence, word for word what Consent stores when it's ticked.
+            Schema\Str::make('sponsorConsentText')->nullable()->visible(fn (Calendar $c, Context $ctx) => $sponsoredPage($c, $ctx) && ! $ctx->getActor()->isGuest())
+                ->get(fn (Calendar $c) => $c->sponsor ? $this->consent->sentence($c->sponsor, $c) : null),
             ...$this->prizeAndDoorFields($own, $input, $extra),
 
             ...$this->builderFields($input, $single),

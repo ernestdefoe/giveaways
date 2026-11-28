@@ -11,6 +11,8 @@ import { showGiveaway, enterGiveaway, drawGiveaway, deleteGiveaway, claimGiveawa
 import type { Giveaway } from '../../common/api';
 import { countdown, dateTime, phase } from '../../common/format';
 import { winnerCount } from '../components/GiveawayCard';
+import SponsorBanner from '../sponsors/SponsorBanner';
+import ConsentBox from '../sponsors/ConsentBox';
 
 export default class GiveawayPage extends Page {
   loading = true;
@@ -379,6 +381,17 @@ export default class GiveawayPage extends Page {
 
         {active && entered && g.postBonus > 0 && this.earnMore(g)}
 
+        {active && g.sponsor && g.sponsorConsentText && app.session.user && (
+          <ConsentBox
+            sponsor={g.sponsor}
+            campaign="giveaway"
+            campaignId={g.id}
+            checked={g.myConsent}
+            text={g.sponsorConsentText}
+            onchange={(on: boolean) => (g.myConsent = on)}
+          />
+        )}
+
         {g.canViewParticipants && g.entrantCount > 0 && (
           <Button className="Button Button--block GiveawayPage-participantsButton" icon="fas fa-users" onclick={() => this.participants()}>
             {app.translator.trans('ernestdefoe-giveaways.forum.participants.button')}
@@ -558,6 +571,7 @@ export default class GiveawayPage extends Page {
               <Icon name="fas fa-trophy" /> {g.prize}
               {winnerCount(g.winnerCount)}
             </div>
+            {g.sponsor && <SponsorBanner sponsor={g.sponsor} />}
           </div>
         </div>
       </div>

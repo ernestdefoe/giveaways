@@ -7,6 +7,8 @@ import extractText from 'flarum/common/utils/extractText';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import type Mithril from 'mithril';
 import AdventDoor from './AdventDoor';
+import SponsorBanner from '../sponsors/SponsorBanner';
+import ConsentBox from '../sponsors/ConsentBox';
 import { forgetToday } from './todayWidget';
 import { countdown } from '../../common/format';
 import { openDoor, setReminder, showCalendar, shuffled } from '../../common/advent';
@@ -68,6 +70,7 @@ export default class AdventPage extends Page {
         <div className="container">
           <header className="AdventPage-header">
             <h2 className="AdventPage-title">{c.title}</h2>
+            {c.sponsor && <SponsorBanner sponsor={c.sponsor} />}
             {c.status === 'draft' && <span className="AdventPage-draft">{app.translator.trans('ernestdefoe-giveaways.forum.advent.draft')}</span>}
             {c.descriptionHtml && <div className="AdventPage-description Post-body">{m.trust(c.descriptionHtml)}</div>}
             <p className="AdventPage-zone">
@@ -78,6 +81,17 @@ export default class AdventPage extends Page {
           </header>
 
           {c.ineligible && <p className="AdventPage-notice">{c.ineligible}</p>}
+
+          {c.sponsor && c.sponsorConsentText && app.session.user && c.status === 'published' && c.today <= c.days && (
+            <ConsentBox
+              sponsor={c.sponsor}
+              campaign="calendar"
+              campaignId={c.id}
+              checked={c.myConsent}
+              text={c.sponsorConsentText}
+              onchange={(on: boolean) => (c.myConsent = on)}
+            />
+          )}
 
           <div className="AdventGrid" role="group" aria-label={extractText(app.translator.trans('ernestdefoe-giveaways.forum.advent.grid_label'))}>
             {order.map((d, i) => (

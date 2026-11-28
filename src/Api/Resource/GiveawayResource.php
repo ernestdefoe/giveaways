@@ -11,6 +11,7 @@ use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\GiveawayWinner;
 use ErnestDefoe\Giveaways\GiveawayWriter;
 use ErnestDefoe\Giveaways\RichText;
+use ErnestDefoe\Giveaways\Sponsors\Consent;
 use ErnestDefoe\Giveaways\Sponsors\Counter;
 use ErnestDefoe\Giveaways\Sponsors\OptIn;
 use ErnestDefoe\Giveaways\Sponsors\Stat;
@@ -62,6 +63,7 @@ class GiveawayResource extends AbstractDatabaseResource
         private readonly TranslatorInterface $translator,
         private readonly RichText $rich,
         private readonly Counter $counter,
+        private readonly Consent $consent,
     ) {
         $this->views = new \WeakMap();
     }
@@ -225,6 +227,11 @@ class GiveawayResource extends AbstractDatabaseResource
         // A key the presenter leaves out for this viewer (the editable source,
         // the full winners list on a list page...) is left out here too.
         $shown = fn (string $name) => fn (Giveaway $g, Context $context) => $own($g, $context) && array_key_exists($name, $this->view($g, $context));
+
+        // The opt-in box's sentence, word for word what Consent stores when it's ticked.
+        $fields[] = Schema\Str::make('sponsorConsentText')->nullable()
+            ->visible(fn (Giveaway $g, Context $c) => $own($g, $c) && $g->sponsor_id && ! $c->getActor()->isGuest() && ! $c->endpoint instanceof Endpoint\Index)
+            ->get(fn (Giveaway $g) => $g->sponsor ? $this->consent->sentence($g->sponsor, $g) : null);
 
         foreach (self::PRESENTED as $name => [$type, $writable]) {
             $field = $type::make($name)->nullable()->visible($shown($name))->get($presented($name));

@@ -73,7 +73,11 @@ export default class GiveawaysPage extends Page {
   }
 
   create() {
-    app.modal.show(() => import('../components/GiveawayFormModal'), { categories: this.categories, onsave: () => this.load() });
+    app.modal.show(() => import('../components/GiveawayFormModal'), {
+      categories: this.categories,
+      canManage: this.canManage,
+      onsave: () => this.load(),
+    });
   }
 
   manageCategories() {
@@ -132,6 +136,11 @@ export default class GiveawaysPage extends Page {
               {this.canManage && (
                 <Button className="Button" icon="fas fa-tags" onclick={() => this.manageCategories()}>
                   {app.translator.trans('ernestdefoe-giveaways.forum.categories.manage')}
+                </Button>
+              )}
+              {this.canManage && (
+                <Button className="Button" icon="fas fa-handshake" onclick={() => app.modal.show(() => import('../sponsors/SponsorsModal'))}>
+                  {app.translator.trans('ernestdefoe-giveaways.forum.sponsors.manage')}
                 </Button>
               )}
             </div>
