@@ -3,7 +3,6 @@
 namespace ErnestDefoe\Giveaways\Advent;
 
 use ErnestDefoe\Giveaways\RichText;
-use Flarum\User\User;
 
 /**
  * The doors as one member sees them. This is the only place a door's content

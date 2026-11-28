@@ -67,15 +67,20 @@ class Exporter
         return $out;
     }
 
-    /** @return array<string, string> "giveaway:5" => title */
+    /**
+     * Titles of every campaign this sponsor holds agreements for, even one
+     * that has since changed sponsor. One query per kind.
+     *
+     * @return array<string, string> "giveaway:5" => title
+     */
     private function titles(Sponsor $sponsor): array
     {
         $titles = [];
-        foreach (Giveaway::query()->where('sponsor_id', $sponsor->id)->get(['id', 'title']) as $g) {
-            $titles['giveaway:'.$g->id] = $g->title;
-        }
-        foreach (Calendar::query()->where('sponsor_id', $sponsor->id)->get(['id', 'title']) as $c) {
-            $titles['calendar:'.$c->id] = $c->title;
+        foreach ([OptIn::GIVEAWAY => Giveaway::class, OptIn::CALENDAR => Calendar::class] as $kind => $model) {
+            $ids = OptIn::query()->where('sponsor_id', $sponsor->id)->where('campaign', $kind)->select('campaign_id');
+            foreach ($model::query()->whereIn('id', $ids)->get(['id', 'title']) as $c) {
+                $titles[$kind.':'.$c->id] = $c->title;
+            }
         }
 
         return $titles;

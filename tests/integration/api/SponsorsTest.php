@@ -306,6 +306,9 @@ class SponsorsTest extends TestCase
         // and unticking still erases the agreement with the old one.
         $this->call('PATCH', "/api/giveaways/$id", 1, ['data' => ['type' => 'giveaways', 'id' => (string) $id, 'attributes' => ['sponsorId' => $second]]]);
         $this->assertFalse($this->call('GET', "/api/giveaways/$id", 10)[1]['data']['myConsent']);
+        // The old sponsor's list still names the campaign the member agreed for.
+        $csv = (string) $this->call('POST', "/api/giveaway-sponsors/$first/export", 1)[2]->getBody();
+        $this->assertStringContainsString('"elf","elf@machine.local","Sleigh bells"', $csv);
         $this->assertSame(200, $this->consent(10, $id, false));
         $this->assertSame(0, OptIn::query()->count());
 
