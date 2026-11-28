@@ -92,7 +92,7 @@ ernestdefoe-giveaways:
       website: Website
       website_help: Links to it go through the forum, so the report can count the clicks.
       privacy: Privacy policy address
-      privacy_help: Required. Shown beside the box members tick to share their email address.
+      privacy_help: Required. Linked in the sentence members tick to share their email address.
       description: About the sponsor
       save: Save
       saved: Sponsor saved.

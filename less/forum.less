@@ -1240,10 +1240,13 @@ html:not(#x-hi) .SponsorPage-campaign > a {
   text-overflow: ellipsis;
   color: var(--text-color);
 }
-.SponsorsModal-actions {
+.SponsorsModal .SponsorsModal-actions {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  > .Button { width: auto; margin: 0; }
 }
 .SponsorsModal-privacy {
   margin-top: 22px;
