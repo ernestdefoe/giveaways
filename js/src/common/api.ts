@@ -1,4 +1,6 @@
 import app from 'flarum/common/app';
+import { flat } from './jsonapi';
+import type { Resource } from './jsonapi';
 import type { SponsorSummary } from './sponsors';
 
 export interface GiveawayUser {
@@ -99,17 +101,7 @@ export interface ListResult {
   meta: { canCreate: boolean; canManage: boolean };
 }
 
-/** A JSON:API resource as the server sends it. */
-interface Resource<T> {
-  type: string;
-  id: string;
-  attributes: Omit<T, 'id'>;
-}
-
-/** Giveaways and categories are JSON:API resources; the pages use them flat, with a numeric id. */
-function flat<T extends { id: number }>(r: Resource<T>): T {
-  return { id: Number(r.id), ...r.attributes } as T;
-}
+// Giveaways and categories are JSON:API resources; the pages use them flat, with a numeric id.
 
 function one<T extends { id: number }>(res: { data: Resource<T> }): { data: T } {
   return { data: flat(res.data) };

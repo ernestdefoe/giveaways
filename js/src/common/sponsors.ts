@@ -1,4 +1,6 @@
 import app from 'flarum/common/app';
+import { flat as toFlat } from './jsonapi';
+import type { Resource as JsonApiResource } from './jsonapi';
 
 /** A sponsor as a giveaway or calendar shows it (the "Presented by" banner, the opt-in box). */
 export interface SponsorSummary {
@@ -44,10 +46,7 @@ export interface Consent {
   optedInAt: string;
 }
 
-interface Resource {
-  id: string;
-  attributes: Omit<Sponsor, 'id'>;
-}
+type Resource = JsonApiResource<Sponsor>;
 
 const TYPE = 'giveaway-sponsors';
 
@@ -55,9 +54,7 @@ function base(): string {
   return `${app.forum.attribute('apiUrl')}/${TYPE}`;
 }
 
-function flat(r: Resource): Sponsor {
-  return { id: Number(r.id), ...r.attributes };
-}
+const flat = (r: Resource): Sponsor => toFlat(r);
 
 /** The sponsor's tracked link: counts the click for this campaign, then goes to its website. */
 export function trackedLink(slug: string, campaign?: { kind: 'giveaway' | 'calendar'; id: number }): string {

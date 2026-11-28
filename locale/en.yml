@@ -25,8 +25,9 @@ ernestdefoe-giveaways:
     ends_no_earlier: Once people have entered, the end can be moved later but not earlier.
     busy: Another request for this giveaway is running. Try again in a moment.
     sponsors:
-      consent: "I agree that {forum} shares my email address and username with {sponsor}, so that {sponsor} can contact me about {campaign}. This is optional, it doesn't affect my entry, and I can withdraw it at any time. {sponsor}'s privacy policy: {privacy}"
+      consent: "I agree that {forum} shares my email address and username with {sponsor}, so that {sponsor} can contact me about {campaign}. This is optional, it doesn't affect my entry, and I can withdraw it at any time. Privacy policy of {sponsor}: {privacy}"
       not_sponsored: This giveaway has no sponsor.
+      ended: This giveaway or calendar has ended, so there's nothing to share your email address for.
       confirm_email: Confirm your email address first.
       export_limit: That's enough exports for now. Try again in an hour.
       name_required: A sponsor needs a name.
@@ -66,7 +67,7 @@ ernestdefoe-giveaways:
       report_new_members: New members
       report_optins: Opt-ins
       report_few: "fewer than {threshold}"
-      privacy_policy: "{sponsor}'s privacy policy"
+      privacy_policy: "Privacy policy of {sponsor}"
       shared: "You're sharing your email address with {sponsor}."
       withdrawn: "You've stopped sharing your email address with {sponsor}."
       not_found: This sponsor doesn't exist.

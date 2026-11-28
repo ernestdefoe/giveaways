@@ -300,7 +300,7 @@ class CalendarResource extends AbstractDatabaseResource
         $ids = array_map(fn (Calendar $c) => $c->id, $calendars);
 
         $this->loadRelations($calendars, $ids);
-        $consents = $this->consent->mine($actor, OptIn::CALENDAR, $ids);
+        $consents = OptIn::sharedBy($actor, OptIn::CALENDAR, $calendars);
 
         $opened = $remind = $doors = [];
         if (! $actor->isGuest()) {

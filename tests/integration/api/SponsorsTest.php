@@ -289,4 +289,42 @@ class SponsorsTest extends TestCase
         $this->call('DELETE', "/api/giveaway-sponsors/{$sponsor['id']}", 1);
         $this->assertSame(0, $count());
     }
+
+    #[Test]
+    public function withdrawing_always_works_and_a_new_sponsor_starts_unticked()
+    {
+        $first = (int) $this->sponsor()['id'];
+        $second = (int) $this->sponsor(['name' => 'Elf Workshop'])['id'];
+        $id = $this->giveaway($first);
+
+        // A double click is one agreement, not a 500.
+        $this->assertSame(200, $this->consent(10, $id, true));
+        $this->assertSame(200, $this->consent(10, $id, true));
+        $this->assertSame(1, OptIn::query()->count());
+
+        // The campaign changes sponsor: the box is unticked for the new one,
+        // and unticking still erases the agreement with the old one.
+        $this->call('PATCH', "/api/giveaways/$id", 1, ['data' => ['type' => 'giveaways', 'id' => (string) $id, 'attributes' => ['sponsorId' => $second]]]);
+        $this->assertFalse($this->call('GET', "/api/giveaways/$id", 10)[1]['data']['myConsent']);
+        $this->assertSame(200, $this->consent(10, $id, false));
+        $this->assertSame(0, OptIn::query()->count());
+
+        // The sponsor is removed from the campaign: withdrawing still works.
+        $this->consent(11, $id, true);
+        $this->call('PATCH', "/api/giveaways/$id", 1, ['data' => ['type' => 'giveaways', 'id' => (string) $id, 'attributes' => ['sponsorId' => null]]]);
+        $this->assertSame(200, $this->consent(11, $id, false));
+        $this->assertSame(0, OptIn::query()->count());
+
+        // ...and the retention purge still reaches a campaign without a sponsor.
+        $this->call('PATCH', "/api/giveaways/$id", 1, ['data' => ['type' => 'giveaways', 'id' => (string) $id, 'attributes' => ['sponsorId' => $second]]]);
+        $this->consent(12, $id, true);
+        $this->call('PATCH', "/api/giveaways/$id", 1, ['data' => ['type' => 'giveaways', 'id' => (string) $id, 'attributes' => ['sponsorId' => null]]]);
+        $this->database()->table('giveaways')->where('id', $id)->update(['ends_at' => Carbon::now()->subDays(100)]);
+        $this->app()->getContainer()->make(RetentionCommand::class)->run(new ArrayInput([]), new BufferedOutput());
+        $this->assertSame(0, OptIn::query()->count());
+
+        // Once it's over there's nothing to agree to.
+        $this->call('PATCH', "/api/giveaways/$id", 1, ['data' => ['type' => 'giveaways', 'id' => (string) $id, 'attributes' => ['sponsorId' => $second]]]);
+        $this->assertSame(422, $this->consent(10, $id, true));
+    }
 }

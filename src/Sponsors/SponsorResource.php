@@ -7,6 +7,8 @@ use ErnestDefoe\Giveaways\Advent\Calendar;
 use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\RichText;
+use ErnestDefoe\Giveaways\Slugs;
+use Flarum\Locale\TranslatorInterface;
 use Flarum\Api\Context;
 use Flarum\Api\Endpoint;
 use Flarum\Api\Resource\AbstractDatabaseResource;
@@ -14,7 +16,8 @@ use Flarum\Api\Schema;
 use Flarum\Http\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
-use Laminas\Diactoros\Response\TextResponse;
+use Laminas\Diactoros\Response;
+use Psr\Http\Message\StreamInterface;
 use Tobyz\JsonApiServer\Context as BaseContext;
 
 /**
@@ -37,12 +40,12 @@ class SponsorResource extends AbstractDatabaseResource
     private const MANAGE = 'giveaways.manage';
 
     public function __construct(
-        private readonly SponsorWriter $writer,
         private readonly Consent $consent,
         private readonly Exporter $exporter,
         private readonly Campaigns $campaigns,
         private readonly RichText $rich,
         private readonly UrlGenerator $url,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -88,9 +91,11 @@ class SponsorResource extends AbstractDatabaseResource
                     $body = (array) ($context->body() ?? []);
                     $campaign = (string) Arr::get($body, 'campaign');
                     $id = (int) Arr::get($body, 'campaignId');
-                    $this->consent->set($context->getActor(), $campaign, $id, Arr::get($body, 'on') === true);
+                    $on = Arr::get($body, 'on') === true;
+                    $this->consent->set($context->getActor(), $campaign, $id, $on);
+                    $c = $on ? $this->campaigns->find($campaign, $id, $context->getActor()) : null;
 
-                    return ['meta' => ['consented' => isset($this->consent->mine($context->getActor(), $campaign, [$id])[$id])]];
+                    return ['meta' => ['consented' => $c && isset(OptIn::sharedBy($context->getActor(), $campaign, [$c])[$id])]];
                 }),
             Endpoint\Endpoint::make('consents')
                 ->route('GET', '/consents')
@@ -123,7 +128,7 @@ class SponsorResource extends AbstractDatabaseResource
             }),
             $manager('export', 'POST', '/{id}/export')
                 ->action(fn (Context $context) => $this->exporter->csv($context->model, $context->getActor()))
-                ->response(fn (Context $context, string $csv) => new TextResponse($csv, 200, [
+                ->response(fn (Context $context, StreamInterface $csv) => new Response($csv, 200, [
                     'Content-Type' => 'text/csv; charset=utf-8',
                     'Content-Disposition' => 'attachment; filename="'.$context->model->slug.'-opt-ins.csv"',
                     'Cache-Control' => 'no-store',
@@ -152,17 +157,33 @@ class SponsorResource extends AbstractDatabaseResource
     {
         $manage = fn ($sponsor, Context $context) => $context->getActor()->hasPermission(self::MANAGE);
         $single = fn ($sponsor, Context $context) => $context->collection instanceof self && ! $context->endpoint instanceof Endpoint\Index;
-        // Accepted from managers and checked in SponsorWriter; nothing is set here.
-        $input = fn (Schema\Attribute $field) => $field->writable($manage)->set(fn () => null);
+        $t = fn (string $key) => $this->translator->trans("ernestdefoe-giveaways.api.sponsors.$key");
+        // The website (where the tracked link sends people) and the privacy
+        // policy (linked beside the opt-in box) must be real http(s) links.
+        $link = fn (string $name, string $column, string $error) => Schema\Str::make($name)->property($column)->writable($manage)->requiredOnCreate()->rule('filled')
+            ->rule(fn () => function ($attribute, $value, $fail) use ($t, $error) {
+                Sponsor::link($value) ?? $fail($t($error));
+            })
+            ->set(fn (Sponsor $s, $value) => $s->$column = Sponsor::link($value));
 
         return [
-            $input(Schema\Str::make('name')),
+            Schema\Str::make('name')->writable($manage)->requiredOnCreate()->rule('filled')->maxLength(120)
+                ->rule(fn () => function ($attribute, $value, $fail) use ($t) {
+                    trim((string) $value) === '' && $fail($t('name_required'));
+                })
+                ->set(fn (Sponsor $s, $value) => $s->name = trim((string) $value)),
             Schema\Str::make('slug'),
-            $input(Schema\Str::make('logoUrl')->nullable())->property('logo_url'),
-            $input(Schema\Str::make('websiteUrl'))->property('website_url'),
-            $input(Schema\Str::make('privacyUrl'))->property('privacy_url'),
+            // A logo may also be a path on this forum.
+            Schema\Str::make('logoUrl')->nullable()->property('logo_url')->writable($manage)->maxLength(600)
+                ->set(fn (Sponsor $s, $value) => $s->logo_url = Sponsor::link($value) ?? Sponsor::localPath($value)),
+            $link('websiteUrl', 'website_url', 'website_required'),
+            $link('privacyUrl', 'privacy_url', 'privacy_required'),
             Schema\Str::make('descriptionHtml')->nullable()->visible($single)->get(fn (Sponsor $s) => $this->rich->html($s->description, $s)),
-            $input(Schema\Str::make('description')->nullable())->visible(fn ($s, Context $c) => $single($s, $c) && $manage($s, $c))->get(fn (Sponsor $s) => $this->rich->source($s->description, $s)),
+            // Parsed by the forum's formatter, like a post.
+            Schema\Str::make('description')->nullable()->writable($manage)
+                ->visible(fn ($s, Context $c) => $single($s, $c) && $manage($s, $c))
+                ->get(fn (Sponsor $s) => $this->rich->source($s->description, $s))
+                ->set(fn (Sponsor $s, $value, Context $c) => $s->description = $this->rich->store((string) $value, $s, $c->getActor())),
             Schema\Arr::make('campaigns')->visible($single)->get(fn (Sponsor $s, Context $c) => $this->campaignList($s, $c)),
             // Managers: whether a report link exists (never the link), and how many share their email.
             Schema\Str::make('reportLinkCreatedAt')->nullable()->visible($manage)->get(fn (Sponsor $s) => $s->report_token_created_at?->toIso8601String()),
@@ -170,31 +191,31 @@ class SponsorResource extends AbstractDatabaseResource
         ];
     }
 
-    public function create(object $model, BaseContext $context): object
+    /** A new slug when the name changes; timestamps. */
+    public function saving(object $model, BaseContext $context): ?object
     {
-        return $this->writer->save(null, $this->input($context), $context->getActor());
-    }
+        /** @var Sponsor $model */
+        if (! $model->slug || $model->isDirty('name')) {
+            $model->slug = Slugs::unique(Sponsor::class, $model->name, $model->id, 'sponsor');
+        }
+        $model->created_at ??= Carbon::now();
+        $model->updated_at = Carbon::now();
 
-    public function update(object $model, BaseContext $context): object
-    {
-        return $this->writer->save($model, $this->input($context), $context->getActor());
+        return $model;
     }
 
     public function delete(object $model, BaseContext $context): void
     {
-        // Its opt-ins, stats and export log cascade in the database; cleared here too for drivers without foreign keys.
-        OptIn::query()->where('sponsor_id', $model->id)->delete();
-        Stat::query()->where('sponsor_id', $model->id)->delete();
-        Export::query()->where('sponsor_id', $model->id)->delete();
-        Giveaway::query()->where('sponsor_id', $model->id)->update(['sponsor_id' => null]);
-        Calendar::query()->where('sponsor_id', $model->id)->update(['sponsor_id' => null]);
-        $model->delete();
-    }
-
-    /** @return array<string, mixed> */
-    private function input(BaseContext $context): array
-    {
-        return (array) ($context->body()['data']['attributes'] ?? []);
+        // All or nothing. Its opt-ins, stats and export log cascade in the
+        // database; cleared here too for drivers without foreign keys.
+        $model->getConnection()->transaction(function () use ($model) {
+            OptIn::query()->where('sponsor_id', $model->id)->delete();
+            Stat::query()->where('sponsor_id', $model->id)->delete();
+            Export::query()->where('sponsor_id', $model->id)->delete();
+            Giveaway::query()->where('sponsor_id', $model->id)->update(['sponsor_id' => null]);
+            Calendar::query()->where('sponsor_id', $model->id)->update(['sponsor_id' => null]);
+            $model->delete();
+        });
     }
 
     /**

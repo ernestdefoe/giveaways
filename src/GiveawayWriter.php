@@ -64,7 +64,7 @@ class GiveawayWriter
     }
 
     /**
-     * Title, prize, dates, text, cover, winners and category.
+     * Title, prize, dates, text, cover and winners; then sponsor and category.
      *
      * @param array<string, mixed> $attrs
      * @param array<string, string> $errors
@@ -112,6 +112,16 @@ class GiveawayWriter
         if (array_key_exists('winnerCount', $attrs)) {
             $g->winner_count = max(1, min(100, (int) $attrs['winnerCount']));
         }
+        $this->sponsorAndCategory($g, $attrs, $actor);
+    }
+
+    /**
+     * The sponsor (managers only) and the category, each only if it exists.
+     *
+     * @param array<string, mixed> $attrs
+     */
+    private function sponsorAndCategory(Giveaway $g, array $attrs, User $actor): void
+    {
         // Only managers attach a sponsor: it's a promise to the sponsor about where its name appears.
         if (array_key_exists('sponsorId', $attrs) && $actor->hasPermission('giveaways.manage')) {
             $sid = $attrs['sponsorId'] ? (int) $attrs['sponsorId'] : null;

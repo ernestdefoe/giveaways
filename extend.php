@@ -84,8 +84,7 @@ return [
     (new Extend\ModelVisibility(Advent\Calendar::class))
         ->scope(Advent\ScopeCalendarVisibility::class),
 
-    // Both optional: a calendar follows Festoon's timezone, and a door can
-    // feature a Secret Santa exchange.
+    // Optional integrations, each active only while its extension is enabled.
     (new Extend\Conditional())
         // A member's sponsor consents in their data export, and erased with them.
         ->whenExtensionEnabled('flarum-gdpr', fn () => [
@@ -95,9 +94,11 @@ return [
         ->whenExtensionEnabled('flarum-approval', fn () => [
             (new Extend\Event())->listen('Flarum\\Approval\\Event\\PostWasApproved', PublishFromPost::class),
         ])
+        // A calendar follows Festoon's timezone.
         ->whenExtensionEnabled('ernestdefoe-festoon', fn () => [
             (new Extend\ServiceProvider())->register(Advent\FestoonProvider::class),
         ])
+        // A door can feature a Secret Santa exchange.
         ->whenExtensionEnabled('ernestdefoe-secret-santa', fn () => [
             (new Extend\ServiceProvider())->register(Advent\SecretSantaProvider::class),
         ]),

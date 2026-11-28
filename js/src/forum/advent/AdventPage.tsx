@@ -82,16 +82,7 @@ export default class AdventPage extends Page {
 
           {c.ineligible && <p className="AdventPage-notice">{c.ineligible}</p>}
 
-          {c.sponsor && c.sponsorConsentText && app.session.user && c.status === 'published' && c.today <= c.days && (
-            <ConsentBox
-              sponsor={c.sponsor}
-              campaign="calendar"
-              campaignId={c.id}
-              checked={c.myConsent}
-              text={c.sponsorConsentText}
-              onchange={(on: boolean) => (c.myConsent = on)}
-            />
-          )}
+          {this.consent(c)}
 
           <div className="AdventGrid" role="group" aria-label={extractText(app.translator.trans('ernestdefoe-giveaways.forum.advent.grid_label'))}>
             {order.map((d, i) => (
@@ -103,6 +94,22 @@ export default class AdventPage extends Page {
           {this.grand(c)}
         </div>
       </div>
+    );
+  }
+
+  /** The sponsor's opt-in box, while the calendar runs, for signed-in members. */
+  consent(c: AdventCalendar): Mithril.Children {
+    if (!c.sponsor || !c.sponsorConsentText || !app.session.user || c.status !== 'published' || c.today > c.days) return null;
+
+    return (
+      <ConsentBox
+        sponsor={c.sponsor}
+        campaign="calendar"
+        campaignId={c.id}
+        checked={!!c.myConsent}
+        text={c.sponsorConsentText}
+        onchange={(on: boolean) => (c.myConsent = on)}
+      />
     );
   }
 

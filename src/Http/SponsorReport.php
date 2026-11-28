@@ -50,6 +50,7 @@ class SponsorReport implements RequestHandlerInterface
             'sponsor' => $sponsor,
             'rows' => $this->report->rows($sponsor),
             'forum' => (string) $this->settings->get('forum_title'),
+            'locale' => $this->translator->getLocale(),
             'trans' => fn (string $key, array $params = []) => $this->translator->trans("ernestdefoe-giveaways.forum.sponsors.$key", $params),
             'shown' => fn (int $n) => Report::shown($n),
         ])->render();

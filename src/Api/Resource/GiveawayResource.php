@@ -306,13 +306,15 @@ class GiveawayResource extends AbstractDatabaseResource
             throw new PermissionDeniedException();
         }
 
-        // Children also cascade in the database; deleted here too for drivers without foreign keys.
-        GiveawayEntry::query()->where('giveaway_id', $model->id)->delete();
-        GiveawayWinner::query()->where('giveaway_id', $model->id)->delete();
-        // Its sponsor opt-ins and stats go with it.
-        OptIn::query()->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $model->id)->delete();
-        Stat::query()->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $model->id)->delete();
-        $model->delete();
+        // All or nothing. Children also cascade in the database; deleted here
+        // too for drivers without foreign keys. Its sponsor opt-ins and stats go with it.
+        $model->getConnection()->transaction(function () use ($model) {
+            GiveawayEntry::query()->where('giveaway_id', $model->id)->delete();
+            GiveawayWinner::query()->where('giveaway_id', $model->id)->delete();
+            OptIn::query()->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $model->id)->delete();
+            Stat::query()->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $model->id)->delete();
+            $model->delete();
+        });
     }
 
     /** @return array<string, mixed> */

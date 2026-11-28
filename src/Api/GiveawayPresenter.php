@@ -65,9 +65,7 @@ class GiveawayPresenter
             ->whereIn('giveaway_id', $ids)->where('user_id', $actor->id)
             ->get()->keyBy('giveaway_id');
 
-        $myConsents = $actor->isGuest() ? [] : OptIn::query()
-            ->where('user_id', $actor->id)->where('campaign', OptIn::GIVEAWAY)->whereIn('campaign_id', $ids)
-            ->pluck('campaign_id')->mapWithKeys(fn ($id) => [(int) $id => true])->all();
+        $myConsents = OptIn::sharedBy($actor, OptIn::GIVEAWAY, $giveaways);
 
         return new self($actor, $rich, $myEntries, $myWins, $aggregates, $myConsents);
     }
@@ -256,14 +254,7 @@ class GiveawayPresenter
 
     private function consented(Giveaway $g): bool
     {
-        if ($this->actor->isGuest()) {
-            return false;
-        }
-        if ($this->myConsents !== null) {
-            return isset($this->myConsents[$g->id]);
-        }
-
-        return OptIn::query()->where('user_id', $this->actor->id)->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $g->id)->exists();
+        return isset(($this->myConsents ?? OptIn::sharedBy($this->actor, OptIn::GIVEAWAY, [$g]))[$g->id]);
     }
 
     /**

@@ -1,4 +1,6 @@
 import app from 'flarum/common/app';
+import { flat as toFlat } from './jsonapi';
+import type { Resource as JsonApiResource } from './jsonapi';
 import type { SponsorSummary } from './sponsors';
 
 /**
@@ -76,10 +78,7 @@ export interface AdventCalendar {
   exchangeChoices?: { id: number; title: string }[];
 }
 
-interface Resource {
-  id: string;
-  attributes: Omit<AdventCalendar, 'id'>;
-}
+type Resource = JsonApiResource<AdventCalendar>;
 
 const TYPE = 'giveaway-calendars';
 
@@ -93,9 +92,8 @@ function base(): string {
  */
 const SUMMARY = { 'giveaway-calendars': 'title,slug,status,today,days,todayOpened,nextOpensAt,grand,tickets,sponsor' };
 
-function flat(resource: Resource): AdventCalendar {
-  return { id: resource.id, ...resource.attributes };
-}
+// Calendars keep the server's string id.
+const flat = (r: Resource): AdventCalendar => toFlat(r, String);
 
 export function showCalendar(slug: string): Promise<AdventCalendar> {
   return app.request<{ data: Resource }>({ method: 'GET', url: `${base()}/${encodeURIComponent(slug)}` }).then((r) => flat(r.data));

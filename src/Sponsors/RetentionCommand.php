@@ -33,19 +33,38 @@ class RetentionCommand extends AbstractCommand
     {
         $cutoff = Carbon::now()->subDays(max(0, min(365, (int) $this->settings->get(self::DAYS))));
 
-        $giveaways = Giveaway::query()->whereNotNull('sponsor_id')->where('ends_at', '<=', $cutoff)->pluck('id')->all();
-        $calendars = Calendar::query()->whereNotNull('sponsor_id')->get()
-            ->filter(fn (Calendar $c) => $this->clock->opensAt($c, $c->days + 1) <= $cutoff)
-            ->map(fn (Calendar $c) => $c->id)->values()->all();
-
+        // Driven from the agreements themselves: a campaign whose sponsor was
+        // since removed, or that no longer exists, is purged all the same.
         $erased = 0;
-        foreach ([OptIn::GIVEAWAY => $giveaways, OptIn::CALENDAR => $calendars] as $campaign => $ids) {
+        foreach ([OptIn::GIVEAWAY, OptIn::CALENDAR] as $campaign) {
+            $ids = OptIn::query()->where('campaign', $campaign)->distinct()->pluck('campaign_id')->map(fn ($id) => (int) $id)->all();
             foreach (array_chunk($ids, 200) as $chunk) {
-                $erased += OptIn::query()->where('campaign', $campaign)->whereIn('campaign_id', $chunk)->delete();
+                $over = array_values(array_diff($chunk, $this->stillRunning($campaign, $chunk, $cutoff)));
+                if ($over) {
+                    $erased += OptIn::query()->where('campaign', $campaign)->whereIn('campaign_id', $over)->delete();
+                }
             }
         }
         $this->info("Erased $erased opt-ins.");
 
         return 0;
+    }
+
+    /**
+     * Of these campaigns, the ones still running or that ended after the
+     * cutoff (kept). Every other id has been over long enough, or is gone.
+     *
+     * @param list<int> $ids
+     * @return list<int>
+     */
+    private function stillRunning(string $campaign, array $ids, Carbon $cutoff): array
+    {
+        if ($campaign === OptIn::GIVEAWAY) {
+            return Giveaway::query()->whereIn('id', $ids)->where('ends_at', '>', $cutoff)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        }
+
+        return Calendar::query()->whereIn('id', $ids)->get()
+            ->filter(fn (Calendar $c) => $this->clock->opensAt($c, $c->days + 1) > $cutoff)
+            ->map(fn (Calendar $c) => (int) $c->id)->values()->all();
     }
 }

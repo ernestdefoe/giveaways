@@ -381,16 +381,7 @@ export default class GiveawayPage extends Page {
 
         {active && entered && g.postBonus > 0 && this.earnMore(g)}
 
-        {active && g.sponsor && g.sponsorConsentText && app.session.user && (
-          <ConsentBox
-            sponsor={g.sponsor}
-            campaign="giveaway"
-            campaignId={g.id}
-            checked={g.myConsent}
-            text={g.sponsorConsentText}
-            onchange={(on: boolean) => (g.myConsent = on)}
-          />
-        )}
+        {active && this.consent(g)}
 
         {g.canViewParticipants && g.entrantCount > 0 && (
           <Button className="Button Button--block GiveawayPage-participantsButton" icon="fas fa-users" onclick={() => this.participants()}>
@@ -404,6 +395,22 @@ export default class GiveawayPage extends Page {
           </Link>
         )}
       </div>
+    );
+  }
+
+  /** The sponsor's opt-in box, for signed-in members (the server sends its sentence only to them). */
+  consent(g: Giveaway): Mithril.Children {
+    if (!g.sponsor || !g.sponsorConsentText || !app.session.user) return null;
+
+    return (
+      <ConsentBox
+        sponsor={g.sponsor}
+        campaign="giveaway"
+        campaignId={g.id}
+        checked={g.myConsent}
+        text={g.sponsorConsentText}
+        onchange={(on: boolean) => (g.myConsent = on)}
+      />
     );
   }
 

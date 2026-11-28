@@ -37,6 +37,36 @@ class OptIn extends AbstractModel
         'opted_in_at' => 'datetime',
     ];
 
+    /**
+     * Which of these campaigns the member shares their email with the
+     * campaign's CURRENT sponsor: an agreement with a sponsor the campaign
+     * no longer has doesn't tick the box for the new one. One query.
+     *
+     * @param iterable<\ErnestDefoe\Giveaways\Giveaway|\ErnestDefoe\Giveaways\Advent\Calendar> $campaigns
+     * @return array<int, true> campaign id => true
+     */
+    public static function sharedBy(?User $actor, string $campaign, iterable $campaigns): array
+    {
+        $sponsorOf = [];
+        foreach ($campaigns as $c) {
+            if ($c->sponsor_id) {
+                $sponsorOf[(int) $c->id] = (int) $c->sponsor_id;
+            }
+        }
+        if (! $actor || $actor->isGuest() || ! $sponsorOf) {
+            return [];
+        }
+
+        $shared = [];
+        foreach (self::query()->where('user_id', $actor->id)->where('campaign', $campaign)->whereIn('campaign_id', array_keys($sponsorOf))->get(['campaign_id', 'sponsor_id']) as $row) {
+            if (($sponsorOf[$row->campaign_id] ?? null) === $row->sponsor_id) {
+                $shared[$row->campaign_id] = true;
+            }
+        }
+
+        return $shared;
+    }
+
     /** @return BelongsTo<Sponsor, $this> */
     public function sponsor(): BelongsTo
     {
