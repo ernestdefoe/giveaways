@@ -30,7 +30,8 @@ use Tobyz\JsonApiServer\Context as BaseContext;
  *   box for one campaign (Consent). `GET /consents`: what they share.
  * - Managers: `POST /{id}/report-link` makes a new secret report link (shown
  *   once; only its hash is kept) and `DELETE /{id}/report-link` revokes it;
- *   `POST /{id}/export` downloads the opted-in members (Exporter);
+ *   `POST /{id}/export` downloads the opted-in members (Exporter; needs
+ *   the separate "Export sponsor opt-ins" permission, admins only by default);
  *   `POST /{id}/erase` erases every opt-in for the sponsor.
  *
  * @extends AbstractDatabaseResource<Sponsor>
@@ -38,6 +39,9 @@ use Tobyz\JsonApiServer\Context as BaseContext;
 class SponsorResource extends AbstractDatabaseResource
 {
     private const MANAGE = 'giveaways.manage';
+
+    /** Downloading members' email addresses: its own permission, admins only unless granted. */
+    public const EXPORT = 'giveaways.exportSponsorOptIns';
 
     public function __construct(
         private readonly Consent $consent,
@@ -126,7 +130,7 @@ class SponsorResource extends AbstractDatabaseResource
 
                 return ['meta' => ['revoked' => true]];
             }),
-            $manager('export', 'POST', '/{id}/export')
+            Endpoint\Endpoint::make('export')->route('POST', '/{id}/export')->authenticated()->can(self::EXPORT)
                 ->action(fn (Context $context) => $this->exporter->csv($context->model, $context->getActor()))
                 ->response(fn (Context $context, StreamInterface $csv) => new Response($csv, 200, [
                     'Content-Type' => 'text/csv; charset=utf-8',
@@ -187,6 +191,7 @@ class SponsorResource extends AbstractDatabaseResource
             Schema\Arr::make('campaigns')->visible($single)->get(fn (Sponsor $s, Context $c) => $this->campaignList($s, $c)),
             // Managers: whether a report link exists (never the link), and how many share their email.
             Schema\Str::make('reportLinkCreatedAt')->nullable()->visible($manage)->get(fn (Sponsor $s) => $s->report_token_created_at?->toIso8601String()),
+            Schema\Boolean::make('canExport')->visible(fn ($s, Context $c) => $single($s, $c) && $manage($s, $c))->get(fn ($s, Context $c) => $c->getActor()->hasPermission(self::EXPORT)),
             Schema\Integer::make('optInCount')->visible(fn ($s, Context $c) => $single($s, $c) && $manage($s, $c))->get(fn (Sponsor $s) => OptIn::query()->where('sponsor_id', $s->id)->count()),
         ];
     }

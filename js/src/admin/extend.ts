@@ -68,5 +68,15 @@ export default [
       }),
       'moderate',
       90
+    )
+    // Downloads members' email addresses: admins only until granted.
+    .permission(
+      () => ({
+        icon: 'fas fa-file-csv',
+        label: app.translator.trans('ernestdefoe-giveaways.admin.perm_export_sponsor_optins'),
+        permission: 'giveaways.exportSponsorOptIns',
+      }),
+      'moderate',
+      89
     ),
 ];

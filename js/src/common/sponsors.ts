@@ -35,6 +35,8 @@ export interface Sponsor {
   description?: string | null;
   reportLinkCreatedAt?: string | null;
   optInCount?: number;
+  /** Managers: may download the opted-in members (a separate permission). */
+  canExport?: boolean;
 }
 
 export interface Consent {

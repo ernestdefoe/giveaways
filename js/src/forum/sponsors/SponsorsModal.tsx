@@ -171,19 +171,21 @@ export default class SponsorsModal extends FormModal<IInternalModalAttrs> {
           )}
         </div>
         <h4>{this.t('optins_heading', { count: s.optInCount ?? 0 })}</h4>
-        <p className="helpText">{this.t('optins_help')}</p>
+        <p className="helpText">{this.t(s.canExport ? 'optins_help' : 'optins_help_no_export')}</p>
         <div className="SponsorsModal-actions">
-          <Button
-            className="Button"
-            icon="fas fa-file-csv"
-            onclick={() =>
-              exportOptIns(s).catch(() => {
-                /* app.request already showed the alert */
-              })
-            }
-          >
-            {this.t('export')}
-          </Button>
+          {s.canExport && (
+            <Button
+              className="Button"
+              icon="fas fa-file-csv"
+              onclick={() =>
+                exportOptIns(s).catch(() => {
+                  /* app.request already showed the alert */
+                })
+              }
+            >
+              {this.t('export')}
+            </Button>
+          )}
           <Button className="Button Button--danger" icon="fas fa-eraser" onclick={() => this.erase(s)}>
             {this.t('erase')}
           </Button>

@@ -108,6 +108,7 @@ ernestdefoe-giveaways:
       optins_heading: "Members sharing their email address: {count}"
       optins_help: "Downloads only the members who ticked the box and have a confirmed email address. Each download is logged. Agreements are erased automatically after the retention period set in the admin page."
       export: Download as CSV
+      optins_help_no_export: "Downloading them needs the \"Export sponsor opt-ins\" permission, which only admins have unless an admin grants it. Agreements are erased automatically after the retention period set in the admin page."
       erase: Erase all agreements
       erase_confirm: "Erase every member's agreement to share with {sponsor}? This can't be undone."
       erased: Agreements erased.
@@ -383,6 +384,7 @@ ernestdefoe-giveaways:
     perm_enter: Enter giveaways
     perm_create: Create & manage own giveaways
     perm_manage: Manage all giveaways
+    perm_export_sponsor_optins: Export sponsor opt-ins (members' email addresses)
     perm_view_participants: View giveaway participants
     nav_label_setting: Navigation label
     nav_label_help: The text shown in the forum navigation for the giveaways page.

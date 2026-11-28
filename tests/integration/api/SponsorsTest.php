@@ -336,4 +336,30 @@ class SponsorsTest extends TestCase
         $this->call('PATCH', "/api/giveaways/$id", 1, ['data' => ['type' => 'giveaways', 'id' => (string) $id, 'attributes' => ['sponsorId' => $second]]]);
         $this->assertSame(422, $this->consent(10, $id, true));
     }
+
+    #[Test]
+    public function only_admins_export_emails_unless_granted()
+    {
+        // Elf manages giveaways (a mod group), but exporting is its own permission.
+        $this->prepareDatabase([
+            'groups' => [['id' => 4, 'name_singular' => 'Mod', 'name_plural' => 'Mods'], ['id' => 5, 'name_singular' => 'Exporter', 'name_plural' => 'Exporters']],
+            'group_user' => [['user_id' => 10, 'group_id' => 4], ['user_id' => 11, 'group_id' => 4], ['user_id' => 11, 'group_id' => 5]],
+            'group_permission' => [
+                ['permission' => 'giveaways.manage', 'group_id' => 4],
+                ['permission' => 'giveaways.exportSponsorOptIns', 'group_id' => 5],
+            ],
+        ]);
+        $sponsor = $this->sponsor();
+
+        [, $body] = $this->call('GET', "/api/giveaway-sponsors/{$sponsor['id']}", 10);
+        $this->assertFalse($body['data']['canExport']);
+        $this->assertSame(403, $this->call('POST', "/api/giveaway-sponsors/{$sponsor['id']}/export", 10)[0]);
+        // Managing still works without it.
+        $this->assertSame(200, $this->call('POST', "/api/giveaway-sponsors/{$sponsor['id']}/report-link", 10)[0]);
+
+        // An admin has it; a group it is granted to has it.
+        $this->assertTrue($this->call('GET', "/api/giveaway-sponsors/{$sponsor['id']}", 1)[1]['data']['canExport']);
+        $this->assertSame(200, $this->call('POST', "/api/giveaway-sponsors/{$sponsor['id']}/export", 1)[0]);
+        $this->assertSame(200, $this->call('POST', "/api/giveaway-sponsors/{$sponsor['id']}/export", 11)[0]);
+    }
 }
