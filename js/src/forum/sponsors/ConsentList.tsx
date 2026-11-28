@@ -1,6 +1,8 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import Button from 'flarum/common/components/Button';
+import FieldSet from 'flarum/common/components/FieldSet';
+import extractText from 'flarum/common/utils/extractText';
 import type Mithril from 'mithril';
 import { myConsents, setConsent } from '../../common/sponsors';
 import type { Consent } from '../../common/sponsors';
@@ -28,8 +30,7 @@ export default class ConsentList extends Component {
     const t = (key: string, params = {}) => app.translator.trans(`ernestdefoe-giveaways.forum.sponsors.${key}`, params);
 
     return (
-      <fieldset className="ConsentList">
-        <legend>{t('settings_heading')}</legend>
+      <FieldSet className="ConsentList" label={extractText(t('settings_heading'))}>
         <ul className="ConsentList-items">
           {this.consents.map((c) => (
             <li className="ConsentList-item">
@@ -41,7 +42,7 @@ export default class ConsentList extends Component {
             </li>
           ))}
         </ul>
-      </fieldset>
+      </FieldSet>
     );
   }
 
