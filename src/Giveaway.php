@@ -4,6 +4,7 @@ namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
 use ErnestDefoe\Giveaways\Advent\Calendar;
+use ErnestDefoe\Giveaways\Sponsors\Sponsor;
 use Flarum\Database\AbstractModel;
 use Flarum\Database\ScopeVisibilityTrait;
 use Flarum\User\User;
@@ -36,7 +37,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Carbon\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, GiveawayEntry> $entries
  * @property-read \Illuminate\Database\Eloquent\Collection<int, GiveawayWinner> $winners
+ * @property int|null $sponsor_id
  * @property-read User|null $user
+ * @property-read Sponsor|null $sponsor
  * @property-read GiveawayCategory|null $category
  * @property-read Calendar|null $calendar
  */
@@ -53,6 +56,7 @@ class Giveaway extends AbstractModel
         'drawn_at' => 'datetime',
         'winner_count' => 'integer',
         'calendar_id' => 'integer',
+        'sponsor_id' => 'integer',
     ];
 
     /** @return BelongsTo<Calendar, $this> */
@@ -235,5 +239,11 @@ class Giveaway extends AbstractModel
     public function hasEnded(): bool
     {
         return $this->ends_at->lte(Carbon::now());
+    }
+
+    /** @return BelongsTo<Sponsor, $this> */
+    public function sponsor(): BelongsTo
+    {
+        return $this->belongsTo(Sponsor::class);
     }
 }

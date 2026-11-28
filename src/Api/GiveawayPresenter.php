@@ -6,6 +6,8 @@ use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\GiveawayWinner;
 use ErnestDefoe\Giveaways\RichText;
+use ErnestDefoe\Giveaways\Sponsors\OptIn;
+use ErnestDefoe\Giveaways\Sponsors\Sponsor;
 use Flarum\Discussion\Discussion;
 use Flarum\User\User;
 use Illuminate\Support\Collection;
@@ -32,7 +34,9 @@ class GiveawayPresenter
         protected RichText $rich,
         protected ?Collection $myEntries = null,
         protected ?Collection $myWins = null,
-        protected ?Collection $aggregates = null
+        protected ?Collection $aggregates = null,
+        /** @var array<int, bool>|null giveaway ids whose sponsor the actor shares their email with */
+        protected ?array $myConsents = null,
     ) {
     }
 
@@ -61,7 +65,11 @@ class GiveawayPresenter
             ->whereIn('giveaway_id', $ids)->where('user_id', $actor->id)
             ->get()->keyBy('giveaway_id');
 
-        return new self($actor, $rich, $myEntries, $myWins, $aggregates);
+        $myConsents = $actor->isGuest() ? [] : OptIn::query()
+            ->where('user_id', $actor->id)->where('campaign', OptIn::GIVEAWAY)->whereIn('campaign_id', $ids)
+            ->pluck('campaign_id')->mapWithKeys(fn ($id) => [(int) $id => true])->all();
+
+        return new self($actor, $rich, $myEntries, $myWins, $aggregates, $myConsents);
     }
 
     public function present(Giveaway $g, bool $full = false): array
@@ -118,6 +126,7 @@ class GiveawayPresenter
                 'title' => $g->calendar->title,
                 'role' => $g->calendar_role,
             ] : null,
+            'sponsor' => $g->sponsor_id && $g->sponsor ? self::sponsor($g->sponsor) : null,
             'category' => $g->category ? [
                 'id' => (int) $g->category->id,
                 'name' => $g->category->name,
@@ -160,6 +169,8 @@ class GiveawayPresenter
             'claimInstructions' => ($myClaimed || $canManage) ? (string) ($s['claim_instructions'] ?? '') : null,
             // A winner's own line of the per-winner list, and only theirs.
             'myClaimLine' => $myClaimed ? $g->claimLineFor((int) $myWin->position) : null,
+            // Whether they share their email with this giveaway's sponsor (the box's state).
+            'myConsent' => $g->sponsor_id ? $this->consented($g) : false,
         ];
     }
 
@@ -241,6 +252,35 @@ class GiveawayPresenter
         }
 
         return $g->winners()->where('user_id', $this->actor->id)->first();
+    }
+
+    private function consented(Giveaway $g): bool
+    {
+        if ($this->actor->isGuest()) {
+            return false;
+        }
+        if ($this->myConsents !== null) {
+            return isset($this->myConsents[$g->id]);
+        }
+
+        return OptIn::query()->where('user_id', $this->actor->id)->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $g->id)->exists();
+    }
+
+    /**
+     * A sponsor as a campaign shows it: the "Presented by" banner and the
+     * opt-in box's privacy link.
+     *
+     * @return array<string, mixed>
+     */
+    public static function sponsor(Sponsor $s): array
+    {
+        return [
+            'id' => (int) $s->id,
+            'name' => $s->name,
+            'slug' => $s->slug,
+            'logoUrl' => $s->logo_url,
+            'privacyUrl' => $s->privacy_url,
+        ];
     }
 
     private static function user(User $u): array

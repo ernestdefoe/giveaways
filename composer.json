@@ -32,7 +32,8 @@
         "fof/upload": "Pick a giveaway's cover image from the media library.",
         "flarum/approval": "A giveaway added in the composer goes public when its post is approved.",
         "ernestdefoe/bespoke": "A widget host for the \"Today's door\" advent calendar widget.",
-        "fof/forum-widgets-core": "A widget host for the \"Today's door\" advent calendar widget."
+        "fof/forum-widgets-core": "A widget host for the \"Today's door\" advent calendar widget.",
+        "flarum/gdpr": "Members' sponsor consents are included in their data export and erased with their account."
     },
     "autoload": {
         "psr-4": {
@@ -59,7 +60,8 @@
                 "ernestdefoe/festoon",
                 "ernestdefoe/secret-santa",
                 "ernestdefoe/bespoke",
-                "fof/forum-widgets-core"
+                "fof/forum-widgets-core",
+                "flarum/gdpr"
             ]
         }
     },
@@ -67,7 +69,8 @@
         "flarum/phpstan": "^2.0",
         "flarum/testing": "^2.0",
         "ernestdefoe/festoon": "^1.4",
-        "ernestdefoe/secret-santa": "^1.0"
+        "ernestdefoe/secret-santa": "^1.0",
+        "flarum/gdpr": "^2.0"
     },
     "scripts": {
         "test": [

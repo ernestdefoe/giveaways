@@ -2,10 +2,14 @@
 
 namespace ErnestDefoe\Giveaways\Advent;
 
+use ErnestDefoe\Giveaways\Api\GiveawayPresenter;
 use ErnestDefoe\Giveaways\EntryService;
 use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\RichText;
+use ErnestDefoe\Giveaways\Sponsors\Consent;
+use ErnestDefoe\Giveaways\Sponsors\Counter;
+use ErnestDefoe\Giveaways\Sponsors\OptIn;
 use Flarum\Api\Context;
 use Flarum\Api\Endpoint;
 use Flarum\Api\Resource\AbstractDatabaseResource;
@@ -48,6 +52,8 @@ class CalendarResource extends AbstractDatabaseResource
         private readonly RichText $rich,
         private readonly EntryService $entries,
         private readonly Exchanges $exchanges,
+        private readonly Consent $consent,
+        private readonly Counter $counter,
     ) {
         $this->extras = new \WeakMap();
     }
@@ -120,6 +126,10 @@ class CalendarResource extends AbstractDatabaseResource
                 ->before(fn (Context $context) => $context->getActor()->assertCan('viewForum'))
                 ->after(function (Context $context, Calendar $calendar) {
                     $this->preload([$calendar], $context->getActor());
+                    // A sponsored calendar's page view, for the sponsor's report (counts only).
+                    if ($calendar->sponsor_id) {
+                        $this->counter->record($calendar->sponsor_id, OptIn::CALENDAR, $calendar->id, 'views', $context->request);
+                    }
 
                     return $calendar;
                 }),
@@ -163,6 +173,8 @@ class CalendarResource extends AbstractDatabaseResource
             // Why this member can't open doors right now (not eligible, not signed in...), or null.
             Schema\Str::make('ineligible')->nullable()->visible($own)->get(fn (Calendar $c, Context $context) => $this->ineligible($c, $context->getActor())),
             Schema\Boolean::make('canManage')->get($manage),
+            Schema\Arr::make('sponsor')->nullable()->visible($own)->get(fn (Calendar $c) => $c->sponsor_id && $c->sponsor ? GiveawayPresenter::sponsor($c->sponsor) : null),
+            Schema\Boolean::make('myConsent')->visible($own)->get(fn (Calendar $c) => $extra($c, 'consent', false)),
             ...$this->prizeAndDoorFields($own, $input, $extra),
 
             ...$this->builderFields($input, $single),
@@ -211,6 +223,7 @@ class CalendarResource extends AbstractDatabaseResource
             $input(Schema\Str::make('grandPrize'))->visible($single)->get(fn (Calendar $c) => (string) $c->grand?->prize),
             $input(Schema\Integer::make('grandWinners'))->visible($single)->get(fn (Calendar $c) => (int) ($c->grand->winner_count ?? 1)),
             $input(Schema\Str::make('grandClaimInstructions'))->visible($single)->get(fn (Calendar $c) => (string) ($c->grand?->settingsArray()['claim_instructions'] ?? '')),
+            $input(Schema\Integer::make('sponsorId')->nullable())->visible($single)->property('sponsor_id'),
             $input(Schema\Str::make('grandClaimLines'))->visible($single)->get(fn (Calendar $c) => (string) ($c->grand?->settingsArray()['claim_lines'] ?? '')),
             Schema\Arr::make('editor')->visible($single)->get(fn (Calendar $c) => $this->doorView->forEditor($c, $c->doors()->with('giveaway')->get())),
             Schema\Arr::make('exchangeChoices')->visible($single)->get(fn () => $this->exchanges->choices()),
@@ -282,10 +295,8 @@ class CalendarResource extends AbstractDatabaseResource
         }
         $ids = array_map(fn (Calendar $c) => $c->id, $calendars);
 
-        $grands = Giveaway::query()->whereIn('calendar_id', $ids)->where('calendar_role', 'grand')->get()->keyBy('calendar_id');
-        foreach ($calendars as $calendar) {
-            $calendar->setRelation('grand', $grands->get($calendar->id));
-        }
+        $this->loadRelations($calendars, $ids);
+        $consents = $this->consent->mine($actor, OptIn::CALENDAR, $ids);
 
         $opened = $remind = $doors = [];
         if (! $actor->isGuest()) {
@@ -319,7 +330,23 @@ class CalendarResource extends AbstractDatabaseResource
                 'doors' => $doors[$calendar->id] ?? [],
                 'exchanges' => $exchanges,
                 'entered' => $entered,
+                'consent' => isset($consents[$calendar->id]),
             ];
+        }
+    }
+
+    /**
+     * Every calendar's grand prize and sponsor, one query each.
+     *
+     * @param list<Calendar> $calendars
+     * @param list<int> $ids
+     */
+    private function loadRelations(array $calendars, array $ids): void
+    {
+        $grands = Giveaway::query()->whereIn('calendar_id', $ids)->where('calendar_role', 'grand')->get()->keyBy('calendar_id');
+        (new \Illuminate\Database\Eloquent\Collection($calendars))->load('sponsor');
+        foreach ($calendars as $calendar) {
+            $calendar->setRelation('grand', $grands->get($calendar->id));
         }
     }
 }

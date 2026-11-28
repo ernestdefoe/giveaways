@@ -8,6 +8,9 @@ use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\GiveawayWinner;
 use ErnestDefoe\Giveaways\RichText;
 use ErnestDefoe\Giveaways\Slugs;
+use ErnestDefoe\Giveaways\Sponsors\OptIn;
+use ErnestDefoe\Giveaways\Sponsors\Sponsor;
+use ErnestDefoe\Giveaways\Sponsors\Stat;
 use Flarum\Foundation\ValidationException;
 use Flarum\Locale\TranslatorInterface;
 use Flarum\User\User;
@@ -105,6 +108,11 @@ class Calendars
             }
         }
         $calendar->settings = json_encode($settings);
+
+        if (array_key_exists('sponsorId', $in)) {
+            $sid = $in['sponsorId'] ? (int) $in['sponsorId'] : null;
+            $calendar->sponsor_id = ($sid && Sponsor::query()->whereKey($sid)->exists()) ? $sid : null;
+        }
     }
 
     /** Removes the calendar with everything it owns (the database cascades too, where foreign keys are on). */
@@ -118,6 +126,8 @@ class Calendars
             Giveaway::query()->whereIn('id', $giveaways)->delete();
             Opening::query()->where('calendar_id', $calendar->id)->delete();
             Reminder::query()->where('calendar_id', $calendar->id)->delete();
+            OptIn::query()->where('campaign', OptIn::CALENDAR)->where('campaign_id', $calendar->id)->delete();
+            Stat::query()->where('campaign', OptIn::CALENDAR)->where('campaign_id', $calendar->id)->delete();
             $calendar->delete();
         });
     }

@@ -4,6 +4,7 @@ namespace ErnestDefoe\Giveaways;
 
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
+use ErnestDefoe\Giveaways\Sponsors\Sponsor;
 use Flarum\Foundation\ValidationException;
 use Flarum\Locale\TranslatorInterface;
 use Flarum\User\User;
@@ -110,6 +111,11 @@ class GiveawayWriter
         }
         if (array_key_exists('winnerCount', $attrs)) {
             $g->winner_count = max(1, min(100, (int) $attrs['winnerCount']));
+        }
+        // Only managers attach a sponsor: it's a promise to the sponsor about where its name appears.
+        if (array_key_exists('sponsorId', $attrs) && $actor->hasPermission('giveaways.manage')) {
+            $sid = $attrs['sponsorId'] ? (int) $attrs['sponsorId'] : null;
+            $g->sponsor_id = ($sid && Sponsor::query()->whereKey($sid)->exists()) ? $sid : null;
         }
         if (array_key_exists('categoryId', $attrs)) {
             $cid = $attrs['categoryId'] ? (int) $attrs['categoryId'] : null;

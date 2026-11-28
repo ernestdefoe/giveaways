@@ -10,6 +10,9 @@ use ErnestDefoe\Giveaways\Advent;
 use ErnestDefoe\Giveaways\Api;
 use ErnestDefoe\Giveaways\Api\Resource;
 use ErnestDefoe\Giveaways\Console\DrawDueCommand;
+use ErnestDefoe\Giveaways\Gdpr\SponsorConsents;
+use ErnestDefoe\Giveaways\Http;
+use ErnestDefoe\Giveaways\Sponsors;
 use ErnestDefoe\Giveaways\Console\RemindCommand;
 use ErnestDefoe\Giveaways\Giveaway;
 use ErnestDefoe\Giveaways\Listener\AwardPostBonus;
@@ -19,6 +22,7 @@ use ErnestDefoe\Giveaways\Notification\GiveawayClaimedBlueprint;
 use ErnestDefoe\Giveaways\Notification\GiveawayWonBlueprint;
 use ErnestDefoe\Giveaways\ScopeGiveawayVisibility;
 use Flarum\Extend;
+use Flarum\Gdpr\Extend\UserData;
 use Flarum\Api\Resource\ForumResource;
 use Flarum\Post\Event\Posted;
 use Flarum\Post\Event\Revised;
@@ -32,7 +36,17 @@ return [
         ->css(__DIR__.'/less/forum.less')
         ->route('/giveaways', 'giveaways.index')
         ->route('/giveaways/{slug}', 'giveaways.show')
-        ->route('/advent/{slug}', 'giveaways.advent'),
+        ->route('/advent/{slug}', 'giveaways.advent')
+        ->route('/giveaways/sponsors/{slug}', 'giveaways.sponsor'),
+
+    // A sponsor's tracked link (counts a click, redirects to its website) and
+    // its campaign report behind a secret link: plain pages, not JSON:API.
+    (new Extend\Routes('forum'))
+        ->get('/giveaways/go/{slug}', 'giveaways.go', Http\GoToSponsor::class)
+        ->get('/giveaways/sponsors/report/{token}', 'giveaways.sponsors.report', Http\SponsorReport::class),
+
+    (new Extend\View())
+        ->namespace('ernestdefoe-giveaways', __DIR__.'/views'),
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
@@ -46,6 +60,8 @@ return [
         ->default('ernestdefoe-giveaways.show_nav', true)
         // Jokers per member per advent calendar (0–3), for opening a missed door.
         ->default('ernestdefoe-giveaways.advent_jokers', 1)
+        // Days a sponsor's opt-ins are kept after its campaign ends (0 to 365; 0 = erased at the end).
+        ->default('ernestdefoe-giveaways.sponsor_retention_days', 90)
         ->serializeToForum('giveawaysNavLabel', 'ernestdefoe-giveaways.nav_label')
         ->serializeToForum('giveawaysShowNav', 'ernestdefoe-giveaways.show_nav', 'boolval'),
 
@@ -64,12 +80,17 @@ return [
     (new Extend\ModelVisibility(Giveaway::class))
         ->scope(ScopeGiveawayVisibility::class),
     new Extend\ApiResource(Advent\CalendarResource::class),
+    new Extend\ApiResource(Sponsors\SponsorResource::class),
     (new Extend\ModelVisibility(Advent\Calendar::class))
         ->scope(Advent\ScopeCalendarVisibility::class),
 
     // Both optional: a calendar follows Festoon's timezone, and a door can
     // feature a Secret Santa exchange.
     (new Extend\Conditional())
+        // A member's sponsor consents in their data export, and erased with them.
+        ->whenExtensionEnabled('flarum-gdpr', fn () => [
+            (new UserData())->addType(SponsorConsents::class),
+        ])
         // A giveaway added in the composer goes public when its post is approved.
         ->whenExtensionEnabled('flarum-approval', fn () => [
             (new Extend\Event())->listen('Flarum\\Approval\\Event\\PostWasApproved', PublishFromPost::class),
@@ -94,5 +115,9 @@ return [
         ->command(RemindCommand::class)
         ->schedule(RemindCommand::class, function (ScheduledEvent $event) {
             $event->everyFiveMinutes()->withoutOverlapping();
+        })
+        ->command(Sponsors\RetentionCommand::class)
+        ->schedule(Sponsors\RetentionCommand::class, function (ScheduledEvent $event) {
+            $event->daily()->withoutOverlapping();
         }),
 ];

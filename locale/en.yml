@@ -24,6 +24,14 @@ ernestdefoe-giveaways:
     locked_after_draw: This can't be changed after the draw.
     ends_no_earlier: Once people have entered, the end can be moved later but not earlier.
     busy: Another request for this giveaway is running. Try again in a moment.
+    sponsors:
+      consent: "I agree that {forum} shares my email address and username with {sponsor}, so that {sponsor} can contact me about {campaign}. This is optional, it doesn't affect my entry, and I can withdraw it at any time. {sponsor}'s privacy policy: {privacy}"
+      not_sponsored: This giveaway has no sponsor.
+      confirm_email: Confirm your email address first.
+      export_limit: That's enough exports for now. Try again in an hour.
+      name_required: A sponsor needs a name.
+      website_required: A sponsor needs a website address starting with https:// or http://.
+      privacy_required: A sponsor needs a privacy policy address starting with https:// or http://.
     advent:
       closed: This calendar isn't open.
       not_yet: This door isn't open yet.
@@ -44,6 +52,20 @@ ernestdefoe-giveaways:
       door_title: "{calendar}: door {day}"
 
   forum:
+    sponsors:
+      presented_by: Presented by
+      report_title: "{sponsor}: campaign report"
+      report_intro: "Totals from {forum}. No names or email addresses, and a count from 1 to 4 is shown as fewer than {threshold}."
+      report_empty: No campaigns yet.
+      report_missing: This report link doesn't exist or has been turned off.
+      report_campaign: Campaign
+      report_dates: Dates
+      report_views: Views
+      report_clicks: Clicks
+      report_entrants: Entrants
+      report_new_members: New members
+      report_optins: Opt-ins
+      report_few: "fewer than {threshold}"
     advent:
       heading: Advent calendars
       new: New advent calendar
@@ -321,3 +343,7 @@ ernestdefoe-giveaways:
     nav_label_help: The text shown in the forum navigation for the giveaways page.
     nav_label_placeholder: Giveaways
     show_nav_setting: Show a "Giveaways" link in the main navigation
+  lib:
+    gdpr:
+      export: What you agreed to share with giveaway sponsors.
+      delete: Your agreements to share your email address with giveaway sponsors.

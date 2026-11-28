@@ -11,6 +11,9 @@ use ErnestDefoe\Giveaways\GiveawayEntry;
 use ErnestDefoe\Giveaways\GiveawayWinner;
 use ErnestDefoe\Giveaways\GiveawayWriter;
 use ErnestDefoe\Giveaways\RichText;
+use ErnestDefoe\Giveaways\Sponsors\Counter;
+use ErnestDefoe\Giveaways\Sponsors\OptIn;
+use ErnestDefoe\Giveaways\Sponsors\Stat;
 use Flarum\Api\Context;
 use Flarum\Api\Endpoint;
 use Flarum\Api\Resource\AbstractDatabaseResource;
@@ -58,6 +61,7 @@ class GiveawayResource extends AbstractDatabaseResource
         private readonly ClaimService $claims,
         private readonly TranslatorInterface $translator,
         private readonly RichText $rich,
+        private readonly Counter $counter,
     ) {
         $this->views = new \WeakMap();
     }
@@ -178,7 +182,14 @@ class GiveawayResource extends AbstractDatabaseResource
 
                     return $giveaways;
                 }),
-            Endpoint\Show::make()->before($view),
+            Endpoint\Show::make()->before($view)->after(function (Context $context, Giveaway $g) {
+                // A sponsored giveaway's page view, for the sponsor's report (counts only).
+                if ($g->sponsor_id && ! $g->calendar_id) {
+                    $this->counter->record($g->sponsor_id, OptIn::GIVEAWAY, $g->id, 'views', $context->request);
+                }
+
+                return $g;
+            }),
             Endpoint\Create::make()->before($view)->authenticated(),
             Endpoint\Update::make()->before($view)->authenticated(),
             Endpoint\Delete::make()->before($view)->authenticated(),
@@ -206,6 +217,7 @@ class GiveawayResource extends AbstractDatabaseResource
             Schema\Str::make('drawnAt')->nullable()->get(fn (Giveaway $g) => $g->drawn_at?->toIso8601String()),
             // Write-only.
             $input(Schema\Integer::make('categoryId')->nullable())->visible(false),
+            $input(Schema\Integer::make('sponsorId')->nullable())->visible(false),
             $input(Schema\Boolean::make('draft'))->visible(false),
             $input(Schema\Boolean::make('publish'))->visible(false),
         ];
@@ -257,6 +269,8 @@ class GiveawayResource extends AbstractDatabaseResource
         'createdBy' => [Schema\Arr::class, false],
         'category' => [Schema\Arr::class, false],
         'calendar' => [Schema\Arr::class, false],
+        'sponsor' => [Schema\Arr::class, false],
+        'myConsent' => [Schema\Boolean::class, false],
         // One giveaway only (not on a list).
         'descriptionHtml' => [Schema\Str::class, false],
         'rulesHtml' => [Schema\Str::class, false],
@@ -288,6 +302,9 @@ class GiveawayResource extends AbstractDatabaseResource
         // Children also cascade in the database; deleted here too for drivers without foreign keys.
         GiveawayEntry::query()->where('giveaway_id', $model->id)->delete();
         GiveawayWinner::query()->where('giveaway_id', $model->id)->delete();
+        // Its sponsor opt-ins and stats go with it.
+        OptIn::query()->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $model->id)->delete();
+        Stat::query()->where('campaign', OptIn::GIVEAWAY)->where('campaign_id', $model->id)->delete();
         $model->delete();
     }
 
@@ -306,13 +323,13 @@ class GiveawayResource extends AbstractDatabaseResource
     private function view(Giveaway $g, Context $context): array
     {
         return $this->views[$g] ??= GiveawayPresenter::forActor($context->getActor(), $this->rich)
-            ->present($g->loadMissing(['user', 'category', 'calendar']), ! $context->endpoint instanceof Endpoint\Index);
+            ->present($g->loadMissing(['user', 'category', 'calendar', 'sponsor']), ! $context->endpoint instanceof Endpoint\Index);
     }
 
     /** @param iterable<Giveaway> $giveaways */
     private function presentList(iterable $giveaways, User $actor): void
     {
-        $list = (new Collection([...$giveaways]))->load(['user', 'category', 'calendar']);
+        $list = (new Collection([...$giveaways]))->load(['user', 'category', 'calendar', 'sponsor']);
         $presenter = GiveawayPresenter::forList($actor, $list, $this->rich);
         foreach ($list as $g) {
             $this->views[$g] = $presenter->present($g, false);

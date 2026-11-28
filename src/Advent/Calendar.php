@@ -3,6 +3,7 @@
 namespace ErnestDefoe\Giveaways\Advent;
 
 use ErnestDefoe\Giveaways\Giveaway;
+use ErnestDefoe\Giveaways\Sponsors\Sponsor;
 use Flarum\Database\AbstractModel;
 use Flarum\Database\ScopeVisibilityTrait;
 use Flarum\User\User;
@@ -29,7 +30,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property \Carbon\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Door> $doors
  * @property-read Giveaway|null $grand
+ * @property int|null $sponsor_id
  * @property-read User|null $user
+ * @property-read Sponsor|null $sponsor
  */
 class Calendar extends AbstractModel
 {
@@ -44,6 +47,7 @@ class Calendar extends AbstractModel
     protected $casts = [
         'id' => 'integer',
         'user_id' => 'integer',
+        'sponsor_id' => 'integer',
         'starts_on' => 'date',
         'days' => 'integer',
         'reminded_day' => 'integer',
@@ -78,5 +82,11 @@ class Calendar extends AbstractModel
     public function settingsArray(): array
     {
         return array_merge(['min_posts' => 0, 'min_age_days' => 0], json_decode((string) $this->settings, true) ?: []);
+    }
+
+    /** @return BelongsTo<Sponsor, $this> */
+    public function sponsor(): BelongsTo
+    {
+        return $this->belongsTo(Sponsor::class);
     }
 }
