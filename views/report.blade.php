@@ -19,6 +19,17 @@
   th:first-child, td:first-child { text-align: left; white-space: normal; }
   th { color: var(--muted); font-weight: 600; font-size: 13px; }
   .few { color: var(--muted); font-style: italic; }
+  /* Phones: each campaign as a labelled card instead of a wide table. */
+  @media (max-width: 600px) {
+    table { min-width: 0; }
+    thead { display: none; }
+    tr, td { display: block; }
+    tr { border-bottom: 1px solid var(--line); padding: 8px 0; }
+    td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 4px 0; white-space: normal; }
+    td::before { content: attr(data-label); color: var(--muted); font-size: 13px; }
+    td:first-child { font-weight: 600; }
+    td:first-child::before { content: none; }
+  }
 </style>
 </head>
 <body>
@@ -38,12 +49,12 @@
     @foreach ($rows as $row)
       <tr>
         <td>{{ $row['title'] }}</td>
-        <td>{{ $row['starts']?->toDateString() }} – {{ $row['ends']->toDateString() }}</td>
-        <td>{{ $row['views'] }}</td>
-        <td>{{ $row['clicks'] }}</td>
-        @foreach (['entrants', 'newMembers', 'optIns'] as $key)
+        <td data-label="{{ $trans('report_dates') }}">{{ $row['starts']?->toDateString() }} – {{ $row['ends']->toDateString() }}</td>
+        <td data-label="{{ $trans('report_views') }}">{{ $row['views'] }}</td>
+        <td data-label="{{ $trans('report_clicks') }}">{{ $row['clicks'] }}</td>
+        @foreach (['entrants' => 'report_entrants', 'newMembers' => 'report_new_members', 'optIns' => 'report_optins'] as $key => $label)
           @php($n = $shown($row[$key]))
-          <td>@if ($n === null)<span class="few">{{ $trans('report_few', ['threshold' => \ErnestDefoe\Giveaways\Sponsors\Report::THRESHOLD]) }}</span>@else{{ $n }}@endif</td>
+          <td data-label="{{ $trans($label) }}">@if ($n === null)<span class="few">{{ $trans('report_few', ['threshold' => \ErnestDefoe\Giveaways\Sponsors\Report::THRESHOLD]) }}</span>@else{{ $n }}@endif</td>
         @endforeach
       </tr>
     @endforeach
