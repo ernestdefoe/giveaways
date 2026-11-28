@@ -67,7 +67,6 @@ ernestdefoe-giveaways:
       report_new_members: New members
       report_optins: Opt-ins
       report_few: "fewer than {threshold}"
-      privacy_policy: "Privacy policy of {sponsor}"
       shared: "You're sharing your email address with {sponsor}."
       withdrawn: "You've stopped sharing your email address with {sponsor}."
       not_found: This sponsor doesn't exist.

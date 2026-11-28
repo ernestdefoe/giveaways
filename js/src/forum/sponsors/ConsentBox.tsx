@@ -38,13 +38,24 @@ export default class ConsentBox extends Component<ConsentBoxAttrs> {
             disabled={this.busy}
             onchange={(e: Event) => this.toggle((e.target as HTMLInputElement).checked)}
           />
-          <span>{text}</span>
+          <span>{this.sentence(text, sponsor.privacyUrl)}</span>
         </label>
-        <a className="ConsentBox-privacy" href={sponsor.privacyUrl} target="_blank" rel="noopener noreferrer">
-          {app.translator.trans('ernestdefoe-giveaways.forum.sponsors.privacy_policy', { sponsor: sponsor.name })}
-        </a>
       </div>
     );
+  }
+
+  /** The stored sentence word for word, its privacy-policy address a link. */
+  sentence(text: string, url: string): Mithril.Children {
+    const at = url ? text.lastIndexOf(url) : -1;
+    if (at < 0) return text;
+
+    return [
+      text.slice(0, at),
+      <a className="ConsentBox-privacy" href={url} target="_blank" rel="noopener noreferrer">
+        {url}
+      </a>,
+      text.slice(at + url.length),
+    ];
   }
 
   toggle(on: boolean) {
